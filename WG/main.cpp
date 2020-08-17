@@ -71,8 +71,7 @@ int main(int argc, char *argv[])
                 settingsFileName = argv[1];
             else
             {
-                qDebug() << "ERROR: missing .ini file";
-                qDebug() << "\nUSAGE\nWG.exe [settings.ini]\n";
+                qDebug() << "USAGE:\nWG.exe [settings.ini]\n";
                 return 0;
             }
         #endif
