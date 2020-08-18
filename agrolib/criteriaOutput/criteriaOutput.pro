@@ -2,7 +2,7 @@
 #
 #   criteriaOutput
 #   post-processing of CRITERIA-1D output
-#   to csv or shapefile
+#   to csv or shapefile or aggregation (csv) file
 #
 #   This project is part of CRITERIA-1D distribution
 #
@@ -44,11 +44,13 @@ SOURCES += \
     ../../agrolib/criteriaModel/criteria1DUnit.cpp \
     ../../agrolib/crop/cropDbQuery.cpp \
     criteriaAggregationVariable.cpp \
+    criteriaOutputElaboration.cpp \
     criteriaOutputProject.cpp \
     criteriaOutputVariable.cpp
 
 HEADERS += \
     criteriaAggregationVariable.h \
+    criteriaOutputElaboration.h \
     criteriaOutputProject.h \
     criteriaOutputVariable.h
 
