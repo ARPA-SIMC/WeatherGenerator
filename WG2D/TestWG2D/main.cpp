@@ -3,13 +3,8 @@
 #include <QFile>
 #include <QDateTime>
 #include <QTextStream>
-// added for simulating C4 and C7
-#include <QDebug>
 #include <iostream>
-#include <QFileDialog>
-#include <QApplication>
 #include <malloc.h>
-
 
 #include <stdlib.h>
 #include <math.h>
@@ -43,7 +38,6 @@
 #define NRCONSORTIUM 4
 #define CONNECTDATABASE false
 
-static Crit3DMeteoGridDbHandler* meteoGridDbHandler;
 static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
 static weatherGenerator2D WG2D;
 
@@ -87,7 +81,7 @@ bool saveOnMeteoGridDB(QString* errorString, int consortium)
     meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
 
     // todo
-    //meteoGridDbHandler->meteoGrid()->setGisSettings(this->gisSettings);
+    //meteoGridDbHandlerWG2D->meteoGrid()->setGisSettings(this->gisSettings);
 
     if (! meteoGridDbHandlerWG2D->parseXMLGrid(xmlName, errorString)) return false;
 
@@ -104,7 +98,6 @@ bool saveOnMeteoGridDB(QString* errorString, int consortium)
 
 int main()
 {
-    bool testTomei = false;
     /*double* arrayInput = (double *)calloc(20, sizeof(double));
     double* arrayOutput = (double *)calloc(20, sizeof(double));
     for(int i=0;i<20;i++)
@@ -118,94 +111,6 @@ int main()
         printf("%d  %f  %f\n",i, arrayInput[i],arrayOutput[i]);
     }
     return 0;*/
-    if (testTomei)
-    {
-        using namespace std::chrono;
-        high_resolution_clock::time_point t1, t2;
-
-        /*
-         * int yearInitial =1899;
-        int monthInitial = 12;
-        int dayInitial = 31;
-        int dayFinal,monthFinal,yearFinal;
-        dayFinal = monthFinal = yearFinal = NODATA;
-        */
-        int nrDaysToAdd;
-        int nryears = 1000;
-        int nrLoops = 100000000;
-
-        srand(time(0));
-        printf ( "...Check time\n");
-
-
-        // test crit3Ddate
-        Crit3DDate critdate, critdate2;
-        critdate.setDate(1, 1, 1900);
-        printf ( "\nstart Crit3DDate: %s \n", QTime::currentTime().toString().toStdString().c_str());
-        t1 = high_resolution_clock::now();
-        for (int i=0; i<nrLoops; i++)
-        {
-            nrDaysToAdd = ((double(rand()) / RAND_MAX) -0.5) * 365 * nryears;
-            critdate2 = critdate.addDays(nrDaysToAdd);
-            long offset = critdate.daysTo(critdate2);
-            if (offset != nrDaysToAdd)
-                printf ("Wrong offset!");
-        }
-        t2 = high_resolution_clock::now();
-        duration<double, std::milli> dt = t2 - t1;
-        printf ( "end Crit3DDate: %s \n", QTime::currentTime().toString().toStdString().c_str());
-
-        // test QDate
-        QDate qdate, qdate2;
-        qdate.setDate(1900, 1, 1);
-        printf ( "\nstart QDate: %s \n", QTime::currentTime().toString().toStdString().c_str());
-        t1 = high_resolution_clock::now();
-        for (int i=0; i<nrLoops; i++)
-        {
-            nrDaysToAdd = ((double(rand()) / RAND_MAX) -0.5) * 365 * nryears;
-            qdate2 = qdate.addDays(nrDaysToAdd);
-            long offset = qdate.daysTo(qdate2);
-            if (offset != nrDaysToAdd)
-                printf ("Wrong offset!");
-        }
-        t2 = high_resolution_clock::now();
-        duration<double, std::milli> dt2 = t2 - t1;
-        printf ( "end QDate: %s \n", QTime::currentTime().toString().toStdString().c_str());
-        printf ( "Qdate time ratio: %f \n", dt2.count() / dt.count());
-
-        printf ( "\n...Check dates\n");
-        int wrongDates = 0;
-        for (int i=0; i<nrLoops/10; i++)
-        {
-            // random date
-            int doy = double(rand()) / RAND_MAX * 365;
-            if (doy < 1) doy = 1;
-            int year = double(rand()) / RAND_MAX * 2000;
-            if (year < 1) year = 1;
-            critdate = getDateFromDoy(year, doy);
-            qdate.setDate(critdate.year, critdate.month, critdate.day);
-
-            // random offset
-            nrDaysToAdd = ((double(rand()) / RAND_MAX) -0.5) * 365 * nryears;
-            qdate2 = qdate.addDays(nrDaysToAdd);
-
-            // back with crit3Ddate
-            critdate2.setDate(qdate2.day(), qdate2.month(), qdate2.year());
-            critdate = critdate2.addDays(-nrDaysToAdd);
-
-            // check offset
-            long offset = critdate.daysTo(critdate2);
-
-            if (critdate.day != qdate.day() || critdate.month != qdate.month()
-                    || critdate.year != qdate.year() || offset != nrDaysToAdd)
-            {
-                    wrongDates++;
-            }
-        }
-        printf ("\nWRONG DATES: %d\n", wrongDates);
-
-        return 0;
-    }
 
     FILE* fp;
     fp = fopen("randomNumbers2.txt","r");
@@ -231,6 +136,7 @@ int main()
         } while (dummy != '\n');
         randomSeries[j] = atof(vectorDummy);
     }
+
     fclose(fp);
     WG2D.initializeRandomNumbers(randomSeries);
     int numberMeteoLines;
@@ -254,7 +160,6 @@ int main()
             printf("Error! File not found\n");
             return -1;
         }
-
 
         numberMeteoLines = readPragaLineFileNumber(fp);
         fclose(fp);
@@ -286,8 +191,6 @@ int main()
         srand(time(nullptr));
         for (int i=0;i<nrStations;i++)
         {
-
-
             if (i==0)
             {
                    fp = fopen("inputData/argelato_1961_2018.txt","r");
@@ -565,7 +468,6 @@ int main()
         double prec,minT,maxT,meanT;
         doy = day = month = year = NODATA;
         prec = minT = maxT = meanT = NODATA;
-        bool firstDay = true;
         lengthDataSeries = numberMeteoLines;
         int nrVariables = 3;
         int nrDate = 3;
@@ -658,13 +560,9 @@ int main()
             }
             //getchar();
         }
-
-
     }
 
     free(cellCode);
-
-
 
     TObsDataD** observedDataDaily = (TObsDataD **)calloc(nrStations, sizeof(TObsDataD*));
     for (int i=0;i<nrStations;i++)
@@ -826,7 +724,6 @@ int main()
 
 void printSimulationResults(ToutputWeatherData* output,int nrStations,int lengthArray, int nrC)
 {
-    FILE* fp;
     QString outputName;
     for (int iStation=0; iStation<nrStations;iStation++)
     {
@@ -840,5 +737,4 @@ void printSimulationResults(ToutputWeatherData* output,int nrStations,int length
         }
         file.close();
     }
-
 }

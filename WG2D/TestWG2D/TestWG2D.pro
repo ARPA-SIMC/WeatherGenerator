@@ -8,7 +8,7 @@
 #-------------------------------------------------------------------
 
 QT -= gui
-QT  += widgets sql xml
+QT  += sql xml
 
 
 TEMPLATE = app
