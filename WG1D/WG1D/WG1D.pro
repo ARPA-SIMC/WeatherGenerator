@@ -1,14 +1,14 @@
 #-------------------------------------------------------------------
 #
-#   WG.exe
+#   WG1D
 #
 #   Weather Generator 1D
-#   This project is part of CRITERIA-1D distribution
+#   This project is part of ARPAE-SIMC distribution
 #
 #-------------------------------------------------------------------
 
 
-QT += core xml
+QT += core sql xml
 QT -= gui
 
 CONFIG += c++11
@@ -20,34 +20,35 @@ TEMPLATE = app
 
 unix:{
     CONFIG(debug, debug|release) {
-        TARGET = debug/WG
+        TARGET = debug/WG1D
     } else {
-        TARGET = release/WG
+        TARGET = release/WG1D
     }
 }
 macx:{
     CONFIG(debug, debug|release) {
-        TARGET = debug/WG
+        TARGET = debug/WG1D
     } else {
-        TARGET = release/WG
+        TARGET = release/WG1D
     }
 }
 win32:{
-    TARGET = WG
+    TARGET = WG1D
 }
 
-INCLUDEPATH += ../agrolib/crit3dDate ../agrolib/mathFunctions ../agrolib/weatherGenerator
+INCLUDEPATH += ../../agrolib/crit3dDate ../../agrolib/mathFunctions ../../agrolib/weatherGenerator ../../agrolib/utilities
 
 CONFIG(debug, debug|release) {
-    LIBS += -L../agrolib/weatherGenerator/debug -lweatherGenerator
-    LIBS += -L../agrolib/mathFunctions/debug -lmathFunctions
-    LIBS += -L../agrolib/crit3dDate/debug -lcrit3dDate
+    LIBS += -L../../agrolib/utilities/debug -lutilities
+    LIBS += -L../../agrolib/weatherGenerator/debug -lweatherGenerator
+    LIBS += -L../../agrolib/mathFunctions/debug -lmathFunctions
+    LIBS += -L../../agrolib/crit3dDate/debug -lcrit3dDate
 
 } else {
-
-    LIBS += -L../agrolib/weatherGenerator/release -lweatherGenerator
-    LIBS += -L../agrolib/mathFunctions/release -lmathFunctions
-    LIBS += -L../agrolib/crit3dDate/release -lcrit3dDate
+    LIBS += -L../../agrolib/utilities/release -lutilities
+    LIBS += -L../../agrolib/weatherGenerator/release -lweatherGenerator
+    LIBS += -L../../agrolib/mathFunctions/release -lmathFunctions
+    LIBS += -L../../agrolib/crit3dDate/release -lcrit3dDate
 }
 
 
