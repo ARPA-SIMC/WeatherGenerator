@@ -9,12 +9,7 @@
 #include "crit3dDate.h"
 #include "weatherGenerator.h"
 #include "wgClimate.h"
-
-
-#include <QDebug>
 #include <iostream>
-#include <QFileDialog>
-#include <QApplication>
 #include <QFile>
 #include <QTextStream>
 #include <QString>
@@ -133,7 +128,7 @@ int main(int argc, char *argv[])
     timeinfo = localtime ( &rawtime );
     printf ( "Current local time and date: %s", asctime (timeinfo) );
 
-    QApplication myApp(argc, argv);
+    QCoreApplication myApp(argc, argv);
     QString appPath = myApp.applicationDirPath() + "/";
 
     QString myError;

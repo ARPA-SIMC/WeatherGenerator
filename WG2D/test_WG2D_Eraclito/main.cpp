@@ -5,13 +5,11 @@
 #include "meteoPoint.h"
 #include "wg2D.h"
 #include "crit3dDate.h"
-//#include "readErg5FilesC4C7.h" // !! take out
 
 #include <QDebug>
 #include <iostream>
-#include <QFileDialog>
-#include <QApplication>
 #include <QFile>
+#include <QCoreApplication>
 #include <QTextStream>
 #include <QString>
 #include <malloc.h>
@@ -128,7 +126,7 @@ int main(int argc, char *argv[])
     timeinfo = localtime ( &rawtime );
     printf ( "Current local time and date: %s", asctime (timeinfo) );
 
-    QApplication myApp(argc, argv);
+    QCoreApplication myApp(argc, argv);
     QString appPath = myApp.applicationDirPath() + "/";
 
     QString myError;
@@ -381,7 +379,6 @@ int main(int argc, char *argv[])
 
 void printSimulationResults(ToutputWeatherData* output,int nrStations,int lengthArray)
 {
-    FILE* fp;
     QString outputName;
     for (int iStation=0; iStation<nrStations;iStation++)
     {

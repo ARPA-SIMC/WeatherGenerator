@@ -5,7 +5,4 @@ SUBDIRS =   ../../agrolib/crit3dDate ../../agrolib/mathFunctions ../../agrolib/e
             ../../agrolib/utilities  ../../agrolib/dbMeteoGrid \
            ../TestWG2D
 
-#SUBDIRS =   ../../agrolib/weatherGenerator2D  \
-#            ../TestWG2D
-
 CONFIG += ordered

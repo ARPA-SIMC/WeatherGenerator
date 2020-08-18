@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QDateTime>
 #include <QTextStream>
+#include <QCoreApplication>
 #include <iostream>
 #include <malloc.h>
 
