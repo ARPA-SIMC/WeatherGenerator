@@ -27,7 +27,7 @@
 #include "meteoPoint.h"
 
 
-#define NR_SIMULATION_YEARS 100
+#define NR_SIMULATION_YEARS 5
 // [ 1 - 10 ]
 #define NR_STATIONS 5
 #define DEFAULT_TEST 0
@@ -153,6 +153,7 @@ int main()
     int* cellCode = nullptr;
     bool kindOfTest;
     kindOfTest = KIND_TEST;
+    kindOfTest = 1;
     if (kindOfTest == DEFAULT_TEST)
     {
         fp = fopen("inputData/argelato_1961_2018.txt", "r");
