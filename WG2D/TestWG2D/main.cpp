@@ -27,7 +27,7 @@
 #include "meteoPoint.h"
 
 
-#define NR_SIMULATION_YEARS 100
+#define NR_SIMULATION_YEARS 5
 // [ 1 - 10 ]
 #define NR_STATIONS 5
 #define DEFAULT_TEST 0
