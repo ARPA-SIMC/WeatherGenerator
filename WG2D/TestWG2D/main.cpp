@@ -27,16 +27,16 @@
 #include "meteoPoint.h"
 
 
-#define NR_SIMULATION_YEARS 5
+#define NR_SIMULATION_YEARS 100
 // [ 1 - 10 ]
 #define NR_STATIONS 5
 #define DEFAULT_TEST 0
 #define RECLAMATION_CONSORTIA_TEST 1
-#define KIND_TEST DEFAULT_TEST
+#define KIND_TEST RECLAMATION_CONSORTIA_TEST
 // added for simulating C4 and C7
 #define STARTING_YEAR  2501
 #define PREC_THRESHOLD 0.25
-#define NRCONSORTIUM 4
+#define NRCONSORTIUM 7
 #define CONNECTDATABASE false
 
 static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
@@ -153,7 +153,7 @@ int main()
     int* cellCode = nullptr;
     bool kindOfTest;
     kindOfTest = KIND_TEST;
-    kindOfTest = 1;
+    //kindOfTest = 1;
     if (kindOfTest == DEFAULT_TEST)
     {
         fp = fopen("inputData/argelato_1961_2018.txt", "r");
@@ -601,6 +601,7 @@ int main()
     results = WG2D.getWeatherGeneratorOutput(startingYear);
     printSimulationResults(results,nrStations,lengthArraySimulation,nrC);
     if (!connectDatabase) return 0;
+    printf("non arriva qui");
     if (kindOfTest == KIND_TEST)
     {
         std::vector<TObsDataD> outputDataD;
