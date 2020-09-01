@@ -27,7 +27,7 @@
 #include "meteoPoint.h"
 
 
-#define NR_SIMULATION_YEARS 5
+#define NR_SIMULATION_YEARS 10
 // [ 1 - 10 ]
 #define NR_STATIONS 5
 #define DEFAULT_TEST 0
@@ -36,8 +36,10 @@
 // added for simulating C4 and C7
 #define STARTING_YEAR  2501
 #define PREC_THRESHOLD 0.25
-#define NRCONSORTIUM 7
+#define NRCONSORTIUM 4
 #define CONNECTDATABASE false
+#define ROLLING_AVERAGE 0
+#define FOURIER_HARMONICS_AVERAGE 1
 
 static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
 static weatherGenerator2D WG2D;
@@ -99,22 +101,9 @@ bool saveOnMeteoGridDB(QString* errorString, int consortium)
 
 int main()
 {
-    /*double* arrayInput = (double *)calloc(20, sizeof(double));
-    double* arrayOutput = (double *)calloc(20, sizeof(double));
-    for(int i=0;i<20;i++)
-    {
-        arrayInput[i]= 0. + 1.0*i*i;
-        arrayOutput[i] = NODATA;
-    }
-    statistics::rollingAverage(arrayInput,20,10,arrayOutput);
-    for(int i=0;i<20;i++)
-    {
-        printf("%d  %f  %f\n",i, arrayInput[i],arrayOutput[i]);
-    }
-    return 0;*/
 
     FILE* fp;
-    fp = fopen("randomNumbers2.txt","r");
+    /*fp = fopen("randomNumbers2.txt","r");
     char vectorDummy[20];
     double randomSeries[10000];
 
@@ -139,7 +128,7 @@ int main()
     }
 
     fclose(fp);
-    WG2D.initializeRandomNumbers(randomSeries);
+    WG2D.initializeRandomNumbers(randomSeries);*/
     int numberMeteoLines;
     double precipitationThreshold = PREC_THRESHOLD;
     int nrC = NRCONSORTIUM;
@@ -153,7 +142,6 @@ int main()
     int* cellCode = nullptr;
     bool kindOfTest;
     kindOfTest = KIND_TEST;
-    //kindOfTest = 1;
     if (kindOfTest == DEFAULT_TEST)
     {
         fp = fopen("inputData/argelato_1961_2018.txt", "r");
