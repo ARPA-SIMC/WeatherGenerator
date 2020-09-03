@@ -12,6 +12,7 @@
 #include <QCoreApplication>
 #include <QTextStream>
 #include <QString>
+//#include <QFileDialog>
 #include <malloc.h>
 #include <time.h>
 

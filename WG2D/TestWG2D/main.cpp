@@ -32,7 +32,7 @@
 #define NR_STATIONS 5
 #define DEFAULT_TEST 0
 #define RECLAMATION_CONSORTIA_TEST 1
-#define KIND_TEST RECLAMATION_CONSORTIA_TEST
+#define KIND_TEST DEFAULT_TEST
 // added for simulating C4 and C7
 #define STARTING_YEAR  2501
 #define PREC_THRESHOLD 0.25
@@ -103,32 +103,7 @@ int main()
 {
 
     FILE* fp;
-    /*fp = fopen("randomNumbers2.txt","r");
-    char vectorDummy[20];
-    double randomSeries[10000];
-
     int counter = 0;
-    char dummy;
-
-    for (int j=0;j<10000;j++)
-    {
-        counter = 0;
-        for (int i=0;i<20;i++)
-        {
-            vectorDummy[i] = '\0';
-        }
-        do
-        {
-            dummy = getc(fp);
-            if (dummy != '\n')
-                vectorDummy[counter]= dummy;
-            counter++;
-        } while (dummy != '\n');
-        randomSeries[j] = atof(vectorDummy);
-    }
-
-    fclose(fp);
-    WG2D.initializeRandomNumbers(randomSeries);*/
     int numberMeteoLines;
     double precipitationThreshold = PREC_THRESHOLD;
     int nrC = NRCONSORTIUM;
@@ -161,8 +136,6 @@ int main()
         lengthDataSeries = numberMeteoLines;
         int nrVariables = 3;
         int nrDate = 3;
-        //float *** weatherArray = nullptr;
-        //int ** dateArray = nullptr;
 
         weatherArray = (float ***)calloc(nrStations, sizeof(float**));
         for (int i=0;i<nrStations;i++)
