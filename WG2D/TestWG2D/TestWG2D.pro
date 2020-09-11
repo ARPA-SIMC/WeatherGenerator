@@ -60,6 +60,7 @@ INCLUDEPATH += ../../agrolib/weatherGenerator ../../agrolib/weatherGenerator2D .
 INCLUDEPATH += ../../agrolib/dbMeteoGrid ../../agrolib/utilities
 
 SOURCES += main.cpp \
+    main_old.cpp \
     readPragaFormatData.cpp \
     readErg5FilesC4C7.cpp
 
