@@ -1,3 +1,17 @@
+// ****************************************************************************************************************
+// This is a smart interface to use the 2D weather generator
+// the input file must be within the subfolder inputData and called 0000.txt (first station), 0001.txt and so forth
+// check the right format for input in the proposed default files
+
+// please set the following variables before running the weather generator
+#define NR_STATIONS 5 // number of stations/cells. Do not exceed 10000 stations, corresponding to 9999.txt input file
+#define NR_SIMULATION_YEARS 10 // integer number please do not exceed 1000 years.Be careful with memory issue by default 10 stations are inserted.
+#define STARTING_YEAR  1 // modify if necessary
+#define PREC_THRESHOLD 0.25  // choose the threshold in mm
+#define TEMPERATURE_AVERAGE_METHOD 0 // 0 for ROLLING AVERAGE (default ) otherwise 1 FOURIER HARMONICS AVERAGE (the first 3 harmonics are used)
+#define COMPUTE_MONTHLY_STATISTICS true  // aut true aut false
+
+//************************************************************************************************************
 
 #include <QString>
 #include <QFile>
@@ -26,14 +40,6 @@
 #include "meteoPoint.h"
 
 
-#define NR_SIMULATION_YEARS 10
-// [ 1 - 10 ]
-#define NR_STATIONS 5
-#define STARTING_YEAR  2501
-#define PREC_THRESHOLD 0.25
-#define ROLLING_AVERAGE 0
-#define FOURIER_HARMONICS_AVERAGE 1
-#define TEMPERATURE_AVERAGE_METHOD ROLLING_AVERAGE
 static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
 static weatherGenerator2D WG2D;
 
@@ -216,7 +222,7 @@ int main()
         results[iStation].precipitation = (double *)calloc(lengthArraySimulation, sizeof(double));
     }
     WG2D.initializeParameters(precipitationThreshold, yearsOfSimulations, distributionType,
-                              computePrecipitation, computeTemperature,true,TaverageTempMethod(TEMPERATURE_AVERAGE_METHOD));
+                              computePrecipitation, computeTemperature,COMPUTE_MONTHLY_STATISTICS,TaverageTempMethod(TEMPERATURE_AVERAGE_METHOD));
     WG2D.computeWeatherGenerator2D();
     results = WG2D.getWeatherGeneratorOutput(startingYear);
     printSimulationResults(results,nrStations,lengthArraySimulation);
