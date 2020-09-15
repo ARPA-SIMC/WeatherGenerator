@@ -61,11 +61,10 @@ INCLUDEPATH += ../../agrolib/dbMeteoGrid ../../agrolib/utilities
 
 SOURCES += main.cpp \
     readPragaFormatData.cpp \
-    readErg5FilesC4C7.cpp
+
 
 HEADERS += \
     readPragaFormatData.h \
-    readErg5FilesC4C7.h
 
 
 
