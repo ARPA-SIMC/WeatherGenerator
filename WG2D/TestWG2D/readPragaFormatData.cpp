@@ -7,7 +7,7 @@
 
 int readPragaLineFileNumber(FILE *fp)
 {
-    int counter = -2;
+    int counter = -1;
     char dummy;
 
     do {
@@ -151,7 +151,7 @@ bool readPragaERACLITODailyData(FILE *fp,bool* firstDay,int *doy,int *day,int *m
 
     if (*firstDay)
     {
-        for(int i=0;i<2;i++)
+        for(int i=0;i<1;i++)
         {
             do {
                 dummy = getc(fp);
@@ -161,7 +161,7 @@ bool readPragaERACLITODailyData(FILE *fp,bool* firstDay,int *doy,int *day,int *m
     }
     else
     {
-        getc(fp);
+        //getc(fp);
         for (short i=0; i<2; i++)daychar[i] = getc(fp);
         getc(fp);
         for (short i=0; i<2; i++) monthchar[i] = getc(fp);
