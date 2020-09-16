@@ -1,16 +1,16 @@
-This is the version 1.0 of the weahter generator 2D of Arpae.
-The main body of the algorithm is the translation of the Mulgets weahter generator
+This is the user interface of the weather generator 2D of Arpae.
+The main body of the algorithm is the translation of the Mulgets weather generator
 from Matlab to C/C++ programming language.
 The algorithm is totally open.
 A simple interface is provided in order to test the software.
 
 Input:
 
-1) the subfolder inputData harbours 10 input weahter files. Format file .txt
-2) the first lines of main.cpp must be modified in order to insert your parameters for simulations.
-Parameters are divided from the rest of the code.
+1) the subfolder inputData harbours 10 input weather files. Format file .txt
+2) the first lines of main.cpp must be modified in order to insert the parameters of your simulations.
+Input parameters are divided from the rest of the code.
 
-run:
+Copmutation:
 the only five functions which must be called to run the weather generator are
     WG2D.initializeData;
     WG2D.setObservedData;
