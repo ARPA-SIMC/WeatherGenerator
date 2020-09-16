@@ -3,6 +3,8 @@ The main body of the algorithm is the translation of the Mulgets weather generat
 from Matlab to C/C++ programming language.
 The algorithm is totally open.
 A simple interface is provided in order to test the software.
+The interface provided needs some Qt libraries.
+To compile and run you can use the project Makeall_WG2D which includes all dependencies and libraries used by the weather generator and its interface
 
 Input:
 
