@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
     lengthArraySimulation = 365 * nrYearSimulations;
     bool computeStats = true;
     WG2D.initializeParameters(PREC_THRESHOLD, nrYearSimulations, distributionType,
-                              computePrecipitation, computeTemperature,computeStats);
+                              computePrecipitation, computeTemperature,computeStats,ROLLING_AVERAGE);
 
     WG2D.computeWeatherGenerator2D();
 
