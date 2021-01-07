@@ -1,5 +1,4 @@
 #include "project.h"
-#include "formInfo.h"
 #include "commonConstants.h"
 #include "basicMath.h"
 #include "spatialControl.h"
@@ -25,6 +24,7 @@ Project::Project()
     quality = new Crit3DQuality();
     meteoPointsColorScale = new Crit3DColorScale();
     meteoGridDbHandler = nullptr;
+    formLog = nullptr;
 
     // They not change after loading default settings
     appPath = "";
@@ -44,6 +44,7 @@ void Project::initializeProject()
     requestedExit = false;
     logFileName = "";
     errorString = "";
+    errorType = ERROR_NONE;
     currentTileMap = "";
 
     nrMeteoPoints = 0;
@@ -606,7 +607,7 @@ bool Project::loadParameters(QString parametersFileName)
 
             myProxy->setProxyTable(parameters->value("table").toString().toStdString());
             myProxy->setProxyField(parameters->value("field").toString().toStdString());
-            myProxy->setGridName(parameters->value("raster").toString().toStdString());
+            myProxy->setGridName(getCompleteFileName(parameters->value("raster").toString(), PATH_GEO).toStdString());
             myProxy->setForQualityControl(parameters->value("use_for_spatial_quality_control").toBool());
 
             if (! parameters->contains("active"))
@@ -642,7 +643,7 @@ bool Project::loadParameters(QString parametersFileName)
             int nrGrids = parameters->beginReadArray("grids");
             for (int i = 0; i < nrGrids; ++i) {
                 parameters->setArrayIndex(i);
-                proxyGridSeriesNames.push_back(parameters->value("name").toString());
+                proxyGridSeriesNames.push_back(getCompleteFileName(parameters->value("name").toString(), PATH_GEO));
                 proxyGridSeriesYears.push_back(parameters->value("year").toUInt());
             }
             parameters->endArray();
@@ -791,6 +792,18 @@ void Project::getMeteoPointsRange(float *minimum, float *maximum)
     }
 }
 
+void Project::cleanMeteoPointsData()
+{
+    if (nrMeteoPoints > 0 && meteoPoints != nullptr)
+    {
+        for (int i = 0; i < nrMeteoPoints; i++)
+        {
+            meteoPoints[i].cleanObsDataH();
+            meteoPoints[i].cleanObsDataD();
+            meteoPoints[i].cleanObsDataM();
+        }
+    }
+}
 
 void Project::clearMeteoPoints()
 {
@@ -858,6 +871,8 @@ bool Project::loadDEM(QString myFileName)
         return false;
     }
 
+    logInfoGUI("Load DEM = " + myFileName);
+
     this->demFileName = myFileName;
     myFileName = getCompleteFileName(myFileName, PATH_DEM);
 
@@ -903,7 +918,6 @@ bool Project::loadDEM(QString myFileName)
     //check points position with respect to DEM
     checkMeteoPointsDEM();
 
-    logInfo("DEM = " + myFileName);
     return true;
 }
 
@@ -968,7 +982,7 @@ bool Project::loadMeteoPointsDB(QString dbName)
     // load proxy values for detrending
     if (! readProxyValues())
     {
-        logInfo("Error reading proxy values");
+        logError("Error reading proxy values");
     }
 
     //position with respect to DEM
@@ -1061,6 +1075,45 @@ bool Project::loadMeteoPointsData(QDate firstDate, QDate lastDate, bool loadHour
 
         if (loadDaily)
             if (meteoPointsDbHandler->loadDailyData(getCrit3DDate(firstDate), getCrit3DDate(lastDate), &(meteoPoints[i]))) isData = true;
+    }
+
+    if (showInfo) myInfo.close();
+
+    return isData;
+}
+
+bool Project::loadMeteoPointsData(QDate firstDate, QDate lastDate, bool loadHourly, bool loadDaily, QString dataset, bool showInfo)
+{
+    //check
+    if (firstDate == QDate(1800,1,1) || lastDate == QDate(1800,1,1)) return false;
+
+    bool isData = false;
+    FormInfo myInfo;
+    int step = 0;
+
+    QString infoStr = "Load data: " + firstDate.toString();
+
+    if (firstDate != lastDate)
+        infoStr += " - " + lastDate.toString();
+
+    if (showInfo)
+        step = myInfo.start(infoStr, nrMeteoPoints);
+
+    for (int i=0; i < nrMeteoPoints; i++)
+    {
+        if (showInfo)
+        {
+            if ((i % step) == 0) myInfo.setValue(i);
+        }
+
+        if (meteoPoints[i].dataset == dataset.toStdString())
+        {
+            if (loadHourly)
+                if (meteoPointsDbHandler->loadHourlyData(getCrit3DDate(firstDate), getCrit3DDate(lastDate), &(meteoPoints[i]))) isData = true;
+
+            if (loadDaily)
+                if (meteoPointsDbHandler->loadDailyData(getCrit3DDate(firstDate), getCrit3DDate(lastDate), &(meteoPoints[i]))) isData = true;
+        }
     }
 
     if (showInfo) myInfo.close();
@@ -1306,7 +1359,7 @@ bool Project::loadProxyGrids()
     {
         Crit3DProxy* myProxy = interpolationSettings.getProxy(i);
 
-        logInfo("Loading grid for proxy: " + QString::fromStdString(myProxy->getName()));
+        logInfoGUI("Loading grid for proxy: " + QString::fromStdString(myProxy->getName()));
 
         if (interpolationSettings.getSelectedCombination().getValue(i) || myProxy->getForQualityControl())
         {
@@ -1822,7 +1875,7 @@ bool Project::searchDefaultPath(QString* defaultPath)
 
     if (! isFound)
     {
-        logError("DATA directory is missing");
+        logError("PRAGA/DATA directory is missing");
         return false;
     }
 
@@ -2061,19 +2114,33 @@ bool Project::loadProject()
 
     if (! loadParameters(parametersFileName))
     {
+        errorType = ERROR_SETTINGS;
         logError();
         return false;
     }
 
     if (demFileName != "")
-        if (! loadDEM(demFileName)) return false;
+        if (! loadDEM(demFileName))
+        {
+            errorType = ERROR_DEM;
+            return false;
+        }
 
     if (dbPointsFileName != "")
-        if (! loadMeteoPointsDB(dbPointsFileName)) return false;
+        if (! loadMeteoPointsDB(dbPointsFileName))
+        {
+            errorType = ERROR_DBPOINT;
+            return false;
+        }
 
     if (dbGridXMLFileName != "")
-        if (! loadMeteoGridDB(dbGridXMLFileName)) return false;
+        if (! loadMeteoGridDB(dbGridXMLFileName))
+        {
+            errorType = ERROR_DBGRID;
+            return false;
+        }
 
+    closeLogInfo();
     return true;
 }
 
@@ -2335,7 +2402,7 @@ bool Project::setLogFile(QString myFileName)
     logFile.open(currentFileName.toStdString().c_str());
     if (logFile.is_open())
     {
-        logInfo("LogFile: " + currentFileName);
+        logInfo("LogFile = " + currentFileName);
         return true;
     }
     else
@@ -2362,7 +2429,11 @@ void Project::logInfoGUI(QString myStr)
 {
     if (modality == MODE_GUI)
     {
-        QMessageBox::information(nullptr, "Information", myStr);
+        if (formLog == nullptr)
+        {
+            formLog = new FormInfo();
+        }
+        formLog->showInfo(myStr);
     }
     else
     {
@@ -2372,6 +2443,15 @@ void Project::logInfoGUI(QString myStr)
     if (logFile.is_open())
     {
         logFile << myStr.toStdString() << std::endl;
+    }
+}
+
+
+void Project::closeLogInfo()
+{
+    if ((modality == MODE_GUI) && (formLog != nullptr))
+    {
+        formLog->close();
     }
 }
 
