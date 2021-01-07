@@ -188,7 +188,7 @@ int main()
            weatherArray[i][j][2] = prec;
            dateArray[j][0] = day;
            dateArray[j][1] = month;
-           dateArray[j][2] = year;           
+           dateArray[j][2] = year;
        }
        fclose(fp);
     }
