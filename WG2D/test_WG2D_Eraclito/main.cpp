@@ -93,7 +93,7 @@ bool saveOnMeteoGridDB(QString* errorString)
     //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
     QString path;
     if (! searchDataPath(&path)) return -1;
-    QString xmlName = path + "METEOGRID/DBGridXML_C7_WG2D.xml";
+    QString xmlName = path + "METEOGRID/DBGridXML_Output_WG2D.xml";
 
     meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
 
@@ -135,8 +135,8 @@ int main(int argc, char *argv[])
     QString myError;
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
-    QDate firstDay(1961,1,1);
-    QDate lastDay(1990,12,31);
+    QDate firstDay(2001,1,1);
+    QDate lastDay(2010,12,31);
     QDate currentDay;
     QDate firstDateDB(1,1,1);
     TObsDataD** obsDataD = nullptr;
@@ -284,9 +284,9 @@ int main(int argc, char *argv[])
                               computePrecipitation, computeTemperature,computeStats,ROLLING_AVERAGE);
 
     WG2D.computeWeatherGenerator2D();
-    return 0;
+
     results = WG2D.getWeatherGeneratorOutput(startingYear);
-    return 0;
+    // return 0;
     //printSimulationResults(results,nrActivePoints,lengthArraySimulation);
     std::vector<TObsDataD> outputDataD;
     int nrLeapYears = 0;
