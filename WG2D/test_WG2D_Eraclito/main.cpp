@@ -252,6 +252,7 @@ int main(int argc, char *argv[])
                dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
                                                                     variable, firstDay, lastDay, &firstDateDB);
                for (int iLength=0; iLength<lengthSeries; iLength++) obsDataD[counter][iLength].tMin = dailyVariable[iLength];
+               //for (int iLength=0; iLength<lengthSeries; iLength++) printf("temp %f\n",dailyVariable[iLength]);
                variable = dailyAirTemperatureMax;
                dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
                                                                     variable, firstDay, lastDay, &firstDateDB);
