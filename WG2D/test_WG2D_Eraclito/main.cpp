@@ -117,10 +117,12 @@ int main(int argc, char *argv[])
 {
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
-    scanf("%d",&startingYear);
+    //scanf("%d",&startingYear);
+    startingYear = 1;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
-    scanf("%d",&nrYearSimulations);
+    //scanf("%d",&nrYearSimulations);
+    nrYearSimulations = 10;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -151,12 +153,13 @@ int main(int argc, char *argv[])
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("../TestWG2D/inputDataC7/list_C7.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("../TestWG2D/inputDataC7/list_C7.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
     cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
@@ -281,7 +284,7 @@ int main(int argc, char *argv[])
                               computePrecipitation, computeTemperature,computeStats,ROLLING_AVERAGE);
 
     WG2D.computeWeatherGenerator2D();
-
+    return 0;
     results = WG2D.getWeatherGeneratorOutput(startingYear);
     return 0;
     //printSimulationResults(results,nrActivePoints,lengthArraySimulation);
