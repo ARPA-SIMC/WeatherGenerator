@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
         std::cout << errorString.toStdString() << std::endl;
         return -1;
     }
-
+    printf("\n sono arrivato qui?\n");
     std::string id;
     int nrActivePoints = 0;
     int lengthSeries = 0;
