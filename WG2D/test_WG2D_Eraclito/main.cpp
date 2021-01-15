@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
     WG2D.computeWeatherGenerator2D();
 
     results = WG2D.getWeatherGeneratorOutput(startingYear);
-    // return 0;
+    //return 0;
     //printSimulationResults(results,nrActivePoints,lengthArraySimulation);
     std::vector<TObsDataD> outputDataD;
     int nrLeapYears = 0;
@@ -321,6 +321,7 @@ int main(int argc, char *argv[])
 
                 while (iCells < nrActivePoints) // !! take out
                 {
+                    printf("entra\n");
                     int idCellInt;  // !! take out
                     idCellInt = atoi(id.c_str());// !! take out
                     if (idCellInt == cellCode[iCells] ) isConsortiumCell = true; // !! take out
