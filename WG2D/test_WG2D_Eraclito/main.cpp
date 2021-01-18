@@ -68,8 +68,8 @@ bool loadMeteoGridDB(QString* errorString)
 
     QString path;
     if (! searchDataPath(&path)) return -1;
-    QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
-    //QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v1.xml";
+    //QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
+    QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v2.1.xml";
     meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
 
     // todo
@@ -167,7 +167,6 @@ int main(int argc, char *argv[])
     { // !! take out
         readTheCellNumber(fp,numCell);// !! take out
         cellCode[i] = atoi(numCell);// !! take out
-        //QString stringNumber(numCell);
     }// !! take out
     fclose(fp);
 
@@ -180,11 +179,6 @@ int main(int argc, char *argv[])
 
            if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id))
            {
-               /*for (int i=0;i<5;i++)
-                    code[i]=id[i];
-
-               fprintf(fp,"%c%c%c%c%c\n",code[0],code[1],code[2],code[3],code[4]);
-               */
                ++nrActivePoints;
                if (nrActivePoints == 1)
                {
@@ -196,9 +190,7 @@ int main(int argc, char *argv[])
            }
         }
     }
-    //fclose(fp);
-    //printf("concluso \n");
-    //return 0;
+
     #ifdef MAX_NR_POINTS
         nrActivePoints = MINVALUE(nrActivePoints, MAX_NR_POINTS);
     #endif
@@ -321,7 +313,6 @@ int main(int argc, char *argv[])
 
                 while (iCells < nrActivePoints) // !! take out
                 {
-                    printf("entra\n");
                     int idCellInt;  // !! take out
                     idCellInt = atoi(id.c_str());// !! take out
                     if (idCellInt == cellCode[iCells] ) isConsortiumCell = true; // !! take out
@@ -341,8 +332,7 @@ int main(int argc, char *argv[])
                    outputDataD[k].tMin = results[counter].minT[j];
                    outputDataD[k].tMax = results[counter].maxT[j];
                    outputDataD[k].prec = results[counter].precipitation[j];
-                   //printf("%d  %d  %d\n",outputDataD[k].date.day,outputDataD[k].date.month,outputDataD[k].date.year);
-                   //printf("%f  %f  %f\n",outputDataD[k].tMin,outputDataD[k].tMax,outputDataD[k].prec);
+
                    if (results[counter].daySimulated[j] == 28 && results[counter].monthSimulated[j] == 2)
                    {
                         if (isLeapYear(results[counter].yearSimulated[j]))
@@ -354,17 +344,11 @@ int main(int argc, char *argv[])
                             outputDataD[k].tMin = results[counter].minT[j];
                             outputDataD[k].tMax = results[counter].maxT[j];
                             outputDataD[k].prec = results[counter].precipitation[j];
-                            //printf("%d  %d  %d\n",outputDataD[k].date.day,outputDataD[k].date.month,outputDataD[k].date.year);
-                            //printf("%f  %f  %f\n",outputDataD[k].tMin,outputDataD[k].tMax,outputDataD[k].prec);
                         }
                    }
-
                    k++;
-
-
-                   //getchar();
                }
-               //getchar();
+
                meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD = outputDataD;
                /*for (int j=0;j<lengthArraySimulation+nrYearSimulations;j++)
                {
@@ -377,7 +361,6 @@ int main(int argc, char *argv[])
            }
            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
         }
-        //std::cout << row << "\n";
     }
     meteoGridDbHandlerWG2D->closeDatabase();
     return 0;
