@@ -21,7 +21,7 @@
 
 // [ 1 - 10 ]
 //#define NR_STATIONS 10
-#define STARTING_YEAR 3001
+#define STARTING_YEAR 1
 #define PREC_THRESHOLD 0.25
 void printSimulationResults(ToutputWeatherData* output,int nrStations,int lengthArray);
 static Crit3DMeteoGridDbHandler* meteoGridDbHandler;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 10;
+    nrYearSimulations = 50;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
     QDate firstDay(2001,1,1);
-    QDate lastDay(2010,12,31);
+    QDate lastDay(2020,12,31);
     QDate currentDay;
     QDate firstDateDB(1,1,1);
     TObsDataD** obsDataD = nullptr;
@@ -153,12 +153,12 @@ int main(int argc, char *argv[])
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
 
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
