@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
     //scanf("%d",&startingYear);
-    startingYear = 1;
+    startingYear = 2101;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
@@ -153,12 +153,12 @@ int main(int argc, char *argv[])
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_enza_secchia_panaro_short.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_enza_secchia_panaro_short.txt","r"); // !! take out
 
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out

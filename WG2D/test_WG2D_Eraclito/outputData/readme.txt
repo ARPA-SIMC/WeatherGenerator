@@ -1,1 +1,0 @@
-The file in this direcotry will be the simulation output, the basic monthly statistics and the monthly correlation matrices
