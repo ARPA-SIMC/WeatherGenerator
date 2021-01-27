@@ -117,15 +117,16 @@ int main(int argc, char *argv[])
 {
     printf("Do you want to write the output on database? type : 1 (yes) , or 0 (no) \n");
     int writeOnDB;
-    scanf("%d",&writeOnDB);
+    //scanf("%d",&writeOnDB);
+    writeOnDB = 0;
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
-    scanf("%d",&startingYear);
-    //startingYear = 2001;
+    //scanf("%d",&startingYear);
+    startingYear = 2101;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
-    scanf("%d",&nrYearSimulations);
-    //nrYearSimulations = 50;
+    //scanf("%d",&nrYearSimulations);
+    nrYearSimulations = 50;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -155,12 +156,14 @@ int main(int argc, char *argv[])
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("./inputData/list_enza_secchia_panaro_short.txt","r"); // !! take out
+    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("./inputData/list_enza_secchia_panaro_short.txt","r"); // !! take out
+    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
 
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
