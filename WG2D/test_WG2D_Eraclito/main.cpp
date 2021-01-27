@@ -115,14 +115,17 @@ bool saveOnMeteoGridDB(QString* errorString)
 
 int main(int argc, char *argv[])
 {
+    printf("Do you want to write the output on database? type : 1 (yes) , or 0 (no) \n");
+    int writeOnDB;
+    scanf("%d",&writeOnDB);
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
-    //scanf("%d",&startingYear);
-    startingYear = 2101;
+    scanf("%d",&startingYear);
+    //startingYear = 2001;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
-    //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 50;
+    scanf("%d",&nrYearSimulations);
+    //nrYearSimulations = 50;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -147,7 +150,6 @@ int main(int argc, char *argv[])
         std::cout << errorString.toStdString() << std::endl;
         return -1;
     }
-    printf("\n sono arrivato qui?\n");
     std::string id;
     int nrActivePoints = 0;
     int lengthSeries = 0;
@@ -279,7 +281,10 @@ int main(int argc, char *argv[])
     WG2D.computeWeatherGenerator2D();
 
     results = WG2D.getWeatherGeneratorOutput(startingYear);
-    //return 0;
+    if (writeOnDB != 1)
+    {
+        return 0;
+    }
     //printSimulationResults(results,nrActivePoints,lengthArraySimulation);
     std::vector<TObsDataD> outputDataD;
     int nrLeapYears = 0;
