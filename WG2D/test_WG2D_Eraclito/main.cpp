@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
     //scanf("%d",&startingYear);
-    startingYear = 2101;
+    startingYear = 2001;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
