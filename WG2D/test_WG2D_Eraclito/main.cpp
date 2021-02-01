@@ -156,14 +156,14 @@ int main(int argc, char *argv[])
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
 
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
