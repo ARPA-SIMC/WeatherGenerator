@@ -175,19 +175,19 @@ void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* 
         monthlyMax.wetAverageTmin[j] = NODATA;
         monthlyMax.fractionWetDays[j] = NODATA;
         monthlyMax.probabilityWetWet[j] = NODATA;
-        monthlyMin.month[j] = -NODATA;
-        monthlyMin.averageTmax[j] = -NODATA;
-        monthlyMin.averageTmin[j] = -NODATA;
-        monthlyMin.sumPrec[j] = -NODATA;
-        monthlyMin.stdDevTmax[j] = -NODATA;
-        monthlyMin.stdDevTmin[j] = -NODATA;
-        monthlyMin.dewPointTmax[j] = -NODATA;
-        monthlyMin.dryAverageTmax[j] = -NODATA;
-        monthlyMin.dryAverageTmin[j] = -NODATA;
-        monthlyMin.wetAverageTmax[j] = -NODATA;
-        monthlyMin.wetAverageTmin[j] = -NODATA;
-        monthlyMin.fractionWetDays[j] = -NODATA;
-        monthlyMin.probabilityWetWet[j] = -NODATA;
+        monthlyMin.month[j] = 9999;
+        monthlyMin.averageTmax[j] = 9999;
+        monthlyMin.averageTmin[j] = 9999;
+        monthlyMin.sumPrec[j] = 9999;
+        monthlyMin.stdDevTmax[j] = 9999;
+        monthlyMin.stdDevTmin[j] = 9999;
+        monthlyMin.dewPointTmax[j] = 9999;
+        monthlyMin.dryAverageTmax[j] = 9999;
+        monthlyMin.dryAverageTmin[j] = 9999;
+        monthlyMin.wetAverageTmax[j] = 9999;
+        monthlyMin.wetAverageTmin[j] = 9999;
+        monthlyMin.fractionWetDays[j] = 9999;
+        monthlyMin.probabilityWetWet[j] = 9999;
     }
     for (int i=0; i<nrSites;i++)
     {
