@@ -35,7 +35,7 @@ struct TmonthlyData{
 };
 
 void readFileContents(FILE *fp,int site,TmonthlyData* monthlyData);
-void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData monthlyMax, TmonthlyData monthlyMin, int nrSites);
+void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData *monthlyMax, TmonthlyData *monthlyMin, int nrSites);
 
 
 
@@ -82,7 +82,8 @@ int main(int argc, char *argv[])
 
     // determine the bias
 
-    computeBias(monthlyDataClimate,monthlyDataSimulation,monthlyBias,monthlyMaxBias,monthlyMinBias,nrSites);
+    computeBias(monthlyDataClimate,monthlyDataSimulation,monthlyBias,&monthlyMaxBias,&monthlyMinBias,nrSites);
+
     for (int j=0;j<12;j++)
     {
         printf("max %d  %f%f%f%f%f%f%f%f%f%f%f%f  \n min %d  %f%f%f%f%f%f%f%f%f%f%f%f \n",
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
                monthlyMinBias.wetAverageTmin[j],
                monthlyMinBias.fractionWetDays[j],
                monthlyMinBias.probabilityWetWet[j]);
+        //printf("%d %f %f\n",j+1,monthlyMinBias.averageTmax[j],monthlyMaxBias.averageTmax[j]);
     }
 
     //printf("Hello World!\n");
@@ -158,36 +160,36 @@ void readFileContents(FILE *fp,int site,TmonthlyData *monthlyData)
     }
 }
 
-void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData monthlyMax, TmonthlyData monthlyMin, int nrSites)
+void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData* monthlyMax, TmonthlyData* monthlyMin, int nrSites)
 {
     for (int j=0;j<12;j++)
     {
-        monthlyMax.month[j] = NODATA;
-        monthlyMax.averageTmax[j] = NODATA;
-        monthlyMax.averageTmin[j] = NODATA;
-        monthlyMax.sumPrec[j] = NODATA;
-        monthlyMax.stdDevTmax[j] = NODATA;
-        monthlyMax.stdDevTmin[j] = NODATA;
-        monthlyMax.dewPointTmax[j] = NODATA;
-        monthlyMax.dryAverageTmax[j] = NODATA;
-        monthlyMax.dryAverageTmin[j] = NODATA;
-        monthlyMax.wetAverageTmax[j] = NODATA;
-        monthlyMax.wetAverageTmin[j] = NODATA;
-        monthlyMax.fractionWetDays[j] = NODATA;
-        monthlyMax.probabilityWetWet[j] = NODATA;
-        monthlyMin.month[j] = 9999;
-        monthlyMin.averageTmax[j] = 9999;
-        monthlyMin.averageTmin[j] = 9999;
-        monthlyMin.sumPrec[j] = 9999;
-        monthlyMin.stdDevTmax[j] = 9999;
-        monthlyMin.stdDevTmin[j] = 9999;
-        monthlyMin.dewPointTmax[j] = 9999;
-        monthlyMin.dryAverageTmax[j] = 9999;
-        monthlyMin.dryAverageTmin[j] = 9999;
-        monthlyMin.wetAverageTmax[j] = 9999;
-        monthlyMin.wetAverageTmin[j] = 9999;
-        monthlyMin.fractionWetDays[j] = 9999;
-        monthlyMin.probabilityWetWet[j] = 9999;
+        monthlyMax->month[j] = NODATA;
+        monthlyMax->averageTmax[j] = NODATA;
+        monthlyMax->averageTmin[j] = NODATA;
+        monthlyMax->sumPrec[j] = NODATA;
+        monthlyMax->stdDevTmax[j] = NODATA;
+        monthlyMax->stdDevTmin[j] = NODATA;
+        monthlyMax->dewPointTmax[j] = NODATA;
+        monthlyMax->dryAverageTmax[j] = NODATA;
+        monthlyMax->dryAverageTmin[j] = NODATA;
+        monthlyMax->wetAverageTmax[j] = NODATA;
+        monthlyMax->wetAverageTmin[j] = NODATA;
+        monthlyMax->fractionWetDays[j] = NODATA;
+        monthlyMax->probabilityWetWet[j] = NODATA;
+        monthlyMin->month[j] = 9999;
+        monthlyMin->averageTmax[j] = 9999;
+        monthlyMin->averageTmin[j] = 9999;
+        monthlyMin->sumPrec[j] = 9999;
+        monthlyMin->stdDevTmax[j] = 9999;
+        monthlyMin->stdDevTmin[j] = 9999;
+        monthlyMin->dewPointTmax[j] = 9999;
+        monthlyMin->dryAverageTmax[j] = 9999;
+        monthlyMin->dryAverageTmin[j] = 9999;
+        monthlyMin->wetAverageTmax[j] = 9999;
+        monthlyMin->wetAverageTmin[j] = 9999;
+        monthlyMin->fractionWetDays[j] = 9999;
+        monthlyMin->probabilityWetWet[j] = 9999;
     }
     for (int i=0; i<nrSites;i++)
     {
@@ -207,33 +209,37 @@ void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* 
             bias[i].fractionWetDays[j] = simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j];
             bias[i].probabilityWetWet[j] = simulated[i].probabilityWetWet[j] - observed[i].probabilityWetWet[j];
 
-            monthlyMax.month[j] = bias[i].month[j];
-            monthlyMax.averageTmax[j] = MAXVALUE(monthlyMax.averageTmax[j],simulated[i].averageTmax[j] - observed[i].averageTmax[j]);
-            monthlyMax.averageTmin[j] = MAXVALUE(monthlyMax.averageTmin[j],simulated[i].averageTmin[j] - observed[i].averageTmin[j]);
-            monthlyMax.sumPrec[j] = MAXVALUE(monthlyMax.sumPrec[j],simulated[i].sumPrec[j] - observed[i].sumPrec[j]);
-            monthlyMax.stdDevTmax[j] = MAXVALUE(monthlyMax.stdDevTmax[j],simulated[i].stdDevTmax[j] - observed[i].stdDevTmax[j]);
-            monthlyMax.stdDevTmin[j] = MAXVALUE(monthlyMax.stdDevTmin[j],simulated[i].stdDevTmin[j] - observed[i].stdDevTmin[j]);
-            monthlyMax.dewPointTmax[j] = MAXVALUE(monthlyMax.dewPointTmax[j],simulated[i].dewPointTmax[j] - observed[i].dewPointTmax[j]);
-            monthlyMax.dryAverageTmax[j] = MAXVALUE(monthlyMax.dryAverageTmax[j],simulated[i].dryAverageTmax[j] - observed[i].dryAverageTmax[j]);
-            monthlyMax.dryAverageTmin[j] = MAXVALUE(monthlyMax.dryAverageTmin[j],simulated[i].dryAverageTmin[j] - observed[i].dryAverageTmin[j]);
-            monthlyMax.wetAverageTmax[j] = MAXVALUE(monthlyMax.wetAverageTmax[j],simulated[i].wetAverageTmax[j] - observed[i].wetAverageTmax[j]);
-            monthlyMax.wetAverageTmin[j] = MAXVALUE(monthlyMax.wetAverageTmin[j],simulated[i].wetAverageTmin[j] - observed[i].wetAverageTmin[j]);
-            monthlyMax.fractionWetDays[j] = MAXVALUE(monthlyMax.fractionWetDays[j],simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j]);
-            monthlyMax.probabilityWetWet[j] = MAXVALUE(monthlyMax.probabilityWetWet[j],simulated[i].probabilityWetWet[j] - observed[i].probabilityWetWet[j]);
+            monthlyMax->month[j] = bias[i].month[j];
+            monthlyMax->averageTmax[j] = MAXVALUE(monthlyMax->averageTmax[j],simulated[i].averageTmax[j] - observed[i].averageTmax[j]);
+            monthlyMax->averageTmin[j] = MAXVALUE(monthlyMax->averageTmin[j],simulated[i].averageTmin[j] - observed[i].averageTmin[j]);
+            monthlyMax->sumPrec[j] = MAXVALUE(monthlyMax->sumPrec[j],simulated[i].sumPrec[j] - observed[i].sumPrec[j]);
+            monthlyMax->stdDevTmax[j] = MAXVALUE(monthlyMax->stdDevTmax[j],simulated[i].stdDevTmax[j] - observed[i].stdDevTmax[j]);
+            monthlyMax->stdDevTmin[j] = MAXVALUE(monthlyMax->stdDevTmin[j],simulated[i].stdDevTmin[j] - observed[i].stdDevTmin[j]);
+            monthlyMax->dewPointTmax[j] = MAXVALUE(monthlyMax->dewPointTmax[j],simulated[i].dewPointTmax[j] - observed[i].dewPointTmax[j]);
+            monthlyMax->dryAverageTmax[j] = MAXVALUE(monthlyMax->dryAverageTmax[j],simulated[i].dryAverageTmax[j] - observed[i].dryAverageTmax[j]);
+            monthlyMax->dryAverageTmin[j] = MAXVALUE(monthlyMax->dryAverageTmin[j],simulated[i].dryAverageTmin[j] - observed[i].dryAverageTmin[j]);
+            monthlyMax->wetAverageTmax[j] = MAXVALUE(monthlyMax->wetAverageTmax[j],simulated[i].wetAverageTmax[j] - observed[i].wetAverageTmax[j]);
+            monthlyMax->wetAverageTmin[j] = MAXVALUE(monthlyMax->wetAverageTmin[j],simulated[i].wetAverageTmin[j] - observed[i].wetAverageTmin[j]);
+            monthlyMax->fractionWetDays[j] = MAXVALUE(monthlyMax->fractionWetDays[j],simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j]);
+            monthlyMax->probabilityWetWet[j] = MAXVALUE(monthlyMax->probabilityWetWet[j],simulated[i].probabilityWetWet[j] - observed[i].probabilityWetWet[j]);
 
-            monthlyMin.month[j] = bias[i].month[j];
-            monthlyMin.averageTmax[j] = MINVALUE(monthlyMin.averageTmax[j],simulated[i].averageTmax[j] - observed[i].averageTmax[j]);
-            monthlyMin.averageTmin[j] = MINVALUE(monthlyMin.averageTmin[j],simulated[i].averageTmin[j] - observed[i].averageTmin[j]);
-            monthlyMin.sumPrec[j] = MINVALUE(monthlyMin.sumPrec[j],simulated[i].sumPrec[j] - observed[i].sumPrec[j]);
-            monthlyMin.stdDevTmax[j] = MINVALUE(monthlyMin.stdDevTmax[j],simulated[i].stdDevTmax[j] - observed[i].stdDevTmax[j]);
-            monthlyMin.stdDevTmin[j] = MINVALUE(monthlyMin.stdDevTmin[j],simulated[i].stdDevTmin[j] - observed[i].stdDevTmin[j]);
-            monthlyMin.dewPointTmax[j] = MINVALUE(monthlyMin.dewPointTmax[j],simulated[i].dewPointTmax[j] - observed[i].dewPointTmax[j]);
-            monthlyMin.dryAverageTmax[j] = MINVALUE(monthlyMin.dryAverageTmax[j],simulated[i].dryAverageTmax[j] - observed[i].dryAverageTmax[j]);
-            monthlyMin.dryAverageTmin[j] = MINVALUE(monthlyMin.dryAverageTmin[j],simulated[i].dryAverageTmin[j] - observed[i].dryAverageTmin[j]);
-            monthlyMin.wetAverageTmax[j] = MINVALUE(monthlyMin.wetAverageTmax[j],simulated[i].wetAverageTmax[j] - observed[i].wetAverageTmax[j]);
-            monthlyMin.wetAverageTmin[j] = MINVALUE(monthlyMin.wetAverageTmin[j],simulated[i].wetAverageTmin[j] - observed[i].wetAverageTmin[j]);
-            monthlyMin.fractionWetDays[j] = MINVALUE(monthlyMin.fractionWetDays[j],simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j]);
-            monthlyMin.probabilityWetWet[j] = MINVALUE(monthlyMin.probabilityWetWet[j],simulated[i].probabilityWetWet[j] - observed[i].probabilityWetWet[j]);
+            monthlyMin->month[j] = bias[i].month[j];
+            monthlyMin->averageTmax[j] = MINVALUE(monthlyMin->averageTmax[j],simulated[i].averageTmax[j] - observed[i].averageTmax[j]);
+            monthlyMin->averageTmin[j] = MINVALUE(monthlyMin->averageTmin[j],simulated[i].averageTmin[j] - observed[i].averageTmin[j]);
+            monthlyMin->sumPrec[j] = MINVALUE(monthlyMin->sumPrec[j],simulated[i].sumPrec[j] - observed[i].sumPrec[j]);
+            monthlyMin->stdDevTmax[j] = MINVALUE(monthlyMin->stdDevTmax[j],simulated[i].stdDevTmax[j] - observed[i].stdDevTmax[j]);
+            monthlyMin->stdDevTmin[j] = MINVALUE(monthlyMin->stdDevTmin[j],simulated[i].stdDevTmin[j] - observed[i].stdDevTmin[j]);
+            monthlyMin->dewPointTmax[j] = MINVALUE(monthlyMin->dewPointTmax[j],simulated[i].dewPointTmax[j] - observed[i].dewPointTmax[j]);
+            monthlyMin->dryAverageTmax[j] = MINVALUE(monthlyMin->dryAverageTmax[j],simulated[i].dryAverageTmax[j] - observed[i].dryAverageTmax[j]);
+            monthlyMin->dryAverageTmin[j] = MINVALUE(monthlyMin->dryAverageTmin[j],simulated[i].dryAverageTmin[j] - observed[i].dryAverageTmin[j]);
+            monthlyMin->wetAverageTmax[j] = MINVALUE(monthlyMin->wetAverageTmax[j],simulated[i].wetAverageTmax[j] - observed[i].wetAverageTmax[j]);
+            monthlyMin->wetAverageTmin[j] = MINVALUE(monthlyMin->wetAverageTmin[j],simulated[i].wetAverageTmin[j] - observed[i].wetAverageTmin[j]);
+            monthlyMin->fractionWetDays[j] = MINVALUE(monthlyMin->fractionWetDays[j],simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j]);
+            monthlyMin->probabilityWetWet[j] = MINVALUE(monthlyMin->probabilityWetWet[j],simulated[i].probabilityWetWet[j] - observed[i].probabilityWetWet[j]);
         }
+    }
+    for (int j=0;j<12;j++)
+    {
+        //printf("%d %f %f\n",j+1,monthlyMin.averageTmax[j],monthlyMax.averageTmax[j]);
     }
 }
