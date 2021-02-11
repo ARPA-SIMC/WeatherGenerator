@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
 
     for (int j=0;j<12;j++)
     {
+        /*
         printf("max %d  %f%f%f%f%f%f%f%f%f%f%f%f  \n min %d  %f%f%f%f%f%f%f%f%f%f%f%f \n",
                monthlyMaxBias.month[j],
                monthlyMaxBias.averageTmax[j],
@@ -112,8 +113,8 @@ int main(int argc, char *argv[])
                monthlyMinBias.wetAverageTmax[j],
                monthlyMinBias.wetAverageTmin[j],
                monthlyMinBias.fractionWetDays[j],
-               monthlyMinBias.probabilityWetWet[j]);
-        //printf("%d %f %f\n",j+1,monthlyMinBias.averageTmax[j],monthlyMaxBias.averageTmax[j]);
+               monthlyMinBias.probabilityWetWet[j]);*/
+        printf("%d %f %f\n",j+1,monthlyMinBias.fractionWetDays[j],monthlyMaxBias.fractionWetDays[j]);
     }
 
     //printf("Hello World!\n");
