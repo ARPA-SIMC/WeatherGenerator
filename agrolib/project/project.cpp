@@ -1589,8 +1589,7 @@ bool Project::loadTopographicDistanceMaps(bool showInfo)
     QString mapsFolder = projectPath + PATH_TD;
     if (! QDir(mapsFolder).exists())
     {
-        logError("TD folder not found. Please create TD Maps.");
-        return false;
+        QDir().mkdir(mapsFolder);
     }
 
     int infoStep = 0;
@@ -2569,6 +2568,22 @@ void Project::updateProgressBar(int value)
     else
     {
         std::cout << "*";
+    }
+}
+
+
+void Project::updateProgressBarText(QString myStr)
+{
+    if (modality == MODE_GUI)
+    {
+        if (formLog != nullptr)
+        {
+            formLog->setText(myStr);
+        }
+    }
+    else
+    {
+        std::cout << myStr.toStdString();
     }
 }
 

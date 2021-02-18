@@ -59,6 +59,9 @@ void CriteriaOutputProject::initialize()
 
     projectError = "";
     nrUnits = 0;
+
+    logFileName = "";
+    addDateTimeLogFile = false;
 }
 
 
@@ -103,7 +106,7 @@ int CriteriaOutputProject::initializeProjectDtx()
         }
     }
 
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
 
 
@@ -160,7 +163,7 @@ int CriteriaOutputProject::initializeProjectCsv()
         }
     }
 
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
 
 
@@ -200,11 +203,11 @@ int CriteriaOutputProject::initializeProject(QString settingsFileName, QDate dat
 
     if (isLog)
     {
-        logger.setLog(path,projectName);
+        logger.setLog(path, projectName, addDateTimeLogFile);
     }
 
     isProjectLoaded = true;
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
 
 
@@ -212,13 +215,14 @@ bool CriteriaOutputProject::readSettings()
 {
     QSettings* projectSettings;
     projectSettings = new QSettings(configFileName, QSettings::IniFormat);
+
+    // PROJECT
     projectSettings->beginGroup("project");
 
     QString dateStr = dateComputation.toString("yyyy-MM-dd");
 
     projectName = projectSettings->value("name","").toString();
 
-    // unit list
     dbUnitsName = projectSettings->value("db_units","").toString();
     if (dbUnitsName.left(1) == ".")
     {
@@ -251,10 +255,13 @@ bool CriteriaOutputProject::readSettings()
     {
         dbDataHistoricalName = path + QDir::cleanPath(dbDataHistoricalName);
     }
+
+    addDateTimeLogFile = projectSettings->value("add_date_to_log","").toBool();
     projectSettings->endGroup();
 
+    // CSV
     projectSettings->beginGroup("csv");
-    // variables list
+
     variableListFileName = projectSettings->value("variable_list","").toString();
     if (variableListFileName.left(1) == ".")
     {
@@ -263,7 +270,6 @@ bool CriteriaOutputProject::readSettings()
 
     bool addDate = projectSettings->value("add_date_to_filename","").toBool();
 
-    // csv output
     outputCsvFileName = projectSettings->value("csv_output","").toString();
     if (outputCsvFileName.right(4) == ".csv")
     {
@@ -278,56 +284,54 @@ bool CriteriaOutputProject::readSettings()
     }
     projectSettings->endGroup();
 
+    // SHAPEFILE
     projectSettings->beginGroup("shapefile");
-    // UCM
+
     ucmFileName = projectSettings->value("UCM","").toString();
     if (ucmFileName.left(1) == ".")
     {
         ucmFileName = path + QDir::cleanPath(ucmFileName);
     }
 
-    // Field listgetFileNamegetFileName
     fieldListFileName = projectSettings->value("field_list", "").toString();
     if (fieldListFileName.left(1) == ".")
     {
         fieldListFileName = path + QDir::cleanPath(fieldListFileName);
     }
 
-    // Shapefile
+    // output shapefile
     outputShapeFilePath = getFilePath(outputCsvFileName) + dateStr;
     QFileInfo csvFileInfo(outputCsvFileName);
     outputShapeFileName = outputShapeFilePath + "/" + csvFileInfo.baseName() + ".shp";
 
     projectSettings->endGroup();
 
+    // AGGREGATION
     projectSettings->beginGroup("aggregation");
-    // Aggregation Shape
+
     aggregationShapeFileName = projectSettings->value("aggregation_shape","").toString();
     if (aggregationShapeFileName.left(1) == ".")
     {
         aggregationShapeFileName = path + QDir::cleanPath(aggregationShapeFileName);
     }
 
-    // Shape Field
     shapeFieldName = projectSettings->value("shape_field", "").toString();
 
-    // Aggregation List
     aggregationListFileName = projectSettings->value("aggregation_list","").toString();
     if (aggregationListFileName.left(1) == ".")
     {
         aggregationListFileName = path + QDir::cleanPath(aggregationListFileName);
     }
 
-    // Aggregation cell size
     aggregationCellSize = projectSettings->value("aggregation_cellsize","").toString();
 
-    addDate = projectSettings->value("add_date_to_filename","").toBool();
-    // aggregation output
     outputAggrCsvFileName = projectSettings->value("aggregation_output","").toString();
     if (outputAggrCsvFileName.right(4) == ".csv")
     {
         outputAggrCsvFileName = outputAggrCsvFileName.left(outputAggrCsvFileName.length()-4);
     }
+
+    addDate = projectSettings->value("add_date_to_filename","").toBool();
 
     if (addDate) outputAggrCsvFileName += "_" + dateStr;
     outputAggrCsvFileName += ".csv";
@@ -336,11 +340,11 @@ bool CriteriaOutputProject::readSettings()
     {
         outputAggrCsvFileName = path + QDir::cleanPath(outputAggrCsvFileName);
     }
-
     projectSettings->endGroup();
 
-    projectSettings->beginGroup("maps");
     // MAPS
+    projectSettings->beginGroup("maps");
+
     mapListFileName = projectSettings->value("map_list","").toString();
     if (mapListFileName.left(1) == ".")
     {
@@ -365,7 +369,7 @@ int CriteriaOutputProject::precomputeDtx()
     logger.writeInfo("PRECOMPUTE DTX");
 
     int myResult = initializeProjectDtx();
-    if (myResult != CRIT3D_OK)
+    if (myResult != CRIT1D_OK)
     {
         return myResult;
     }
@@ -387,14 +391,14 @@ int CriteriaOutputProject::precomputeDtx()
         logger.writeInfo(QString::number(i) + " ID CASE: " + idCase);
 
         int myResult = computeAllDtxUnit(dbDataHistorical, idCase, projectError);
-        if (myResult != CRIT3D_OK)
+        if (myResult != CRIT1D_OK)
         {
             projectError = "ID CASE: " + idCase + "\n" + projectError;
             return myResult;
         }
     }
 
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
 
 
@@ -403,7 +407,7 @@ int CriteriaOutputProject::createCsvFile()
     logger.writeInfo("Create CSV");
 
     int myResult = initializeProjectCsv();
-    if (myResult != CRIT3D_OK)
+    if (myResult != CRIT1D_OK)
     {
         return myResult;
     }
@@ -432,7 +436,7 @@ int CriteriaOutputProject::createCsvFile()
         idCropClass = unitList[i].idCropClass;
 
         myResult = writeCsvOutputUnit(idCase, idCropClass, dbData, dbCrop, dbDataHistorical, dateComputation, outputVariable, outputCsvFileName, &projectError);
-        if (myResult != CRIT3D_OK)
+        if (myResult != CRIT1D_OK)
         {
             if (QFile(outputCsvFileName).exists())
             {
@@ -442,7 +446,7 @@ int CriteriaOutputProject::createCsvFile()
         }
     }
 
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
 
 
@@ -452,7 +456,7 @@ int CriteriaOutputProject::createShapeFile()
     {
         // create CSV
         int myResult = createCsvFile();
-        if (myResult != CRIT3D_OK)
+        if (myResult != CRIT1D_OK)
         {
             return myResult;
         }
@@ -483,7 +487,7 @@ int CriteriaOutputProject::createShapeFile()
         return ERROR_SHAPEFILE;
     }
 
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
 
 
@@ -523,7 +527,7 @@ int CriteriaOutputProject::createMaps()
     if (! QFile(outputShapeFileName).exists())
     {
         int myResult = createShapeFile();
-        if (myResult != CRIT3D_OK)
+        if (myResult != CRIT1D_OK)
         {
             return myResult;
         }
@@ -606,7 +610,7 @@ int CriteriaOutputProject::createMaps()
 
     if (rasterOK == inputField.size())
     {
-        return CRIT3D_OK;
+        return CRIT1D_OK;
     }
     else
     {
@@ -655,7 +659,7 @@ int CriteriaOutputProject::createAggregationFile()
     {
         // create shapefile
         int myResult = createShapeFile();
-        if (myResult != CRIT3D_OK)
+        if (myResult != CRIT1D_OK)
         {
             return myResult;
         }
@@ -941,7 +945,7 @@ int CriteriaOutputProject::createCsvFileFromGUI(QDate dateComputation, QString c
 {
 
     int myResult = initializeProjectCsv();
-    if (myResult != CRIT3D_OK)
+    if (myResult != CRIT1D_OK)
     {
         return myResult;
     }
@@ -975,7 +979,7 @@ int CriteriaOutputProject::createCsvFileFromGUI(QDate dateComputation, QString c
         idCropClass = unitList[i].idCropClass;
 
         myResult = writeCsvOutputUnit(idCase, idCropClass, dbData, dbCrop, dbDataHistorical, dateComputation, outputVariable, csvFileName, &projectError);
-        if (myResult != CRIT3D_OK)
+        if (myResult != CRIT1D_OK)
         {
             if (QFile(csvFileName).exists())
             {
@@ -984,7 +988,7 @@ int CriteriaOutputProject::createCsvFileFromGUI(QDate dateComputation, QString c
             return myResult;
         }
     }
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
 
 int CriteriaOutputProject::createShapeFileFromGUI()
@@ -1007,5 +1011,5 @@ int CriteriaOutputProject::createShapeFileFromGUI()
         return ERROR_SHAPEFILE;
     }
 
-    return CRIT3D_OK;
+    return CRIT1D_OK;
 }
