@@ -36,15 +36,357 @@ struct TmonthlyData{
 
 void readFileContents(FILE *fp,int site,TmonthlyData* monthlyData);
 void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData *monthlyMax, TmonthlyData *monthlyMin, TmonthlyData *monthlyAverage, int nrSites);
+int readERG5CellListNumber(FILE *fp);
+void readTheCellNumber(FILE *fp, char* numCell);
+void logInfo(QString myStr);
+bool loadMeteoGridDB(QString* errorString, QString xmlName);
 
+
+static Crit3DMeteoGridDbHandler* meteoGridDbHandler;
+static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
+static weatherGenerator2D WG2D;
+
+int readERG5CellListNumber(FILE *fp)
+{
+    int counter = 0;
+    char dummy;
+
+    do {
+        dummy = getc(fp);
+        if (dummy == '\n') counter++ ;
+    } while (dummy != EOF);
+    return counter ;
+}
+
+void readTheCellNumber(FILE *fp, char* numCell)
+{
+    for (int i=0;i<6;i++)
+    {
+        numCell[i] = '\0';
+    }
+    numCell[0] = getc(fp);
+    numCell[1] = getc(fp);
+    numCell[2] = getc(fp);
+    numCell[3] = getc(fp);
+    numCell[4] = getc(fp);
+    getc(fp);
+}
+
+
+
+void logInfo(QString myStr)
+{
+     std::cout << myStr.toStdString() << std::endl;
+}
+
+
+bool loadMeteoGridDB(QString* errorString, QString xmlName)
+{
+    //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
+
+    QString path;
+    if (! searchDataPath(&path)) return -1;
+    //QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
+    //QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v2.1.xml";
+    xmlName = path + xmlName;
+    meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
+
+    // todo
+    //meteoGridDbHandler->meteoGrid()->setGisSettings(this->gisSettings);
+
+    if (! meteoGridDbHandler->parseXMLGrid(xmlName, errorString)) return false;
+
+    if (! meteoGridDbHandler->openDatabase(errorString))return false;
+
+    if (! meteoGridDbHandler->loadCellProperties(errorString)) return false;
+
+    if (! meteoGridDbHandler->updateGridDate(errorString)) return false;
+
+    logInfo("Meteo Grid = " + xmlName);
+
+    return true;
+}
 
 
 int main(int argc, char *argv[])
 {
+    QCoreApplication myApp(argc, argv);
+    QString appPath = myApp.applicationDirPath() + "/";
+
+    QString myError;
+    //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
+    meteoVariable variable;
+    QDate firstDay(2001,1,1);
+    QDate lastDay(2020,12,31);
+    QDate currentDay;
+    QDate firstDateDB(1,1,1);
+    TObsDataD** obsDataD = nullptr;
+    QString xmlName;
+    xmlName = "METEOGRID/DBGridXML_ERG5_v2.1.xml";
+    //xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
+    QString errorString;
+    if (! loadMeteoGridDB(&errorString,xmlName))
+    {
+        std::cout << errorString.toStdString() << std::endl;
+        return -1;
+    }
+    std::string id;
+    int nrActivePoints = 0;
+    int lengthSeries = 0;
+    std::vector<float> dailyVariable;
+    FILE* fp;
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    int numberOfCells; // !! take out
+    numberOfCells = readERG5CellListNumber(fp); // !! take out
+    fclose(fp); // !! take out
+
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+
+    int* cellCode = nullptr; // !! take out
+    char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
+    cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
+    for (int i=0; i<numberOfCells; i++) // !! take out
+    { // !! take out
+        readTheCellNumber(fp,numCell);// !! take out
+        cellCode[i] = atoi(numCell);// !! take out
+    }// !! take out
+    fclose(fp);
+    printf("numCells %d\n",numberOfCells);
+
+    for (int row = 0; row < meteoGridDbHandler->gridStructure().header().nrRows; row++)
+    {
+
+        for (int col = 0; col < meteoGridDbHandler->gridStructure().header().nrCols; col++)
+        {
+
+           if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id))
+           {
+               ++nrActivePoints;
+               if (nrActivePoints == 1)
+               {
+                   variable = dailyAirTemperatureMin;
+                   dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                        variable, firstDay, lastDay, &firstDateDB);
+                   lengthSeries = int(dailyVariable.size());
+               }
+           }
+        }
+    }
+
+    #ifdef MAX_NR_POINTS
+        nrActivePoints = MINVALUE(nrActivePoints, MAX_NR_POINTS);
+    #endif
+    if (nrActivePoints > numberOfCells) nrActivePoints = numberOfCells; // !! take out
+    printf("%d  %d\n", lengthSeries,nrActivePoints);
+    obsDataD = (TObsDataD **)calloc(nrActivePoints, sizeof(TObsDataD*));
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        obsDataD[i] = (TObsDataD *)calloc(lengthSeries, sizeof(TObsDataD));
+    }
+
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        currentDay = firstDay;
+        for (int j=0;j<lengthSeries;j++)
+        {
+            obsDataD[i][j].date.day = currentDay.day();
+            obsDataD[i][j].date.month = currentDay.month();
+            obsDataD[i][j].date.year = currentDay.year();
+            currentDay = currentDay.addDays(1);
+        }
+    }
+
+    printf("load data...\n");
+
+    int counter = 0;
+    for (int row = 0; row < meteoGridDbHandler->gridStructure().header().nrRows; row++)
+    {
+
+        for (int col = 0; col < meteoGridDbHandler->gridStructure().header().nrCols; col++)
+        {
+            bool isConsortiumCell = false; // !! take out
+            int iCells = 0; // !! take out
+            if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id)) // !! take out
+            { // !! take out
+
+                while (iCells < nrActivePoints) // !! take out
+                {
+                    int idCellInt;  // !! take out
+                    idCellInt = atoi(id.c_str());// !! take out
+                    if (idCellInt == cellCode[iCells] ) isConsortiumCell = true; // !! take out
+                     iCells++; // !! take out
+                } // !! take out
+            } // !! take out
+
+           if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id) && counter<nrActivePoints && isConsortiumCell) // !! to modify
+           {
+
+               printf(" %d %d \n",row,col);
+               variable = dailyAirTemperatureMin;
+               dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDay, lastDay, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) obsDataD[counter][iLength].tMin = dailyVariable[iLength];
+               //for (int iLength=0; iLength<lengthSeries; iLength++) printf("temp %f\n",dailyVariable[iLength]);
+               variable = dailyAirTemperatureMax;
+               dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDay, lastDay, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) obsDataD[counter][iLength].tMax = dailyVariable[iLength];
+               variable = dailyPrecipitation;
+               dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDay, lastDay, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) obsDataD[counter][iLength].prec = dailyVariable[iLength];
+               counter++;
+           }
+        }
+        //std::cout << row << "\n";
+    }
+
+    dailyVariable.clear();
+    meteoGridDbHandler->closeDatabase();
+
+// read second DB
+    printf("second DB\n");
+    QDate firstDayWG2D(2001,1,1);
+    QDate lastDayWG2D(2020,12,31);
+
+    TObsDataD** outputDataD = nullptr;
+    xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
+
+    if (! loadMeteoGridDB(&errorString,xmlName))
+    {
+        std::cout << errorString.toStdString() << std::endl;
+        return -1;
+    }
+    printf("second DB loading\n");
+
+    //std::string id;
+    nrActivePoints = 0;
+    lengthSeries = 0;
+    std::vector<float> dailyVariableWG2D;
+    //FILE* fp;
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //int numberOfCells; // !! take out
+    numberOfCells = readERG5CellListNumber(fp); // !! take out
+    fclose(fp); // !! take out
+
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+
+    //int* cellCode = nullptr; // !! take out
+    //char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
+    cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
+    for (int i=0; i<numberOfCells; i++) // !! take out
+    { // !! take out
+        readTheCellNumber(fp,numCell);// !! take out
+        cellCode[i] = atoi(numCell);// !! take out
+    }// !! take out
+    fclose(fp);
+    printf("numCells %d\n",numberOfCells);
+
+    for (int row = 0; row < meteoGridDbHandlerWG2D->gridStructure().header().nrRows; row++)
+    {
+
+        for (int col = 0; col < meteoGridDbHandlerWG2D->gridStructure().header().nrCols; col++)
+        {
+
+           if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id))
+           {
+               ++nrActivePoints;
+               if (nrActivePoints == 1)
+               {
+                   variable = dailyAirTemperatureMin;
+                   dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                        variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+                   lengthSeries = int(dailyVariableWG2D.size());
+               }
+           }
+        }
+    }
+
+    #ifdef MAX_NR_POINTS
+        nrActivePoints = MINVALUE(nrActivePoints, MAX_NR_POINTS);
+    #endif
+    if (nrActivePoints > numberOfCells) nrActivePoints = numberOfCells; // !! take out
+    printf("%d  %d\n", lengthSeries,nrActivePoints);
+    outputDataD = (TObsDataD **)calloc(nrActivePoints, sizeof(TObsDataD*));
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        outputDataD[i] = (TObsDataD *)calloc(lengthSeries, sizeof(TObsDataD));
+    }
+
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        currentDay = firstDayWG2D;
+        for (int j=0;j<lengthSeries;j++)
+        {
+            outputDataD[i][j].date.day = currentDay.day();
+            outputDataD[i][j].date.month = currentDay.month();
+            outputDataD[i][j].date.year = currentDay.year();
+            currentDay = currentDay.addDays(1);
+        }
+    }
+
+    printf("load data...\n");
+
+    counter = 0;
+    for (int row = 0; row < meteoGridDbHandlerWG2D->gridStructure().header().nrRows; row++)
+    {
+
+        for (int col = 0; col < meteoGridDbHandlerWG2D->gridStructure().header().nrCols; col++)
+        {
+            bool isConsortiumCell = false; // !! take out
+            int iCells = 0; // !! take out
+            if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id)) // !! take out
+            { // !! take out
+
+                while (iCells < nrActivePoints) // !! take out
+                {
+                    int idCellInt;  // !! take out
+                    idCellInt = atoi(id.c_str());// !! take out
+                    if (idCellInt == cellCode[iCells] ) isConsortiumCell = true; // !! take out
+                     iCells++; // !! take out
+                } // !! take out
+            } // !! take out
+
+           if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id) && counter<nrActivePoints && isConsortiumCell) // !! to modify
+           {
+
+               printf(" %d %d \n",row,col);
+               variable = dailyAirTemperatureMin;
+               dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) outputDataD[counter][iLength].tMin = dailyVariableWG2D[iLength];
+               //for (int iLength=0; iLength<lengthSeries; iLength++) printf("temp %f\n",dailyVariable[iLength]);
+               variable = dailyAirTemperatureMax;
+               dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) outputDataD[counter][iLength].tMax = dailyVariableWG2D[iLength];
+               variable = dailyPrecipitation;
+               dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) outputDataD[counter][iLength].prec = dailyVariableWG2D[iLength];
+               counter++;
+           }
+        }
+        //std::cout << row << "\n";
+    }
+
+    dailyVariableWG2D.clear();
+    meteoGridDbHandlerWG2D->closeDatabase();
+
+
+    // end of read second DB
+
+
+
 
     int nrSites;
-    printf("insert the number of sites\n");
-    scanf("%d",&nrSites);
+    //printf("insert the number of sites\n");
+    //scanf("%d",&nrSites);
+    nrSites = numberOfCells;
     TmonthlyData *monthlyDataClimate = (TmonthlyData*)calloc(nrSites, sizeof(TmonthlyData));
     TmonthlyData *monthlyDataSimulation = (TmonthlyData*)calloc(nrSites, sizeof(TmonthlyData));
     TmonthlyData *monthlyBias = (TmonthlyData*)calloc(nrSites, sizeof(TmonthlyData));
