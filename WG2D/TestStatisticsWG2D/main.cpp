@@ -39,11 +39,8 @@ void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* 
 int readERG5CellListNumber(FILE *fp);
 void readTheCellNumber(FILE *fp, char* numCell);
 void logInfo(QString myStr);
-bool loadMeteoGridDB(QString* errorString, QString xmlName);
+bool loadMeteoGridDB(Crit3DMeteoGridDbHandler *myHandler, QString* errorString, QString xmlName);
 
-
-static Crit3DMeteoGridDbHandler* meteoGridDbHandler;
-static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
 static weatherGenerator2D WG2D;
 
 int readERG5CellListNumber(FILE *fp)
@@ -80,7 +77,7 @@ void logInfo(QString myStr)
 }
 
 
-bool loadMeteoGridDB(QString* errorString, QString xmlName)
+bool loadMeteoGridDB(Crit3DMeteoGridDbHandler* myHandler, QString* errorString, QString xmlName)
 {
     //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
 
@@ -89,18 +86,17 @@ bool loadMeteoGridDB(QString* errorString, QString xmlName)
     //QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
     //QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v2.1.xml";
     xmlName = path + xmlName;
-    meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
 
     // todo
     //meteoGridDbHandler->meteoGrid()->setGisSettings(this->gisSettings);
 
-    if (! meteoGridDbHandler->parseXMLGrid(xmlName, errorString)) return false;
+    if (! myHandler->parseXMLGrid(xmlName, errorString)) return false;
 
-    if (! meteoGridDbHandler->openDatabase(errorString))return false;
+    if (! myHandler->openDatabase(errorString))return false;
 
-    if (! meteoGridDbHandler->loadCellProperties(errorString)) return false;
+    if (! myHandler->loadCellProperties(errorString)) return false;
 
-    if (! meteoGridDbHandler->updateGridDate(errorString)) return false;
+    if (! myHandler->updateGridDate(errorString)) return false;
 
     logInfo("Meteo Grid = " + xmlName);
 
@@ -108,23 +104,21 @@ bool loadMeteoGridDB(QString* errorString, QString xmlName)
 }
 
 
-bool saveOnMeteoGridDB(QString* errorString)
+bool saveOnMeteoGridDB(Crit3DMeteoGridDbHandler* myHandler, QString* errorString)
 {
     //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
     QString path;
     if (! searchDataPath(&path)) return -1;
     QString xmlName = path + "METEOGRID/DBGridXML_Output_WG2D.xml";
 
-    meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
-
     // todo
     //meteoGridDbHandler->meteoGrid()->setGisSettings(this->gisSettings);
 
-    if (! meteoGridDbHandlerWG2D->parseXMLGrid(xmlName, errorString)) return false;
+    if (! myHandler->parseXMLGrid(xmlName, errorString)) return false;
 
-    if (! meteoGridDbHandlerWG2D->openDatabase(errorString))return false;
+    if (! myHandler->openDatabase(errorString))return false;
 
-    if (! meteoGridDbHandlerWG2D->loadCellProperties(errorString)) return false;
+    if (! myHandler->loadCellProperties(errorString)) return false;
 
     //if (! meteoGridDbHandlerWG2D->updateGridDate(errorString)) return false;
 
@@ -135,6 +129,9 @@ bool saveOnMeteoGridDB(QString* errorString)
 
 int main(int argc, char *argv[])
 {
+    Crit3DMeteoGridDbHandler* meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
+    Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
+
     QCoreApplication myApp(argc, argv);
     QString appPath = myApp.applicationDirPath() + "/";
 
@@ -204,8 +201,9 @@ int main(int argc, char *argv[])
     QString xmlName;
     xmlName = "METEOGRID/DBGridXML_ERG5_v2.1.xml";
     //xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
+
     QString errorString;
-    if (! loadMeteoGridDB(&errorString,xmlName))
+    if (! loadMeteoGridDB(meteoGridDbHandler, &errorString,xmlName))
     {
         std::cout << errorString.toStdString() << std::endl;
         return -1;
@@ -334,7 +332,7 @@ int main(int argc, char *argv[])
     TObsDataD** outputDataD = nullptr;
     xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
 
-    if (! loadMeteoGridDB(&errorString,xmlName))
+    if (! loadMeteoGridDB(meteoGridDbHandlerWG2D, &errorString,xmlName))
     {
         std::cout << errorString.toStdString() << std::endl;
         return -1;
