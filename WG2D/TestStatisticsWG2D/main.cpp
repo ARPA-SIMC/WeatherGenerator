@@ -16,17 +16,63 @@
 #include <malloc.h>
 #include <time.h>
 
-#define NR_SIMULATION_YEARS 1
-//#define MAX_NR_POINTS 5
 
-// [ 1 - 10 ]
-//#define NR_STATIONS 10
-#define STARTING_YEAR 2501
-#define PREC_THRESHOLD 0.25
-void printSimulationResults(double **observed, double **simulated, int nrStations, QString variable, int month);
+struct TmonthlyData{
+    int month[12];
+    double averageTmin[12];
+    double averageTmax[12];
+    double sumPrec[12];
+    double stdDevTmin[12];
+    double stdDevTmax[12];
+    double fractionWetDays[12];
+    double fractionWetWet[12];
+    double dewPointTmax[12];
+    double dryAverageTmin[12];
+    double dryAverageTmax[12];
+    double wetAverageTmin[12];
+    double wetAverageTmax[12];
+
+};
+
+void readFileContents(FILE *fp,int site,TmonthlyData* monthlyData);
+void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData *monthlyMax, TmonthlyData *monthlyMin, TmonthlyData *monthlyAverage, int nrSites);
+int readERG5CellListNumber(FILE *fp);
+void readTheCellNumber(FILE *fp, char* numCell);
+void logInfo(QString myStr);
+bool loadMeteoGridDB(QString* errorString, QString xmlName);
+
+
 static Crit3DMeteoGridDbHandler* meteoGridDbHandler;
 static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
 static weatherGenerator2D WG2D;
+
+int readERG5CellListNumber(FILE *fp)
+{
+    int counter = 0;
+    char dummy;
+
+    do {
+        dummy = getc(fp);
+        if (dummy == '\n') counter++ ;
+    } while (dummy != EOF);
+    return counter ;
+}
+
+void readTheCellNumber(FILE *fp, char* numCell)
+{
+    for (int i=0;i<6;i++)
+    {
+        numCell[i] = '\0';
+    }
+    numCell[0] = getc(fp);
+    numCell[1] = getc(fp);
+    numCell[2] = getc(fp);
+    numCell[3] = getc(fp);
+    numCell[4] = getc(fp);
+    getc(fp);
+}
+
+
 
 void logInfo(QString myStr)
 {
@@ -34,14 +80,15 @@ void logInfo(QString myStr)
 }
 
 
-bool loadMeteoGridDB(QString* errorString)
+bool loadMeteoGridDB(QString* errorString, QString xmlName)
 {
     //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
 
     QString path;
     if (! searchDataPath(&path)) return -1;
-    QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
-
+    //QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
+    //QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v2.1.xml";
+    xmlName = path + xmlName;
     meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
 
     // todo
@@ -60,39 +107,13 @@ bool loadMeteoGridDB(QString* errorString)
     return true;
 }
 
-bool loadMeteoGridDBWG2D(QString* errorString)
-{
-    //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
 
-    QString path;
-    if (! searchDataPath(&path)) return -1;
-    QString xmlName = path + "METEOGRID/DBGridXML_C7_WG2D.xml";
-
-    meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
-
-    // todo
-    //meteoGridDbHandler->meteoGrid()->setGisSettings(this->gisSettings);
-
-    if (! meteoGridDbHandlerWG2D->parseXMLGrid(xmlName, errorString)) return false;
-
-    if (! meteoGridDbHandlerWG2D->openDatabase(errorString))return false;
-
-    if (! meteoGridDbHandlerWG2D->loadCellProperties(errorString)) return false;
-
-    if (! meteoGridDbHandlerWG2D->updateGridDate(errorString)) return false;
-
-    logInfo("Meteo Grid = " + xmlName);
-
-    return true;
-}
-
-/*
 bool saveOnMeteoGridDB(QString* errorString)
 {
     //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
     QString path;
     if (! searchDataPath(&path)) return -1;
-    QString xmlName = path + "METEOGRID/DBGridXML_Eraclito_WG2D.xml";
+    QString xmlName = path + "METEOGRID/DBGridXML_Output_WG2D.xml";
 
     meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
 
@@ -110,48 +131,109 @@ bool saveOnMeteoGridDB(QString* errorString)
     logInfo("Meteo Grid = " + xmlName);
 
     return true;
-}*/
+}
 
 int main(int argc, char *argv[])
 {
-    int startingYear = STARTING_YEAR;
-    printf("insert the starting year for the synthethic series:\n");
-    //scanf("%d",&startingYear);
-    startingYear = 2001;
-    int nrYearSimulations = NR_SIMULATION_YEARS;
-    printf("insert the number of years of the the synthethic series:\n");
-    //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 30;
-    time_t rawtime;
-    struct tm * timeinfo;
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
-    printf ( "Current local time and date: %s", asctime (timeinfo) );
-
     QCoreApplication myApp(argc, argv);
     QString appPath = myApp.applicationDirPath() + "/";
 
     QString myError;
+
+    //preliminary creation of non present tables
+    /*
+    QDate firstDayOutput(2000,1,1);
+    QDate lastDayOutput(2000,1,1);
+    QString errorStringPreviews;
+    int lengthArrayPre = 1;
+    if (! saveOnMeteoGridDB(&errorStringPreviews))
+    {
+        std::cout << errorStringPreviews.toStdString() << std::endl;
+        return -1;
+    }
+    QList<meteoVariable> listMeteoVariable = {dailyAirTemperatureMin,dailyAirTemperatureMax,dailyPrecipitation};
+    std::string idPre;
+
+    int nrRows =  meteoGridDbHandlerWG2D->gridStructure().header().nrRows;
+    int nrCols =  meteoGridDbHandlerWG2D->gridStructure().header().nrCols;
+    std::vector<TObsDataD> outputInitializationDataD;
+    outputInitializationDataD.resize(lengthArrayPre);
+    outputInitializationDataD[0].date.day = 1;
+    outputInitializationDataD[0].date.month = 1;
+    outputInitializationDataD[0].date.year = 2000;
+    outputInitializationDataD[0].prec = NODATA;
+    outputInitializationDataD[0].tMax = NODATA;
+    outputInitializationDataD[0].tMin = NODATA;
+
+    for (int row = 0; row < meteoGridDbHandlerWG2D->gridStructure().header().nrRows; row++)
+    {
+        for (int col = 0; col < meteoGridDbHandlerWG2D->gridStructure().header().nrCols; col++)
+        {
+
+            if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &idPre))
+            {
+
+                for (int k=0;k<lengthArrayPre;k++)
+                {
+                    outputInitializationDataD.resize(lengthArrayPre);
+                    outputInitializationDataD[k].date.day = 1;
+                    outputInitializationDataD[k].date.month = 1;
+                    outputInitializationDataD[k].date.year = 2000;
+                    outputInitializationDataD[k].prec = NODATA;
+                    outputInitializationDataD[k].tMax = NODATA;
+                    outputInitializationDataD[k].tMin = NODATA;
+                }
+                meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD = outputInitializationDataD;
+                meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError, QString::fromStdString(idPre),row,col,firstDayOutput,lastDayOutput,listMeteoVariable);
+            }
+            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
+        }
+        printf("%d\n",row);
+    }
+    meteoGridDbHandlerWG2D->closeDatabase();
+    return 0;
+    */
+
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
-    QDate firstDay(1961,1,1);
-    QDate lastDay(1990,12,31);
+    QDate firstDay(2001,1,1);
+    QDate lastDay(2020,12,31);
     QDate currentDay;
     QDate firstDateDB(1,1,1);
     TObsDataD** obsDataD = nullptr;
-
+    QString xmlName;
+    xmlName = "METEOGRID/DBGridXML_ERG5_v2.1.xml";
+    //xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
     QString errorString;
-    if (! loadMeteoGridDB(&errorString))
+    if (! loadMeteoGridDB(&errorString,xmlName))
     {
         std::cout << errorString.toStdString() << std::endl;
         return -1;
     }
-
     std::string id;
     int nrActivePoints = 0;
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
+    FILE* fp;
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    int numberOfCells; // !! take out
+    numberOfCells = readERG5CellListNumber(fp); // !! take out
+    fclose(fp); // !! take out
 
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+
+    int* cellCode = nullptr; // !! take out
+    char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
+    cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
+    for (int i=0; i<numberOfCells; i++) // !! take out
+    { // !! take out
+        readTheCellNumber(fp,numCell);// !! take out
+        cellCode[i] = atoi(numCell);// !! take out
+    }// !! take out
+    fclose(fp);
+    printf("numCells %d\n",numberOfCells);
 
     for (int row = 0; row < meteoGridDbHandler->gridStructure().header().nrRows; row++)
     {
@@ -176,7 +258,7 @@ int main(int argc, char *argv[])
     #ifdef MAX_NR_POINTS
         nrActivePoints = MINVALUE(nrActivePoints, MAX_NR_POINTS);
     #endif
-
+    if (nrActivePoints > numberOfCells) nrActivePoints = numberOfCells; // !! take out
     printf("%d  %d\n", lengthSeries,nrActivePoints);
     obsDataD = (TObsDataD **)calloc(nrActivePoints, sizeof(TObsDataD*));
     for (int i=0;i<nrActivePoints;i++)
@@ -196,7 +278,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("loading data...\n");
+    printf("load data...\n");
 
     int counter = 0;
     for (int row = 0; row < meteoGridDbHandler->gridStructure().header().nrRows; row++)
@@ -204,14 +286,29 @@ int main(int argc, char *argv[])
 
         for (int col = 0; col < meteoGridDbHandler->gridStructure().header().nrCols; col++)
         {
+            bool isConsortiumCell = false; // !! take out
+            int iCells = 0; // !! take out
+            if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id)) // !! take out
+            { // !! take out
 
-           if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id) && counter<nrActivePoints)
+                while (iCells < nrActivePoints) // !! take out
+                {
+                    int idCellInt;  // !! take out
+                    idCellInt = atoi(id.c_str());// !! take out
+                    if (idCellInt == cellCode[iCells] ) isConsortiumCell = true; // !! take out
+                     iCells++; // !! take out
+                } // !! take out
+            } // !! take out
+
+           if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id) && counter<nrActivePoints && isConsortiumCell) // !! to modify
            {
 
+               printf(" %d %d \n",row,col);
                variable = dailyAirTemperatureMin;
                dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
                                                                     variable, firstDay, lastDay, &firstDateDB);
                for (int iLength=0; iLength<lengthSeries; iLength++) obsDataD[counter][iLength].tMin = dailyVariable[iLength];
+               //for (int iLength=0; iLength<lengthSeries; iLength++) printf("temp %f\n",dailyVariable[iLength]);
                variable = dailyAirTemperatureMax;
                dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
                                                                     variable, firstDay, lastDay, &firstDateDB);
@@ -229,34 +326,81 @@ int main(int argc, char *argv[])
     dailyVariable.clear();
     meteoGridDbHandler->closeDatabase();
 
-    printf("weather generator\n");
+// read second DB
+    printf("second DB\n");
+    QDate firstDayWG2D(2001,1,1);
+    QDate lastDayWG2D(2020,12,31);
 
-    int lengthArraySimulation;
-    lengthArraySimulation = 365 * nrYearSimulations;
+    TObsDataD** outputDataD = nullptr;
+    xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
 
-    int nrLeapYears = 0;
-    for (int iYear = startingYear;iYear<startingYear+nrYearSimulations;iYear++ )
-    {
-        nrLeapYears += isLeapYear(iYear);
-    }
-    //outputDataD.resize(lengthArraySimulation+nrLeapYears);
-    TObsDataD** outputDataD;
-    outputDataD = (TObsDataD **)calloc(nrActivePoints, sizeof(TObsDataD*));
-    for (int i=0;i<nrActivePoints;i++)
-    {
-        outputDataD[i] = (TObsDataD *)calloc(lengthArraySimulation, sizeof(TObsDataD));
-    }
-    QDate firstDayOutput(startingYear,1,1);
-    QDate lastDayOutput(startingYear+nrYearSimulations-1,12,31);
-    if (! loadMeteoGridDBWG2D(&errorString))
+    if (! loadMeteoGridDB(&errorString,xmlName))
     {
         std::cout << errorString.toStdString() << std::endl;
         return -1;
     }
+    printf("second DB loading\n");
+
+    //std::string id;
+    nrActivePoints = 0;
+    lengthSeries = 0;
+    std::vector<float> dailyVariableWG2D;
+    //FILE* fp;
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //int numberOfCells; // !! take out
+    numberOfCells = readERG5CellListNumber(fp); // !! take out
+    fclose(fp); // !! take out
+
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+
+    //int* cellCode = nullptr; // !! take out
+    //char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
+    cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
+    for (int i=0; i<numberOfCells; i++) // !! take out
+    { // !! take out
+        readTheCellNumber(fp,numCell);// !! take out
+        cellCode[i] = atoi(numCell);// !! take out
+    }// !! take out
+    fclose(fp);
+    printf("numCells %d\n",numberOfCells);
+
+    for (int row = 0; row < meteoGridDbHandlerWG2D->gridStructure().header().nrRows; row++)
+    {
+
+        for (int col = 0; col < meteoGridDbHandlerWG2D->gridStructure().header().nrCols; col++)
+        {
+
+           if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id))
+           {
+               ++nrActivePoints;
+               if (nrActivePoints == 1)
+               {
+                   variable = dailyAirTemperatureMin;
+                   dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                        variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+                   lengthSeries = int(dailyVariableWG2D.size());
+               }
+           }
+        }
+    }
+
+    #ifdef MAX_NR_POINTS
+        nrActivePoints = MINVALUE(nrActivePoints, MAX_NR_POINTS);
+    #endif
+    if (nrActivePoints > numberOfCells) nrActivePoints = numberOfCells; // !! take out
+    printf("%d  %d\n", lengthSeries,nrActivePoints);
+    outputDataD = (TObsDataD **)calloc(nrActivePoints, sizeof(TObsDataD*));
     for (int i=0;i<nrActivePoints;i++)
     {
-        currentDay = firstDayOutput;
-        for (int j=0;j<lengthArraySimulation;j++)
+        outputDataD[i] = (TObsDataD *)calloc(lengthSeries, sizeof(TObsDataD));
+    }
+
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        currentDay = firstDayWG2D;
+        for (int j=0;j<lengthSeries;j++)
         {
             outputDataD[i][j].date.day = currentDay.day();
             outputDataD[i][j].date.month = currentDay.month();
@@ -264,7 +408,8 @@ int main(int argc, char *argv[])
             currentDay = currentDay.addDays(1);
         }
     }
-    printf("loading data...\n");
+
+    printf("load data...\n");
 
     counter = 0;
     for (int row = 0; row < meteoGridDbHandlerWG2D->gridStructure().header().nrRows; row++)
@@ -272,406 +417,267 @@ int main(int argc, char *argv[])
 
         for (int col = 0; col < meteoGridDbHandlerWG2D->gridStructure().header().nrCols; col++)
         {
+            bool isConsortiumCell = false; // !! take out
+            int iCells = 0; // !! take out
+            if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id)) // !! take out
+            { // !! take out
 
-           if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id) && counter<nrActivePoints)
+                while (iCells < nrActivePoints) // !! take out
+                {
+                    int idCellInt;  // !! take out
+                    idCellInt = atoi(id.c_str());// !! take out
+                    if (idCellInt == cellCode[iCells] ) isConsortiumCell = true; // !! take out
+                     iCells++; // !! take out
+                } // !! take out
+            } // !! take out
+
+           if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id) && counter<nrActivePoints && isConsortiumCell) // !! to modify
            {
 
+               printf(" %d %d \n",row,col);
                variable = dailyAirTemperatureMin;
-               dailyVariable = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
-                                                                    variable, firstDayOutput, lastDayOutput, &firstDateDB);
-               for (int iLength=0; iLength<lengthArraySimulation; iLength++) outputDataD[counter][iLength].tMin = dailyVariable[iLength];
+               dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) outputDataD[counter][iLength].tMin = dailyVariableWG2D[iLength];
+               //for (int iLength=0; iLength<lengthSeries; iLength++) printf("temp %f\n",dailyVariable[iLength]);
                variable = dailyAirTemperatureMax;
-               dailyVariable = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
-                                                                    variable, firstDayOutput, lastDayOutput, &firstDateDB);
-               for (int iLength=0; iLength<lengthArraySimulation; iLength++) outputDataD[counter][iLength].tMax = dailyVariable[iLength];
+               dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) outputDataD[counter][iLength].tMax = dailyVariableWG2D[iLength];
                variable = dailyPrecipitation;
-               dailyVariable = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
-                                                                    variable, firstDayOutput, lastDayOutput, &firstDateDB);
-               for (int iLength=0; iLength<lengthArraySimulation; iLength++) outputDataD[counter][iLength].prec = dailyVariable[iLength];
+               dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
+                                                                    variable, firstDayWG2D, lastDayWG2D, &firstDateDB);
+               for (int iLength=0; iLength<lengthSeries; iLength++) outputDataD[counter][iLength].prec = dailyVariableWG2D[iLength];
                counter++;
            }
         }
         //std::cout << row << "\n";
     }
-    printf("%d  %d\n", lengthArraySimulation,nrActivePoints);
-    //getchar();
-    dailyVariable.clear();
 
+    dailyVariableWG2D.clear();
     meteoGridDbHandlerWG2D->closeDatabase();
 
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
-    printf ( "Start statistics\nCurrent local time and date: %s", asctime (timeinfo) );
 
-    // compute statistics
-    QString outputFileName;
-    Crit3DDate inputFirstDate;
-    float* inputTMin;
-    float* inputTMax;
-    float* inputPrec;
-    inputTMin = (float*)calloc(lengthSeries, sizeof(float));
-    inputTMax = (float*)calloc(lengthSeries, sizeof(float));
-    inputPrec = (float*)calloc(lengthSeries, sizeof(float));
-    // compute climate statistics from observed data
-    for (int iStation=0;iStation<nrActivePoints;iStation++)
+    // end of read second DB
+
+
+
+
+    int nrSites;
+    //printf("insert the number of sites\n");
+    //scanf("%d",&nrSites);
+    nrSites = numberOfCells;
+    TmonthlyData *monthlyDataClimate = (TmonthlyData*)calloc(nrSites, sizeof(TmonthlyData));
+    TmonthlyData *monthlyDataSimulation = (TmonthlyData*)calloc(nrSites, sizeof(TmonthlyData));
+    TmonthlyData *monthlyBias = (TmonthlyData*)calloc(nrSites, sizeof(TmonthlyData));
+    TmonthlyData monthlyMaxBias,monthlyMinBias,monthlyAverageBias;
+    QString outputFileNameSiteClimate;
+    QString outputFileNameSiteSimulation;
+    FILE *fpClimate;
+    FILE *fpSimulation;
+    FILE *fpStats;
+
+    for (int iSite=0; iSite<nrSites;iSite++)
     {
-        outputFileName = "wgClimate_station_" + QString::number(iStation) + ".txt";
-        inputFirstDate.day = obsDataD[iStation][0].date.day;
-        inputFirstDate.month = obsDataD[iStation][0].date.month;
-        inputFirstDate.year = obsDataD[iStation][0].date.year;
-        int nrDays = nrActivePoints;
-        for (int i=0;i<nrDays;i++)
-        {
-            inputTMin[i] = obsDataD[iStation][i].tMin;
-            inputTMax[i] = obsDataD[iStation][i].tMax;
-            inputPrec[i] = obsDataD[iStation][i].prec;
-        }
-        // float
-        float minPrecData = NODATA;
-        TweatherGenClimate weatherGenClimate;
-        float* monthlyPrec = (float *)calloc(12, sizeof(float));
-        computeWG2DClimate(nrDays,inputFirstDate,inputTMin,inputTMax,inputPrec,PREC_THRESHOLD,minPrecData,&weatherGenClimate,true,outputFileName,monthlyPrec);
-        free(monthlyPrec);
-    }
-    free(inputTMin);
-    free(inputTMax);
-    free(inputPrec);
+        outputFileNameSiteClimate = "../test_WG2D_Eraclito/outputData/wgClimate_station_" + QString::number(iSite) + ".txt";
+        //std::cout << "...read WG2D climate file -->  " << outputFileNameSiteClimate.toStdString() << "\n";
+        QByteArray temp;
+        temp = outputFileNameSiteClimate.toLocal8Bit();
+        const char* fileName;
+        fileName = temp.data();
+        fpClimate = fopen(fileName,"r");
+        readFileContents(fpClimate,iSite,monthlyDataClimate);
+        fclose(fpClimate);
 
-    //float* inputTMin;
-    //float* inputTMax;
-    //float* inputPrec;
-    inputTMin = (float*)calloc(lengthArraySimulation, sizeof(float));
-    inputTMax = (float*)calloc(lengthArraySimulation, sizeof(float));
-    inputPrec = (float*)calloc(lengthArraySimulation, sizeof(float));
-    // compute climate statistics from observed data
-    for (int iStation=0;iStation<nrActivePoints;iStation++)
+
+
+        outputFileNameSiteSimulation = "../test_WG2D_Eraclito/outputData/wgSimulation_station_" + QString::number(iSite) + ".txt";
+        //std::cout << "...read WG2D simulation file -->  " << outputFileNameSiteSimulation.toStdString() << "\n";
+
+        temp = outputFileNameSiteSimulation.toLocal8Bit();
+        fileName = temp.data();
+        fpSimulation = fopen(fileName,"r");
+        readFileContents(fpSimulation,iSite,monthlyDataSimulation);
+        fclose(fpSimulation);
+
+    }
+
+
+    // determine the bias
+
+    computeBias(monthlyDataClimate,monthlyDataSimulation,monthlyBias,&monthlyMaxBias,&monthlyMinBias,&monthlyAverageBias,nrSites);
+    const char* fileName;
+    fileName = "monthlyStatisticsPrecipitation.txt";
+    fpStats = fopen(fileName,"w");
+
+    fprintf(fpStats,"bias cumulated prec (mm)\n");
+    fprintf(fpStats,"month\tmin\t   max\t   average\n");
+    for (int j=0;j<12;j++)
     {
-        outputFileName = "wgSimulation_station_" + QString::number(iStation) + ".txt";
-        inputFirstDate.day = outputDataD[iStation][0].date.day;
-        inputFirstDate.month = outputDataD[iStation][0].date.month;
-        inputFirstDate.year = outputDataD[iStation][0].date.year;
-        int nrDays = nrActivePoints;
-        for (int i=0;i<nrDays;i++)
-        {
-            inputTMin[i] = outputDataD[iStation][i].tMin;
-            inputTMax[i] = outputDataD[iStation][i].tMax;
-            inputPrec[i] = outputDataD[iStation][i].prec;
-        }
-        // float
-        float minPrecData = NODATA;
-        TweatherGenClimate weatherGenClimate;
-        float* monthlyPrec = (float *)calloc(12, sizeof(float));
-        computeWG2DClimate(nrDays,inputFirstDate,inputTMin,inputTMax,inputPrec,PREC_THRESHOLD,minPrecData,&weatherGenClimate,true,outputFileName,monthlyPrec);
-        free (monthlyPrec);
+        fprintf(fpStats,"%d\t%f\t%f\t%f\n",j+1,monthlyMinBias.sumPrec[j],monthlyMaxBias.sumPrec[j],monthlyAverageBias.sumPrec[j]);
     }
-    free(inputTMin);
-    free(inputTMax);
-    free(inputPrec);
-
-    /*
-    double** correlationMatrix;
-    correlationMatrix = (double **)calloc(nrActivePoints, sizeof(double*));
-    for (int i=0; i<nrActivePoints; i++)
+    fprintf(fpStats,"\nbias of probability of wet days (percentage)\n");
+    fprintf(fpStats,"month\tmin\t   max\t   average\n");
+    for (int j=0;j<12;j++)
     {
-        correlationMatrix[i] = (double *)calloc(nrActivePoints, sizeof(double));
+        fprintf(fpStats,"%d %f %f %f\n",j+1,100 * monthlyMinBias.fractionWetDays[j],100 * monthlyMaxBias.fractionWetDays[j], 100 * monthlyAverageBias.fractionWetDays[j]);
     }
-    double** correlationMatrixSimulation;
-    correlationMatrixSimulation = (double **)calloc(nrActivePoints, sizeof(double*));
-    for (int i=0; i<nrActivePoints; i++)
+    fprintf(fpStats,"\nbias probability wetwet (percentage)\n");
+    fprintf(fpStats,"month\tmin\t   max\t   average\n");
+    for (int j=0;j<12;j++)
     {
-        correlationMatrixSimulation[i] = (double *)calloc(nrActivePoints, sizeof(double));
+        fprintf(fpStats,"%d\t%f\t%f\t%f\n",j+1,100 * monthlyMinBias.fractionWetWet[j],100 * monthlyMaxBias.fractionWetWet[j],100 * monthlyAverageBias.fractionWetWet[j]);
     }
-    int counterSimulation = 0;
-    // 1 correlation matrices
-    QString variableToPrint;
-
-
-
-    for (int iMonth = 0; iMonth<12 ; iMonth++)
-    {
-        counterSimulation = counter = 0;
-        for (int i=0; i<lengthSeries; i++)
-        {
-            if (obsDataD[0][i].date.month == iMonth+1) counter++;
-        }
-        for (int i=0; i<lengthArraySimulation; i++)
-        {
-            if (outputDataD[0][i].date.month == iMonth+1) counterSimulation++;
-        }
-        //printf("%f\n", counterSimulation);
-        double** arrayVariable;
-        arrayVariable = (double **)calloc(nrActivePoints, sizeof(double*));
-        for (int i=0; i<nrActivePoints; i++)
-        {
-            arrayVariable[i] = (double *)calloc(counter, sizeof(double));
-        }
-        double** arrayVariableSimulation;
-        arrayVariableSimulation = (double **)calloc(nrActivePoints, sizeof(double*));
-        for (int i=0; i<nrActivePoints; i++)
-        {
-            arrayVariableSimulation[i] = (double *)calloc(counterSimulation, sizeof(double));
-        }
-        int cObs,cSim;
-
-        for (int i=0; i<nrActivePoints; i++)
-        {
-            cObs = cSim = 0;
-            for (int j=0; j<counter; j++)
-            {
-                while (obsDataD[i][cObs].date.month != iMonth + 1)
-                {
-                    cObs++;
-                }
-                arrayVariable[i][j] = obsDataD[i][cObs].tMax;
-                cObs++;
-            }
-            for (int j=0; j<counterSimulation; j++)
-            {
-                while (outputDataD[i][cSim].date.month != iMonth + 1)
-                {
-                    cSim++;
-                }
-                //printf("%d\n",cSim);
-                arrayVariableSimulation[i][j] = outputDataD[i][cSim].tMax;
-                cSim++;
-            }
-        }
-        statistics::correlationsMatrix(nrActivePoints,arrayVariable,counter,correlationMatrix);
-        statistics::correlationsMatrix(nrActivePoints,arrayVariableSimulation,counterSimulation,correlationMatrixSimulation);
-        variableToPrint = "Tmax";
-        printSimulationResults(correlationMatrix,correlationMatrixSimulation,nrActivePoints,variableToPrint, iMonth+1);
-
-        for (int i=0; i<nrActivePoints; i++)
-        {
-            cSim = cObs = 0;
-            for (int j=0; j<counter; j++)
-            {
-                while (obsDataD[i][cObs].date.month != iMonth + 1)
-                {
-                    cObs++;
-                }
-                arrayVariable[i][j] = obsDataD[i][cObs].tMin;
-                cObs++;
-            }
-            for (int j=0; j<counterSimulation; j++)
-            {
-                while (outputDataD[i][cSim].date.month != iMonth + 1)
-                {
-                    cSim++;
-                }
-                arrayVariableSimulation[i][j] = outputDataD[i][cSim].tMin;
-                cSim++;
-            }
-
-        }
-        statistics::correlationsMatrix(nrActivePoints,arrayVariable,counter,correlationMatrix);
-        statistics::correlationsMatrix(nrActivePoints,arrayVariableSimulation,counterSimulation,correlationMatrixSimulation);
-        variableToPrint = "Tmin";
-        printSimulationResults(correlationMatrix,correlationMatrixSimulation,nrActivePoints,variableToPrint, iMonth+1);
-        cSim = cObs = 0;
-        for (int i=0; i<nrActivePoints; i++)
-        {
-            cSim = cObs = 0;
-            for (int j=0; j<counter; j++)
-            {
-                while (obsDataD[i][cObs].date.month != iMonth + 1)
-                {
-                    cObs++;
-                }
-                arrayVariable[i][j] = obsDataD[i][cObs].prec;
-                cObs++;
-            }
-            for (int j=0; j<counterSimulation; j++)
-            {
-                while (outputDataD[i][cSim].date.month != iMonth + 1)
-                {
-                    cSim++;
-                }
-                arrayVariableSimulation[i][j] = outputDataD[i][cSim].prec;
-                cSim++;
-            }
-        }
-        statistics::correlationsMatrix(nrActivePoints,arrayVariable,counter,correlationMatrix);
-        statistics::correlationsMatrix(nrActivePoints,arrayVariableSimulation,counterSimulation,correlationMatrixSimulation);
-        variableToPrint = "Prec";
-        printSimulationResults(correlationMatrix,correlationMatrixSimulation,nrActivePoints,variableToPrint, iMonth+1);
-        for (int i=0; i<nrActivePoints; i++)
-        {
-            free(arrayVariable[i]);
-            free(arrayVariableSimulation[i]);
-        }
-        free(arrayVariable);
-        free(arrayVariableSimulation);
-    }
-    */
-
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
-    printf ( "Current local time and date: %s", asctime (timeinfo) );
-
-
     return 0;
 }
 
-void printSimulationResults(double** observed,double** simulated,int nrStations, QString variable, int month)
+void readFileContents(FILE *fp,int site,TmonthlyData *monthlyData)
 {
-    //FILE* fp;
-    QString outputName;
-    outputName = "correlationMatrix" + variable + "month" + QString::number(month)+".csv";
-    QFile file(outputName);
-    file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
-    QTextStream stream( &file );
-
-    for (int i=0; i<nrStations;i++)
+    for (int iMonth=0;iMonth<12;iMonth++)
     {
-        for (int m=i; m<nrStations; m++)
+        for (int iVariable=0;iVariable<13;iVariable++)
         {
-            stream <<  observed[i][m] << "," << simulated[i][m] << "," << observed[i][m]-simulated[i][m] <<endl;
+            char dummy;
+            char variable[100];
+            double variableNumberFormat;
+            for (int i=0;i<100;i++)
+            {
+                variable[i] = '\0';
+            }
+            int counter = 0;
+            dummy = getc(fp);
+            while (dummy != '\n' && dummy != EOF)
+            {
+                variable[counter] = dummy;
+                counter++;
+                dummy = getc(fp);
+            }
+            variableNumberFormat = atof(variable);
+            //printf("%f\n",variableNumberFormat);
+            if (iVariable == 0) monthlyData[site].month[iMonth] = (int)(variableNumberFormat);
+            if (iVariable == 1) monthlyData[site].averageTmin[iMonth] = variableNumberFormat;
+            if (iVariable == 2) monthlyData[site].averageTmax[iMonth] = variableNumberFormat;
+            if (iVariable == 3) monthlyData[site].sumPrec[iMonth] = variableNumberFormat;
+            if (iVariable == 4) monthlyData[site].stdDevTmin[iMonth] = variableNumberFormat;
+            if (iVariable == 5) monthlyData[site].stdDevTmax[iMonth] = variableNumberFormat;
+            if (iVariable == 6) monthlyData[site].fractionWetDays[iMonth] = variableNumberFormat;
+            if (iVariable == 7) monthlyData[site].fractionWetWet[iMonth] = variableNumberFormat;
+            if (iVariable == 8) monthlyData[site].dewPointTmax[iMonth] = variableNumberFormat;
+            if (iVariable == 9) monthlyData[site].dryAverageTmin[iMonth] = variableNumberFormat;
+            if (iVariable == 10) monthlyData[site].dryAverageTmax[iMonth] = variableNumberFormat;
+            if (iVariable == 11) monthlyData[site].wetAverageTmin[iMonth] = variableNumberFormat;
+            if (iVariable == 12) monthlyData[site].wetAverageTmax[iMonth] = variableNumberFormat;
         }
-
     }
-    file.close();
 }
-/*
-void weatherGenerator2D::precipitationCorrelationMatricesSimulation()
+
+void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData* monthlyMax, TmonthlyData* monthlyMin, TmonthlyData* monthlyAverage, int nrSites)
 {
-    int counter =0;
-    TcorrelationVar amount,occurrence;
-    TcorrelationMatrix* correlationMatrixSimulation = nullptr;
-    correlationMatrixSimulation = (TcorrelationMatrix*)calloc(12, sizeof(TcorrelationMatrix));
-    for (int iMonth=0;iMonth<12;iMonth++)
+    for (int j=0;j<12;j++)
     {
-        correlationMatrixSimulation[iMonth].amount = (double**)calloc(nrStations, sizeof(double*));
-        correlationMatrixSimulation[iMonth].occurrence = (double**)calloc(nrStations, sizeof(double*));
-        for (int i=0;i<nrStations;i++)
-        {
-            correlationMatrixSimulation[iMonth].amount[i]= (double*)calloc(nrStations, sizeof(double));
-            correlationMatrixSimulation[iMonth].occurrence[i]= (double*)calloc(nrStations, sizeof(double));
-            for (int ii=0;ii<nrStations;ii++)
-            {
-                correlationMatrixSimulation[iMonth].amount[i][ii]= NODATA;
-                correlationMatrixSimulation[iMonth].occurrence[i][ii]= NODATA;
-            }
-        }
-    }
-    for (int iMonth=0;iMonth<12;iMonth++)
-    {
-        correlationMatrixSimulation[iMonth].month = iMonth + 1 ; // define the month of the correlation matrix;
-        for (int k=0; k<nrStations;k++) // correlation matrix diagonal elements;
-        {
-            correlationMatrixSimulation[iMonth].amount[k][k] = 1.;
-            correlationMatrixSimulation[iMonth].occurrence[k][k]= 1.;
-        }
+        monthlyMax->month[j] = NODATA;
+        monthlyMax->averageTmax[j] = NODATA;
+        monthlyMax->averageTmin[j] = NODATA;
+        monthlyMax->sumPrec[j] = NODATA;
+        monthlyMax->stdDevTmax[j] = NODATA;
+        monthlyMax->stdDevTmin[j] = NODATA;
+        monthlyMax->dewPointTmax[j] = NODATA;
+        monthlyMax->dryAverageTmax[j] = NODATA;
+        monthlyMax->dryAverageTmin[j] = NODATA;
+        monthlyMax->wetAverageTmax[j] = NODATA;
+        monthlyMax->wetAverageTmin[j] = NODATA;
+        monthlyMax->fractionWetDays[j] = NODATA;
+        monthlyMax->fractionWetWet[j] = NODATA;
+        monthlyMin->month[j] = 9999;
+        monthlyMin->averageTmax[j] = 9999;
+        monthlyMin->averageTmin[j] = 9999;
+        monthlyMin->sumPrec[j] = 9999;
+        monthlyMin->stdDevTmax[j] = 9999;
+        monthlyMin->stdDevTmin[j] = 9999;
+        monthlyMin->dewPointTmax[j] = 9999;
+        monthlyMin->dryAverageTmax[j] = 9999;
+        monthlyMin->dryAverageTmin[j] = 9999;
+        monthlyMin->wetAverageTmax[j] = 9999;
+        monthlyMin->wetAverageTmin[j] = 9999;
+        monthlyMin->fractionWetDays[j] = 9999;
+        monthlyMin->fractionWetWet[j] = 9999;
+        monthlyAverage->month[j] = 0;
+        monthlyAverage->averageTmax[j] = 0;
+        monthlyAverage->averageTmin[j] = 0;
+        monthlyAverage->sumPrec[j] = 0;
+        monthlyAverage->stdDevTmax[j] = 0;
+        monthlyAverage->stdDevTmin[j] = 0;
+        monthlyAverage->dewPointTmax[j] = 0;
+        monthlyAverage->dryAverageTmax[j] = 0;
+        monthlyAverage->dryAverageTmin[j] = 0;
+        monthlyAverage->wetAverageTmax[j] = 0;
+        monthlyAverage->wetAverageTmin[j] = 0;
+        monthlyAverage->fractionWetDays[j] = 0;
+        monthlyAverage->fractionWetWet[j] = 0;
 
-        for (int j=0; j<nrStations-1;j++)
-        {
-            for (int i=j+1; i<nrStations;i++)
-            {
-                counter = 0;
-                amount.meanValue1=0.;
-                amount.meanValue2=0.;
-                amount.covariance = amount.variance1 = amount.variance2 = 0.;
-                occurrence.meanValue1=0.;
-                occurrence.meanValue2=0.;
-                occurrence.covariance = occurrence.variance1 = occurrence.variance2 = 0.;
-
-                for (int k=0; k<365*parametersModel.yearOfSimulation;k++) // compute the monthly means
-                {
-                    int doy,dayCurrent,monthCurrent;
-                    dayCurrent = monthCurrent = 0;
-                    doy = k%365 + 1;
-                    weatherGenerator2D::dateFromDoy(doy,2001,&dayCurrent,&monthCurrent);
-                    if (monthCurrent == (iMonth+1))
-                    {
-                        if (((outputWeatherData[j].precipitation[k] - NODATA) > EPSILON) && ((outputWeatherData[i].precipitation[k] - NODATA) > EPSILON))
-                        {
-                            counter++;
-                            if (outputWeatherData[j].precipitation[k] > parametersModel.precipitationThreshold)
-                            {
-                                amount.meanValue1 += outputWeatherData[j].precipitation[k] ;
-                                occurrence.meanValue1++ ;
-                            }
-                            if (outputWeatherData[i].precipitation[k] > parametersModel.precipitationThreshold)
-                            {
-                                amount.meanValue2 += outputWeatherData[i].precipitation[k];
-                                occurrence.meanValue2++ ;
-                            }
-                        }
-                    }
-                }
-                if (counter != 0)
-                {
-                    amount.meanValue1 /= counter;
-                    occurrence.meanValue1 /= counter;
-                }
-
-                if (counter != 0)
-                {
-                    amount.meanValue2 /= counter;
-                    occurrence.meanValue2 /= counter;
-                }
-                // compute the monthly rho off-diagonal elements
-                for (int k=0; k<365*parametersModel.yearOfSimulation;k++)
-                {
-                    int doy,dayCurrent,monthCurrent;
-                    dayCurrent = monthCurrent = 0;
-                    doy = k%365+1;
-                    weatherGenerator2D::dateFromDoy(doy,2001,&dayCurrent,&monthCurrent);
-                    if (monthCurrent == (iMonth+1))
-                    {
-                        if ((outputWeatherData[j].precipitation[k] != NODATA) && (outputWeatherData[i].precipitation[k] != NODATA))
-                        {
-                            double value1,value2;
-                            if (outputWeatherData[j].precipitation[k] <= parametersModel.precipitationThreshold) value1 = 0.;
-                            else value1 = outputWeatherData[j].precipitation[k];
-                            if (outputWeatherData[i].precipitation[k] <= parametersModel.precipitationThreshold) value2 = 0.;
-                            else value2 = outputWeatherData[i].precipitation[k];
-
-                            amount.covariance += (value1 - amount.meanValue1)*(value2 - amount.meanValue2);
-                            amount.variance1 += (value1 - amount.meanValue1)*(value1 - amount.meanValue1);
-                            amount.variance2 += (value2 - amount.meanValue2)*(value2 - amount.meanValue2);
-
-                            if (outputWeatherData[j].precipitation[k] <= parametersModel.precipitationThreshold) value1 = 0.;
-                            else value1 = 1.;
-                            if (outputWeatherData[i].precipitation[k] <= parametersModel.precipitationThreshold) value2 = 0.;
-                            else value2 = 1.;
-
-                            occurrence.covariance += (value1 - occurrence.meanValue1)*(value2 - occurrence.meanValue2);
-                            occurrence.variance1 += (value1 - occurrence.meanValue1)*(value1 - occurrence.meanValue1);
-                            occurrence.variance2 += (value2 - occurrence.meanValue2)*(value2 - occurrence.meanValue2);
-                        }
-                    }
-                }
-                correlationMatrixSimulation[iMonth].amount[j][i]= amount.covariance / sqrt(amount.variance1*amount.variance2);
-                correlationMatrixSimulation[iMonth].amount[i][j] = correlationMatrixSimulation[iMonth].amount[j][i];
-                correlationMatrixSimulation[iMonth].occurrence[j][i]= occurrence.covariance / sqrt(occurrence.variance1*occurrence.variance2);
-                correlationMatrixSimulation[iMonth].occurrence[i][j] = correlationMatrixSimulation[iMonth].occurrence[j][i];
-            }
-        }
 
     }
-    FILE* fp;
-    fp = fopen("correlationMatrices.txt","w");
-    for (int iMonth=0;iMonth<12;iMonth++)
+    for (int i=0; i<nrSites;i++)
     {
-        fprintf(fp,"month %d \nsimulated - observed\n",iMonth+1);
-        for (int i=0;i<nrStations;i++)
+        for (int j=0;j<12;j++)
         {
-            for (int j=0;j<nrStations;j++)
-            {
-                fprintf(fp,"%.2f ", correlationMatrixSimulation[iMonth].amount[j][i]-correlationMatrix[iMonth].amount[j][i]);
-            }
-            fprintf(fp,"\n");
+            bias[i].month[j] = observed[i].month[j];
+            bias[i].averageTmax[j] = simulated[i].averageTmax[j] - observed[i].averageTmax[j];
+            bias[i].averageTmin[j] = simulated[i].averageTmin[j] - observed[i].averageTmin[j];
+            bias[i].sumPrec[j] = simulated[i].sumPrec[j] - observed[i].sumPrec[j];
+            bias[i].stdDevTmax[j] = simulated[i].stdDevTmax[j] - observed[i].stdDevTmax[j];
+            bias[i].stdDevTmin[j] = simulated[i].stdDevTmin[j] - observed[i].stdDevTmin[j];
+            bias[i].dewPointTmax[j] = simulated[i].dewPointTmax[j] - observed[i].dewPointTmax[j];
+            bias[i].dryAverageTmax[j] = simulated[i].dryAverageTmax[j] - observed[i].dryAverageTmax[j];
+            bias[i].dryAverageTmin[j] = simulated[i].dryAverageTmin[j] - observed[i].dryAverageTmin[j];
+            bias[i].wetAverageTmax[j] = simulated[i].wetAverageTmax[j] - observed[i].wetAverageTmax[j];
+            bias[i].wetAverageTmin[j] = simulated[i].wetAverageTmin[j] - observed[i].wetAverageTmin[j];
+            bias[i].fractionWetDays[j] = simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j];
+            bias[i].fractionWetWet[j] = simulated[i].fractionWetWet[j] - observed[i].fractionWetWet[j];
+
+            monthlyAverage->month[j] =  bias[i].month[j];
+            monthlyAverage->averageTmax[j] += bias[i].averageTmax[j]/nrSites;
+            monthlyAverage->averageTmin[j] += bias[i].averageTmin[j]/nrSites;
+            monthlyAverage->sumPrec[j] += bias[i].sumPrec[j]/nrSites;
+            monthlyAverage->stdDevTmax[j] += bias[i].stdDevTmax[j]/nrSites;
+            monthlyAverage->stdDevTmin[j] += bias[i].stdDevTmin[j]/nrSites;
+            monthlyAverage->dewPointTmax[j] += bias[i].dewPointTmax[j]/nrSites;
+            monthlyAverage->dryAverageTmax[j] += bias[i].dryAverageTmax[j]/nrSites;
+            monthlyAverage->dryAverageTmin[j] += bias[i].dryAverageTmin[j]/nrSites;
+            monthlyAverage->wetAverageTmax[j] += bias[i].wetAverageTmax[j]/nrSites;
+            monthlyAverage->wetAverageTmin[j] += bias[i].wetAverageTmin[j]/nrSites;
+            monthlyAverage->fractionWetDays[j] += bias[i].fractionWetDays[j]/nrSites;
+            monthlyAverage->fractionWetWet[j] += bias[i].fractionWetWet[j]/nrSites;
+
+
+            monthlyMax->month[j] = bias[i].month[j];
+            monthlyMax->averageTmax[j] = MAXVALUE(monthlyMax->averageTmax[j],simulated[i].averageTmax[j] - observed[i].averageTmax[j]);
+            monthlyMax->averageTmin[j] = MAXVALUE(monthlyMax->averageTmin[j],simulated[i].averageTmin[j] - observed[i].averageTmin[j]);
+            monthlyMax->sumPrec[j] = MAXVALUE(monthlyMax->sumPrec[j],simulated[i].sumPrec[j] - observed[i].sumPrec[j]);
+            monthlyMax->stdDevTmax[j] = MAXVALUE(monthlyMax->stdDevTmax[j],simulated[i].stdDevTmax[j] - observed[i].stdDevTmax[j]);
+            monthlyMax->stdDevTmin[j] = MAXVALUE(monthlyMax->stdDevTmin[j],simulated[i].stdDevTmin[j] - observed[i].stdDevTmin[j]);
+            monthlyMax->dewPointTmax[j] = MAXVALUE(monthlyMax->dewPointTmax[j],simulated[i].dewPointTmax[j] - observed[i].dewPointTmax[j]);
+            monthlyMax->dryAverageTmax[j] = MAXVALUE(monthlyMax->dryAverageTmax[j],simulated[i].dryAverageTmax[j] - observed[i].dryAverageTmax[j]);
+            monthlyMax->dryAverageTmin[j] = MAXVALUE(monthlyMax->dryAverageTmin[j],simulated[i].dryAverageTmin[j] - observed[i].dryAverageTmin[j]);
+            monthlyMax->wetAverageTmax[j] = MAXVALUE(monthlyMax->wetAverageTmax[j],simulated[i].wetAverageTmax[j] - observed[i].wetAverageTmax[j]);
+            monthlyMax->wetAverageTmin[j] = MAXVALUE(monthlyMax->wetAverageTmin[j],simulated[i].wetAverageTmin[j] - observed[i].wetAverageTmin[j]);
+            monthlyMax->fractionWetDays[j] = MAXVALUE(monthlyMax->fractionWetDays[j],simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j]);
+            monthlyMax->fractionWetWet[j] = MAXVALUE(monthlyMax->fractionWetWet[j],simulated[i].fractionWetWet[j] - observed[i].fractionWetWet[j]);
+
+            monthlyMin->month[j] = bias[i].month[j];
+            monthlyMin->averageTmax[j] = MINVALUE(monthlyMin->averageTmax[j],simulated[i].averageTmax[j] - observed[i].averageTmax[j]);
+            monthlyMin->averageTmin[j] = MINVALUE(monthlyMin->averageTmin[j],simulated[i].averageTmin[j] - observed[i].averageTmin[j]);
+            monthlyMin->sumPrec[j] = MINVALUE(monthlyMin->sumPrec[j],simulated[i].sumPrec[j] - observed[i].sumPrec[j]);
+            monthlyMin->stdDevTmax[j] = MINVALUE(monthlyMin->stdDevTmax[j],simulated[i].stdDevTmax[j] - observed[i].stdDevTmax[j]);
+            monthlyMin->stdDevTmin[j] = MINVALUE(monthlyMin->stdDevTmin[j],simulated[i].stdDevTmin[j] - observed[i].stdDevTmin[j]);
+            monthlyMin->dewPointTmax[j] = MINVALUE(monthlyMin->dewPointTmax[j],simulated[i].dewPointTmax[j] - observed[i].dewPointTmax[j]);
+            monthlyMin->dryAverageTmax[j] = MINVALUE(monthlyMin->dryAverageTmax[j],simulated[i].dryAverageTmax[j] - observed[i].dryAverageTmax[j]);
+            monthlyMin->dryAverageTmin[j] = MINVALUE(monthlyMin->dryAverageTmin[j],simulated[i].dryAverageTmin[j] - observed[i].dryAverageTmin[j]);
+            monthlyMin->wetAverageTmax[j] = MINVALUE(monthlyMin->wetAverageTmax[j],simulated[i].wetAverageTmax[j] - observed[i].wetAverageTmax[j]);
+            monthlyMin->wetAverageTmin[j] = MINVALUE(monthlyMin->wetAverageTmin[j],simulated[i].wetAverageTmin[j] - observed[i].wetAverageTmin[j]);
+            monthlyMin->fractionWetDays[j] = MINVALUE(monthlyMin->fractionWetDays[j],simulated[i].fractionWetDays[j] - observed[i].fractionWetDays[j]);
+            monthlyMin->fractionWetWet[j] = MINVALUE(monthlyMin->fractionWetWet[j],simulated[i].fractionWetWet[j] - observed[i].fractionWetWet[j]);
         }
     }
-    fclose(fp);
-    for (int iMonth=0;iMonth<12;iMonth++)
-    {
-        for (int i=0;i<nrStations;i++)
-        {
-            free(correlationMatrixSimulation[iMonth].amount[i]);
-            free(correlationMatrixSimulation[iMonth].occurrence[i]);
-        }
-    }
-    free(correlationMatrixSimulation);
-}*/
+
+}

@@ -1,4 +1,4 @@
-Data	Tmin (°C)	Tmax (°C)	Tave (°C)	Prec (mm)	RHmin (%)	RHmean (%)	RHmax (%)	Wind (m/s)	Wind dir(°)	Rad (MJ)
+Data	Tmin (°C)	Tmax (°C)	Tave (°C)	Prec (mm)
 01/01/1961	-7.2	1.7	-2.75	0.9						
 02/01/1961	-0.1	5.8	2.85	2.9						
 03/01/1961	-1.7	9.6	3.95	0.2						

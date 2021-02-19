@@ -21,7 +21,7 @@
 
 // [ 1 - 10 ]
 //#define NR_STATIONS 10
-#define STARTING_YEAR 3001
+#define STARTING_YEAR 1
 #define PREC_THRESHOLD 0.25
 void printSimulationResults(ToutputWeatherData* output,int nrStations,int lengthArray);
 static Crit3DMeteoGridDbHandler* meteoGridDbHandler;
@@ -68,8 +68,8 @@ bool loadMeteoGridDB(QString* errorString)
 
     QString path;
     if (! searchDataPath(&path)) return -1;
-    QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
-    //QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v1.xml";
+    //QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
+    QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v2.1.xml";
     meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
 
     // todo
@@ -93,7 +93,7 @@ bool saveOnMeteoGridDB(QString* errorString)
     //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
     QString path;
     if (! searchDataPath(&path)) return -1;
-    QString xmlName = path + "METEOGRID/DBGridXML_C7_WG2D.xml";
+    QString xmlName = path + "METEOGRID/DBGridXML_Output_WG2D.xml";
 
     meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
 
@@ -115,12 +115,18 @@ bool saveOnMeteoGridDB(QString* errorString)
 
 int main(int argc, char *argv[])
 {
+    printf("Do you want to write the output on database? type : 1 (yes) , or 0 (no) \n");
+    int writeOnDB;
+    //scanf("%d",&writeOnDB);
+    writeOnDB = 1;
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
-    scanf("%d",&startingYear);
+    //scanf("%d",&startingYear);
+    startingYear = 2001;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
-    scanf("%d",&nrYearSimulations);
+    //scanf("%d",&nrYearSimulations);
+    nrYearSimulations = 1;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -133,8 +139,8 @@ int main(int argc, char *argv[])
     QString myError;
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
-    QDate firstDay(1961,1,1);
-    QDate lastDay(1990,12,31);
+    QDate firstDay(2001,1,1);
+    QDate lastDay(2020,12,31);
     QDate currentDay;
     QDate firstDateDB(1,1,1);
     TObsDataD** obsDataD = nullptr;
@@ -145,18 +151,20 @@ int main(int argc, char *argv[])
         std::cout << errorString.toStdString() << std::endl;
         return -1;
     }
-
     std::string id;
     int nrActivePoints = 0;
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("../TestWG2D/inputDataC7/list_C7.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("../TestWG2D/inputDataC7/list_C7.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
     cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
@@ -164,7 +172,6 @@ int main(int argc, char *argv[])
     { // !! take out
         readTheCellNumber(fp,numCell);// !! take out
         cellCode[i] = atoi(numCell);// !! take out
-        //QString stringNumber(numCell);
     }// !! take out
     fclose(fp);
 
@@ -177,11 +184,6 @@ int main(int argc, char *argv[])
 
            if (meteoGridDbHandler->meteoGrid()->getMeteoPointActiveId(row, col, &id))
            {
-               /*for (int i=0;i<5;i++)
-                    code[i]=id[i];
-
-               fprintf(fp,"%c%c%c%c%c\n",code[0],code[1],code[2],code[3],code[4]);
-               */
                ++nrActivePoints;
                if (nrActivePoints == 1)
                {
@@ -193,9 +195,7 @@ int main(int argc, char *argv[])
            }
         }
     }
-    //fclose(fp);
-    //printf("concluso \n");
-    //return 0;
+
     #ifdef MAX_NR_POINTS
         nrActivePoints = MINVALUE(nrActivePoints, MAX_NR_POINTS);
     #endif
@@ -249,6 +249,7 @@ int main(int argc, char *argv[])
                dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
                                                                     variable, firstDay, lastDay, &firstDateDB);
                for (int iLength=0; iLength<lengthSeries; iLength++) obsDataD[counter][iLength].tMin = dailyVariable[iLength];
+               //for (int iLength=0; iLength<lengthSeries; iLength++) printf("temp %f\n",dailyVariable[iLength]);
                variable = dailyAirTemperatureMax;
                dailyVariable = meteoGridDbHandler->loadGridDailyVar(&myError, QString::fromStdString(id),
                                                                     variable, firstDay, lastDay, &firstDateDB);
@@ -278,12 +279,15 @@ int main(int argc, char *argv[])
     lengthArraySimulation = 365 * nrYearSimulations;
     bool computeStats = true;
     WG2D.initializeParameters(PREC_THRESHOLD, nrYearSimulations, distributionType,
-                              computePrecipitation, computeTemperature,computeStats);
+                              computePrecipitation, computeTemperature,computeStats,ROLLING_AVERAGE);
 
     WG2D.computeWeatherGenerator2D();
 
     results = WG2D.getWeatherGeneratorOutput(startingYear);
-    return 0;
+    if (writeOnDB != 1)
+    {
+        return 0;
+    }
     //printSimulationResults(results,nrActivePoints,lengthArraySimulation);
     std::vector<TObsDataD> outputDataD;
     int nrLeapYears = 0;
@@ -336,8 +340,7 @@ int main(int argc, char *argv[])
                    outputDataD[k].tMin = results[counter].minT[j];
                    outputDataD[k].tMax = results[counter].maxT[j];
                    outputDataD[k].prec = results[counter].precipitation[j];
-                   //printf("%d  %d  %d\n",outputDataD[k].date.day,outputDataD[k].date.month,outputDataD[k].date.year);
-                   //printf("%f  %f  %f\n",outputDataD[k].tMin,outputDataD[k].tMax,outputDataD[k].prec);
+
                    if (results[counter].daySimulated[j] == 28 && results[counter].monthSimulated[j] == 2)
                    {
                         if (isLeapYear(results[counter].yearSimulated[j]))
@@ -349,17 +352,11 @@ int main(int argc, char *argv[])
                             outputDataD[k].tMin = results[counter].minT[j];
                             outputDataD[k].tMax = results[counter].maxT[j];
                             outputDataD[k].prec = results[counter].precipitation[j];
-                            //printf("%d  %d  %d\n",outputDataD[k].date.day,outputDataD[k].date.month,outputDataD[k].date.year);
-                            //printf("%f  %f  %f\n",outputDataD[k].tMin,outputDataD[k].tMax,outputDataD[k].prec);
                         }
                    }
-
                    k++;
-
-
-                   //getchar();
                }
-               //getchar();
+
                meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD = outputDataD;
                /*for (int j=0;j<lengthArraySimulation+nrYearSimulations;j++)
                {
@@ -372,7 +369,6 @@ int main(int argc, char *argv[])
            }
            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
         }
-        //std::cout << row << "\n";
     }
     meteoGridDbHandlerWG2D->closeDatabase();
     return 0;
