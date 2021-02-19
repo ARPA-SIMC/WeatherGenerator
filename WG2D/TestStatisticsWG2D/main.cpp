@@ -108,12 +108,92 @@ bool loadMeteoGridDB(QString* errorString, QString xmlName)
 }
 
 
+bool saveOnMeteoGridDB(QString* errorString)
+{
+    //QString xmlName = QFileDialog::getOpenFileName(nullptr, "Open XML grid", "", "XML files (*.xml)");
+    QString path;
+    if (! searchDataPath(&path)) return -1;
+    QString xmlName = path + "METEOGRID/DBGridXML_Output_WG2D.xml";
+
+    meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
+
+    // todo
+    //meteoGridDbHandler->meteoGrid()->setGisSettings(this->gisSettings);
+
+    if (! meteoGridDbHandlerWG2D->parseXMLGrid(xmlName, errorString)) return false;
+
+    if (! meteoGridDbHandlerWG2D->openDatabase(errorString))return false;
+
+    if (! meteoGridDbHandlerWG2D->loadCellProperties(errorString)) return false;
+
+    //if (! meteoGridDbHandlerWG2D->updateGridDate(errorString)) return false;
+
+    logInfo("Meteo Grid = " + xmlName);
+
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication myApp(argc, argv);
     QString appPath = myApp.applicationDirPath() + "/";
 
     QString myError;
+
+    //preliminary creation of non present tables
+    /*
+    QDate firstDayOutput(2000,1,1);
+    QDate lastDayOutput(2000,1,1);
+    QString errorStringPreviews;
+    int lengthArrayPre = 1;
+    if (! saveOnMeteoGridDB(&errorStringPreviews))
+    {
+        std::cout << errorStringPreviews.toStdString() << std::endl;
+        return -1;
+    }
+    QList<meteoVariable> listMeteoVariable = {dailyAirTemperatureMin,dailyAirTemperatureMax,dailyPrecipitation};
+    std::string idPre;
+
+    int nrRows =  meteoGridDbHandlerWG2D->gridStructure().header().nrRows;
+    int nrCols =  meteoGridDbHandlerWG2D->gridStructure().header().nrCols;
+    std::vector<TObsDataD> outputInitializationDataD;
+    outputInitializationDataD.resize(lengthArrayPre);
+    outputInitializationDataD[0].date.day = 1;
+    outputInitializationDataD[0].date.month = 1;
+    outputInitializationDataD[0].date.year = 2000;
+    outputInitializationDataD[0].prec = NODATA;
+    outputInitializationDataD[0].tMax = NODATA;
+    outputInitializationDataD[0].tMin = NODATA;
+
+    for (int row = 0; row < meteoGridDbHandlerWG2D->gridStructure().header().nrRows; row++)
+    {
+        for (int col = 0; col < meteoGridDbHandlerWG2D->gridStructure().header().nrCols; col++)
+        {
+
+            if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &idPre))
+            {
+
+                for (int k=0;k<lengthArrayPre;k++)
+                {
+                    outputInitializationDataD.resize(lengthArrayPre);
+                    outputInitializationDataD[k].date.day = 1;
+                    outputInitializationDataD[k].date.month = 1;
+                    outputInitializationDataD[k].date.year = 2000;
+                    outputInitializationDataD[k].prec = NODATA;
+                    outputInitializationDataD[k].tMax = NODATA;
+                    outputInitializationDataD[k].tMin = NODATA;
+                }
+                meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD = outputInitializationDataD;
+                meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError, QString::fromStdString(idPre),row,col,firstDayOutput,lastDayOutput,listMeteoVariable);
+            }
+            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
+        }
+        printf("%d\n",row);
+    }
+    meteoGridDbHandlerWG2D->closeDatabase();
+    return 0;
+    */
+
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
     QDate firstDay(2001,1,1);
