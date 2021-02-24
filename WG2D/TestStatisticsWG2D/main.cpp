@@ -530,7 +530,7 @@ int main(int argc, char *argv[])
         }
         //std::cout << row << "\n";
     }
-
+    /*
     for (int i=0;i<nrActivePoints;i++)
     {
         currentDay = firstDayWG2D;
@@ -584,7 +584,7 @@ int main(int argc, char *argv[])
             simDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
             printf("active point %d,month %d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,simDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth]);
         }
-    }
+    }*/
 
     dailyVariableWG2D.clear();
     meteoGridDbHandlerWG2D->closeDatabase();
