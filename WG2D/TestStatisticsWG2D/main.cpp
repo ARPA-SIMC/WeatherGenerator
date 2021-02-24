@@ -213,14 +213,14 @@ int main(int argc, char *argv[])
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
 
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
@@ -345,13 +345,13 @@ int main(int argc, char *argv[])
     std::vector<float> dailyVariableWG2D;
     //FILE* fp;
     //fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
-    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     //int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
     //fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
-    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    fp = fopen("../test_WG2D_Eraclito/inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
 
     //int* cellCode = nullptr; // !! take out
     //char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
     dailyVariableWG2D.clear();
     meteoGridDbHandlerWG2D->closeDatabase();
 
-
+    return 0;
     // end of read second DB
 
 

@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 1;
+    nrYearSimulations = 50;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -366,6 +366,7 @@ int main(int argc, char *argv[])
                }*/
                meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError, QString::fromStdString(id),row,col,firstDayOutput,lastDayOutput,listMeteoVariable);
                counter++;
+               printf("saved table nr. %d\n",counter);
            }
            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
         }
