@@ -34,6 +34,18 @@ struct TmonthlyData{
 
 };
 
+struct TdataAnalysis{
+    double** daysWithMoreThan50mm;
+    double** daysWithMoreThan40mm;
+    double** daysWithMoreThan30mm;
+    double** daysWithMoreThan20mm;
+    double** daysWithMoreThan10mm;
+    double** daysWithMoreThan05mm;
+    double** daysWithMoreThan01mm;
+    double** daysWithLessThan01mm;
+
+};
+
 void readFileContents(FILE *fp,int site,TmonthlyData* monthlyData);
 void computeBias(TmonthlyData *observed, TmonthlyData *simulated, TmonthlyData* bias, TmonthlyData *monthlyMax, TmonthlyData *monthlyMin, TmonthlyData *monthlyAverage, int nrSites);
 int readERG5CellListNumber(FILE *fp);
@@ -129,6 +141,8 @@ bool saveOnMeteoGridDB(Crit3DMeteoGridDbHandler* myHandler, QString* errorString
 
 int main(int argc, char *argv[])
 {
+
+
     Crit3DMeteoGridDbHandler* meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
     Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D = new Crit3DMeteoGridDbHandler();
 
@@ -137,66 +151,14 @@ int main(int argc, char *argv[])
 
     QString myError;
 
-    //preliminary creation of non present tables
-    /*
-    QDate firstDayOutput(2000,1,1);
-    QDate lastDayOutput(2000,1,1);
-    QString errorStringPreviews;
-    int lengthArrayPre = 1;
-    if (! saveOnMeteoGridDB(&errorStringPreviews))
-    {
-        std::cout << errorStringPreviews.toStdString() << std::endl;
-        return -1;
-    }
-    QList<meteoVariable> listMeteoVariable = {dailyAirTemperatureMin,dailyAirTemperatureMax,dailyPrecipitation};
-    std::string idPre;
-
-    int nrRows =  meteoGridDbHandlerWG2D->gridStructure().header().nrRows;
-    int nrCols =  meteoGridDbHandlerWG2D->gridStructure().header().nrCols;
-    std::vector<TObsDataD> outputInitializationDataD;
-    outputInitializationDataD.resize(lengthArrayPre);
-    outputInitializationDataD[0].date.day = 1;
-    outputInitializationDataD[0].date.month = 1;
-    outputInitializationDataD[0].date.year = 2000;
-    outputInitializationDataD[0].prec = NODATA;
-    outputInitializationDataD[0].tMax = NODATA;
-    outputInitializationDataD[0].tMin = NODATA;
-
-    for (int row = 0; row < meteoGridDbHandlerWG2D->gridStructure().header().nrRows; row++)
-    {
-        for (int col = 0; col < meteoGridDbHandlerWG2D->gridStructure().header().nrCols; col++)
-        {
-
-            if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &idPre))
-            {
-
-                for (int k=0;k<lengthArrayPre;k++)
-                {
-                    outputInitializationDataD.resize(lengthArrayPre);
-                    outputInitializationDataD[k].date.day = 1;
-                    outputInitializationDataD[k].date.month = 1;
-                    outputInitializationDataD[k].date.year = 2000;
-                    outputInitializationDataD[k].prec = NODATA;
-                    outputInitializationDataD[k].tMax = NODATA;
-                    outputInitializationDataD[k].tMin = NODATA;
-                }
-                meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD = outputInitializationDataD;
-                meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError, QString::fromStdString(idPre),row,col,firstDayOutput,lastDayOutput,listMeteoVariable);
-            }
-            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
-        }
-        printf("%d\n",row);
-    }
-    meteoGridDbHandlerWG2D->closeDatabase();
-    return 0;
-    */
-
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
     QDate firstDay(2001,1,1);
     QDate lastDay(2020,12,31);
     QDate currentDay;
     QDate firstDateDB(1,1,1);
+
+
     TObsDataD** obsDataD = nullptr;
     QString xmlName;
     xmlName = "METEOGRID/DBGridXML_ERG5_v2.1.xml";
@@ -218,6 +180,64 @@ int main(int argc, char *argv[])
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
+
+    TdataAnalysis obsDataAnalysis;
+    TdataAnalysis simDataAnalysis;
+    obsDataAnalysis.daysWithLessThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.daysWithMoreThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.daysWithMoreThan05mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.daysWithMoreThan10mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.daysWithMoreThan20mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.daysWithMoreThan30mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.daysWithMoreThan40mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.daysWithMoreThan50mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithLessThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithMoreThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithMoreThan05mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithMoreThan10mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithMoreThan20mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithMoreThan30mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithMoreThan40mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.daysWithMoreThan50mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    for (int i=0;i<numberOfCells;i++)
+    {
+        obsDataAnalysis.daysWithLessThan01mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.daysWithMoreThan01mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.daysWithMoreThan05mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.daysWithMoreThan10mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.daysWithMoreThan20mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.daysWithMoreThan30mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.daysWithMoreThan40mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.daysWithMoreThan50mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithLessThan01mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithMoreThan01mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithMoreThan05mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithMoreThan10mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithMoreThan20mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithMoreThan30mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithMoreThan40mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.daysWithMoreThan50mm[i] =  (double *) calloc(12, sizeof(double));
+        for (int j=0;j<12;j++)
+        {
+            obsDataAnalysis.daysWithLessThan01mm[i][j] =  0;
+            obsDataAnalysis.daysWithMoreThan01mm[i][j] =  0;
+            obsDataAnalysis.daysWithMoreThan05mm[i][j] =  0;
+            obsDataAnalysis.daysWithMoreThan10mm[i][j] =  0;
+            obsDataAnalysis.daysWithMoreThan20mm[i][j] =  0;
+            obsDataAnalysis.daysWithMoreThan30mm[i][j] =  0;
+            obsDataAnalysis.daysWithMoreThan40mm[i][j] =  0;
+            obsDataAnalysis.daysWithMoreThan50mm[i][j] =  0;
+            simDataAnalysis.daysWithLessThan01mm[i][j] =  0;
+            simDataAnalysis.daysWithMoreThan01mm[i][j] =  0;
+            simDataAnalysis.daysWithMoreThan05mm[i][j] =  0;
+            simDataAnalysis.daysWithMoreThan10mm[i][j] =  0;
+            simDataAnalysis.daysWithMoreThan20mm[i][j] =  0;
+            simDataAnalysis.daysWithMoreThan30mm[i][j] =  0;
+            simDataAnalysis.daysWithMoreThan40mm[i][j] =  0;
+            simDataAnalysis.daysWithMoreThan50mm[i][j] =  0;
+        }
+    }
+
 
     //fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
     fp = fopen("../test_WG2D_Eraclito/inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
@@ -321,13 +341,70 @@ int main(int argc, char *argv[])
         //std::cout << row << "\n";
     }
 
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        currentDay = firstDay;
+        for (int j=0;j<lengthSeries;j++)
+        {
+            if (obsDataD[i][j].prec >= 50)
+            {
+                ++obsDataAnalysis.daysWithMoreThan50mm[i][currentDay.month()-1];
+            }
+            if (obsDataD[i][j].prec >= 40 && obsDataD[i][j].prec < 50)
+            {
+                ++obsDataAnalysis.daysWithMoreThan40mm[i][currentDay.month()-1];
+            }
+            if (obsDataD[i][j].prec >= 30 && obsDataD[i][j].prec < 40)
+            {
+                ++obsDataAnalysis.daysWithMoreThan30mm[i][currentDay.month()-1];
+            }
+            if (obsDataD[i][j].prec >= 20 && obsDataD[i][j].prec < 30)
+            {
+                ++obsDataAnalysis.daysWithMoreThan20mm[i][currentDay.month()-1];
+            }
+            if (obsDataD[i][j].prec >= 10 && obsDataD[i][j].prec < 20)
+            {
+                ++obsDataAnalysis.daysWithMoreThan10mm[i][currentDay.month()-1];
+            }
+            if (obsDataD[i][j].prec >= 5 && obsDataD[i][j].prec < 10)
+            {
+                ++obsDataAnalysis.daysWithMoreThan05mm[i][currentDay.month()-1];
+            }
+            if (obsDataD[i][j].prec >= 1 && obsDataD[i][j].prec < 5)
+            {
+                ++obsDataAnalysis.daysWithMoreThan01mm[i][currentDay.month()-1];
+            }
+            if (obsDataD[i][j].prec >= 0.25 && obsDataD[i][j].prec < 1)
+            {
+                ++obsDataAnalysis.daysWithLessThan01mm[i][currentDay.month()-1];
+            }
+            currentDay = currentDay.addDays(1);
+        }
+        for (int jMonth=0;jMonth<12;jMonth++)
+        {
+
+            int denominator = 1 + lastDay.year() - firstDay.year();
+            obsDataAnalysis.daysWithMoreThan50mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithMoreThan40mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithMoreThan30mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithMoreThan20mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithMoreThan10mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithMoreThan05mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
+            printf("active point %d,month %d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,obsDataAnalysis.daysWithMoreThan50mm[i][jMonth],obsDataAnalysis.daysWithMoreThan40mm[i][jMonth],obsDataAnalysis.daysWithMoreThan30mm[i][jMonth],obsDataAnalysis.daysWithMoreThan20mm[i][jMonth],obsDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],obsDataAnalysis.daysWithMoreThan01mm[i][jMonth],obsDataAnalysis.daysWithLessThan01mm[i][jMonth]);
+        }
+    }
+
+
+
     dailyVariable.clear();
     meteoGridDbHandler->closeDatabase();
 
 // read second DB
     printf("second DB\n");
     QDate firstDayWG2D(2001,1,1);
-    QDate lastDayWG2D(2020,12,31);
+    QDate lastDayWG2D(2050,12,31);
 
     TObsDataD** outputDataD = nullptr;
     xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
@@ -355,7 +432,7 @@ int main(int argc, char *argv[])
 
     //int* cellCode = nullptr; // !! take out
     //char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
-    cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
+    //cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
     for (int i=0; i<numberOfCells; i++) // !! take out
     { // !! take out
         readTheCellNumber(fp,numCell);// !! take out
@@ -373,7 +450,9 @@ int main(int argc, char *argv[])
            if (meteoGridDbHandlerWG2D->meteoGrid()->getMeteoPointActiveId(row, col, &id))
            {
                ++nrActivePoints;
-               if (nrActivePoints == 1)
+               int idCellInt;
+               idCellInt = atoi(id.c_str());
+               if (idCellInt == cellCode[0])
                {
                    variable = dailyAirTemperatureMin;
                    dailyVariableWG2D = meteoGridDbHandlerWG2D->loadGridDailyVar(&myError, QString::fromStdString(id),
@@ -452,10 +531,65 @@ int main(int argc, char *argv[])
         //std::cout << row << "\n";
     }
 
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        currentDay = firstDayWG2D;
+        for (int j=0;j<lengthSeries;j++)
+        {
+            if (outputDataD[i][j].prec >= 50)
+            {
+                ++simDataAnalysis.daysWithMoreThan50mm[i][currentDay.month()-1];
+            }
+            if (outputDataD[i][j].prec >= 40 && obsDataD[i][j].prec < 50)
+            {
+                ++simDataAnalysis.daysWithMoreThan40mm[i][currentDay.month()-1];
+            }
+            if (outputDataD[i][j].prec >= 30 && obsDataD[i][j].prec < 40)
+            {
+                ++simDataAnalysis.daysWithMoreThan30mm[i][currentDay.month()-1];
+            }
+            if (outputDataD[i][j].prec >= 20 && obsDataD[i][j].prec < 30)
+            {
+                ++simDataAnalysis.daysWithMoreThan20mm[i][currentDay.month()-1];
+            }
+            if (outputDataD[i][j].prec >= 10 && obsDataD[i][j].prec < 20)
+            {
+                ++simDataAnalysis.daysWithMoreThan10mm[i][currentDay.month()-1];
+            }
+            if (outputDataD[i][j].prec >= 5 && obsDataD[i][j].prec < 10)
+            {
+                ++simDataAnalysis.daysWithMoreThan05mm[i][currentDay.month()-1];
+            }
+            if (outputDataD[i][j].prec >= 1 && obsDataD[i][j].prec < 5)
+            {
+                ++simDataAnalysis.daysWithMoreThan01mm[i][currentDay.month()-1];
+            }
+            if (outputDataD[i][j].prec >= 0.25 && obsDataD[i][j].prec < 1)
+            {
+                ++simDataAnalysis.daysWithLessThan01mm[i][currentDay.month()-1];
+            }
+            currentDay = currentDay.addDays(1);
+        }
+        for (int jMonth=0;jMonth<12;jMonth++)
+        {
+
+            int denominator = 1 + lastDayWG2D.year() - firstDayWG2D.year();
+            simDataAnalysis.daysWithMoreThan50mm[i][jMonth] /= denominator;
+            simDataAnalysis.daysWithMoreThan40mm[i][jMonth] /= denominator;
+            simDataAnalysis.daysWithMoreThan30mm[i][jMonth] /= denominator;
+            simDataAnalysis.daysWithMoreThan20mm[i][jMonth] /= denominator;
+            simDataAnalysis.daysWithMoreThan10mm[i][jMonth] /= denominator;
+            simDataAnalysis.daysWithMoreThan05mm[i][jMonth] /= denominator;
+            simDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
+            simDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
+            printf("active point %d,month %d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,simDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth]);
+        }
+    }
+
     dailyVariableWG2D.clear();
     meteoGridDbHandlerWG2D->closeDatabase();
+    free(cellCode);
 
-    return 0;
     // end of read second DB
 
 
@@ -526,6 +660,11 @@ int main(int argc, char *argv[])
     {
         fprintf(fpStats,"%d\t%f\t%f\t%f\n",j+1,100 * monthlyMinBias.fractionWetWet[j],100 * monthlyMaxBias.fractionWetWet[j],100 * monthlyAverageBias.fractionWetWet[j]);
     }
+
+    free(monthlyDataClimate);
+    free(monthlyDataSimulation);
+    free(monthlyBias);
+
     return 0;
 }
 
