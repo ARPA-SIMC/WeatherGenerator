@@ -4,6 +4,7 @@
 #include "timeUtility.h"
 #include "wgClimate.h"
 
+#include <time.h>
 #include <QFile>
 #include <QDir>
 #include <QDebug>
