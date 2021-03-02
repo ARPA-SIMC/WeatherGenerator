@@ -5,7 +5,7 @@
 
 // please set the following variables before running the weather generator
 #define NR_STATIONS 10 // number of stations/cells. Do not exceed 10000 stations, corresponding to 9999.txt input file
-#define NR_SIMULATION_YEARS 10 // integer number please do not exceed 1000 years.Be careful with memory issue by default 10 stations are inserted.
+#define NR_SIMULATION_YEARS 50 // integer number please do not exceed 1000 years.Be careful with memory issue by default 10 stations are inserted.
 #define STARTING_YEAR  1 // modify if necessary
 #define PREC_THRESHOLD 0.25  // choose the threshold in mm
 #define TEMPERATURE_AVERAGE_METHOD 0 // 0 for ROLLING AVERAGE (default ) otherwise 1 FOURIER HARMONICS AVERAGE (the first 3 harmonics are used)
