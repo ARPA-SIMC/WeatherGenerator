@@ -483,7 +483,9 @@ int main(int argc, char *argv[])
             outputDataD[i][j].date.month = currentDay.month();
             outputDataD[i][j].date.year = currentDay.year();
             currentDay = currentDay.addDays(1);
+            //printf("month %d,%d,%d\n",outputDataD[i][j].date.day,outputDataD[i][j].date.month,outputDataD[i][j].date.year);
         }
+        //getchar();
     }
 
     printf("load data...\n");
@@ -530,61 +532,68 @@ int main(int argc, char *argv[])
         }
         //std::cout << row << "\n";
     }
-    /*
+
     for (int i=0;i<nrActivePoints;i++)
     {
         currentDay = firstDayWG2D;
         for (int j=0;j<lengthSeries;j++)
         {
+            int month;
+            month = outputDataD[i][j].date.month - 1;
+            //printf("mese %d\n",month);
             if (outputDataD[i][j].prec >= 50)
             {
-                ++simDataAnalysis.daysWithMoreThan50mm[i][currentDay.month()-1];
+                ++simDataAnalysis.daysWithMoreThan50mm[i][month];
             }
-            if (outputDataD[i][j].prec >= 40 && obsDataD[i][j].prec < 50)
+
+            else if (outputDataD[i][j].prec >= 40 && obsDataD[i][j].prec < 50)
             {
-                ++simDataAnalysis.daysWithMoreThan40mm[i][currentDay.month()-1];
+                //++simDataAnalysis.daysWithMoreThan40mm[i][month];
             }
-            if (outputDataD[i][j].prec >= 30 && obsDataD[i][j].prec < 40)
+
+            else if (outputDataD[i][j].prec >= 30 && obsDataD[i][j].prec < 40)
             {
-                ++simDataAnalysis.daysWithMoreThan30mm[i][currentDay.month()-1];
+                //++simDataAnalysis.daysWithMoreThan30mm[i][month];
             }
-            if (outputDataD[i][j].prec >= 20 && obsDataD[i][j].prec < 30)
+
+            else if (outputDataD[i][j].prec >= 20 && obsDataD[i][j].prec < 30)
             {
-                ++simDataAnalysis.daysWithMoreThan20mm[i][currentDay.month()-1];
+                //++simDataAnalysis.daysWithMoreThan20mm[i][month];
             }
-            if (outputDataD[i][j].prec >= 10 && obsDataD[i][j].prec < 20)
+            else if (outputDataD[i][j].prec >= 10 && obsDataD[i][j].prec < 20)
             {
-                ++simDataAnalysis.daysWithMoreThan10mm[i][currentDay.month()-1];
+                //++simDataAnalysis.daysWithMoreThan10mm[i][month];
             }
-            if (outputDataD[i][j].prec >= 5 && obsDataD[i][j].prec < 10)
+            else if (outputDataD[i][j].prec >= 5 && obsDataD[i][j].prec < 10)
             {
-                ++simDataAnalysis.daysWithMoreThan05mm[i][currentDay.month()-1];
+                //++simDataAnalysis.daysWithMoreThan05mm[i][month];
             }
-            if (outputDataD[i][j].prec >= 1 && obsDataD[i][j].prec < 5)
+            else if (outputDataD[i][j].prec >= 1 && obsDataD[i][j].prec < 5)
             {
-                ++simDataAnalysis.daysWithMoreThan01mm[i][currentDay.month()-1];
+                //++simDataAnalysis.daysWithMoreThan01mm[i][month];
             }
-            if (outputDataD[i][j].prec >= 0.25 && obsDataD[i][j].prec < 1)
+            else if (outputDataD[i][j].prec >= 0.25 && obsDataD[i][j].prec < 1)
             {
-                ++simDataAnalysis.daysWithLessThan01mm[i][currentDay.month()-1];
+                //++simDataAnalysis.daysWithLessThan01mm[i][month];
             }
             currentDay = currentDay.addDays(1);
         }
+
         for (int jMonth=0;jMonth<12;jMonth++)
         {
 
             int denominator = 1 + lastDayWG2D.year() - firstDayWG2D.year();
             simDataAnalysis.daysWithMoreThan50mm[i][jMonth] /= denominator;
-            simDataAnalysis.daysWithMoreThan40mm[i][jMonth] /= denominator;
-            simDataAnalysis.daysWithMoreThan30mm[i][jMonth] /= denominator;
-            simDataAnalysis.daysWithMoreThan20mm[i][jMonth] /= denominator;
-            simDataAnalysis.daysWithMoreThan10mm[i][jMonth] /= denominator;
-            simDataAnalysis.daysWithMoreThan05mm[i][jMonth] /= denominator;
-            simDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
-            simDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
+            //simDataAnalysis.daysWithMoreThan40mm[i][jMonth] /= denominator;
+            //simDataAnalysis.daysWithMoreThan30mm[i][jMonth] /= denominator;
+            //simDataAnalysis.daysWithMoreThan20mm[i][jMonth] /= denominator;
+            //simDataAnalysis.daysWithMoreThan10mm[i][jMonth] /= denominator;
+            //simDataAnalysis.daysWithMoreThan05mm[i][jMonth] /= denominator;
+            //simDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
+            //simDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
             printf("active point %d,month %d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,simDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth]);
         }
-    }*/
+    }
 
     dailyVariableWG2D.clear();
     meteoGridDbHandlerWG2D->closeDatabase();
