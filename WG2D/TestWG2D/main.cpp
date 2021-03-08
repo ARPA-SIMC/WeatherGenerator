@@ -4,7 +4,7 @@
 // check the right format for input in the proposed default files
 
 // please set the following variables before running the weather generator
-#define NR_STATIONS 1 // number of stations/cells. Do not exceed 10000 stations, corresponding to 9999.txt input file
+#define NR_STATIONS 10 // number of stations/cells. Do not exceed 10000 stations, corresponding to 9999.txt input file
 #define NR_SIMULATION_YEARS 58 // integer number please do not exceed 1000 years.Be careful with memory issue by default 10 stations are inserted.
 #define STARTING_YEAR  1 // modify if necessary
 #define PREC_THRESHOLD 0.25  // choose the threshold in mm
