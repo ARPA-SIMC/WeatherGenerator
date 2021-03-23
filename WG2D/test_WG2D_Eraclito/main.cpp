@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 50;
+    nrYearSimulations = 20;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
