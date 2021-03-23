@@ -31,6 +31,12 @@ struct TmonthlyData{
     double dryAverageTmax[12];
     double wetAverageTmin[12];
     double wetAverageTmax[12];
+    double dryStdDevTmin[12];
+    double dryStdDevTmax[12];
+    double wetStdDevTmin[12];
+    double wetStdDevTmax[12];
+
+
 
 };
 
@@ -43,6 +49,8 @@ struct TdataAnalysis{
     double** daysWithMoreThan05mm;
     double** daysWithMoreThan01mm;
     double** daysWithLessThan01mm;
+    double** cumulatedET0;
+    double** cumulatedBIC;
 
 };
 
@@ -191,6 +199,8 @@ int main(int argc, char *argv[])
     obsDataAnalysis.daysWithMoreThan30mm =  (double **) calloc(numberOfCells, sizeof(double*));
     obsDataAnalysis.daysWithMoreThan40mm =  (double **) calloc(numberOfCells, sizeof(double*));
     obsDataAnalysis.daysWithMoreThan50mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.cumulatedBIC = (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.cumulatedET0 = (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.daysWithLessThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.daysWithMoreThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.daysWithMoreThan05mm =  (double **) calloc(numberOfCells, sizeof(double*));
@@ -199,6 +209,9 @@ int main(int argc, char *argv[])
     simDataAnalysis.daysWithMoreThan30mm =  (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.daysWithMoreThan40mm =  (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.daysWithMoreThan50mm =  (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.cumulatedBIC = (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.cumulatedET0 = (double **) calloc(numberOfCells, sizeof(double*));
+
     for (int i=0;i<numberOfCells;i++)
     {
         obsDataAnalysis.daysWithLessThan01mm[i] =  (double *) calloc(12, sizeof(double));
@@ -209,6 +222,9 @@ int main(int argc, char *argv[])
         obsDataAnalysis.daysWithMoreThan30mm[i] =  (double *) calloc(12, sizeof(double));
         obsDataAnalysis.daysWithMoreThan40mm[i] =  (double *) calloc(12, sizeof(double));
         obsDataAnalysis.daysWithMoreThan50mm[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.cumulatedBIC[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.cumulatedET0[i] =  (double *) calloc(12, sizeof(double));
+
         simDataAnalysis.daysWithLessThan01mm[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.daysWithMoreThan01mm[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.daysWithMoreThan05mm[i] =  (double *) calloc(12, sizeof(double));
@@ -217,6 +233,8 @@ int main(int argc, char *argv[])
         simDataAnalysis.daysWithMoreThan30mm[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.daysWithMoreThan40mm[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.daysWithMoreThan50mm[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.cumulatedBIC[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.cumulatedET0[i] =  (double *) calloc(12, sizeof(double));
         for (int j=0;j<12;j++)
         {
             obsDataAnalysis.daysWithLessThan01mm[i][j] =  0;
@@ -227,6 +245,8 @@ int main(int argc, char *argv[])
             obsDataAnalysis.daysWithMoreThan30mm[i][j] =  0;
             obsDataAnalysis.daysWithMoreThan40mm[i][j] =  0;
             obsDataAnalysis.daysWithMoreThan50mm[i][j] =  0;
+            obsDataAnalysis.cumulatedBIC[i][j] = 0;
+            obsDataAnalysis.cumulatedET0[i][j] = 0;
             simDataAnalysis.daysWithLessThan01mm[i][j] =  0;
             simDataAnalysis.daysWithMoreThan01mm[i][j] =  0;
             simDataAnalysis.daysWithMoreThan05mm[i][j] =  0;
@@ -235,6 +255,8 @@ int main(int argc, char *argv[])
             simDataAnalysis.daysWithMoreThan30mm[i][j] =  0;
             simDataAnalysis.daysWithMoreThan40mm[i][j] =  0;
             simDataAnalysis.daysWithMoreThan50mm[i][j] =  0;
+            simDataAnalysis.cumulatedBIC[i][j] = 0;
+            simDataAnalysis.cumulatedET0[i][j] = 0;
         }
     }
 
@@ -343,6 +365,7 @@ int main(int argc, char *argv[])
 
     for (int i=0;i<nrActivePoints;i++)
     {
+        int validDays[12] = {0};
         currentDay = firstDay;
         for (int j=0;j<lengthSeries;j++)
         {
@@ -378,6 +401,17 @@ int main(int argc, char *argv[])
             {
                 ++obsDataAnalysis.daysWithLessThan01mm[i][currentDay.month()-1];
             }
+
+            double dailyET0;
+            for (int iMonth=0; iMonth<12;iMonth++)
+                validDays[iMonth] = 0;
+            if (obsDataD[i][j].prec != NODATA && obsDataD[i][j].tMin != NODATA && obsDataD[i][j].tMax != NODATA)
+            {
+                ++validDays[currentDay.month()-1];
+                dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),obsDataD[i][j].tMax,obsDataD[i][j].tMin);
+                obsDataAnalysis.cumulatedET0[i][currentDay.month()-1] += dailyET0;
+                obsDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += obsDataD[i][j].prec - dailyET0;
+            }
             currentDay = currentDay.addDays(1);
         }
         for (int jMonth=0;jMonth<12;jMonth++)
@@ -391,12 +425,12 @@ int main(int argc, char *argv[])
             obsDataAnalysis.daysWithMoreThan10mm[i][jMonth] /= denominator;
             obsDataAnalysis.daysWithMoreThan05mm[i][jMonth] /= denominator;
             obsDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
-            obsDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
+            obsDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;            
             printf("active point %d,month %d\t,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,obsDataAnalysis.daysWithMoreThan50mm[i][jMonth],obsDataAnalysis.daysWithMoreThan40mm[i][jMonth],obsDataAnalysis.daysWithMoreThan30mm[i][jMonth],obsDataAnalysis.daysWithMoreThan20mm[i][jMonth],obsDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],obsDataAnalysis.daysWithMoreThan01mm[i][jMonth],obsDataAnalysis.daysWithLessThan01mm[i][jMonth]);
+            obsDataAnalysis.cumulatedET0[i][jMonth] /= denominator;
+            obsDataAnalysis.cumulatedBIC[i][jMonth] /= denominator;
         }
     }
-
-
 
     dailyVariable.clear();
     meteoGridDbHandler->closeDatabase();
@@ -535,6 +569,7 @@ int main(int argc, char *argv[])
 
     for (int i=0;i<nrActivePoints;i++)
     {
+        int validDays[12] = {0};
         currentDay = firstDayWG2D;
         for (int j=0;j<lengthSeries;j++)
         {
@@ -576,6 +611,16 @@ int main(int argc, char *argv[])
             {
                 ++simDataAnalysis.daysWithLessThan01mm[i][month];
             }
+            double dailyET0;
+            for (int iMonth=0;iMonth<12;iMonth++)
+                validDays[iMonth] = 0;
+            if (outputDataD[i][j].prec != NODATA && outputDataD[i][j].tMin != NODATA && outputDataD[i][j].tMax != NODATA)
+            {
+                ++validDays[currentDay.month()-1];
+                dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),outputDataD[i][j].tMax,outputDataD[i][j].tMin);
+                simDataAnalysis.cumulatedET0[i][currentDay.month()-1] += dailyET0;
+                simDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += outputDataD[i][j].prec - dailyET0;
+            }
             currentDay = currentDay.addDays(1);
         }
 
@@ -592,6 +637,8 @@ int main(int argc, char *argv[])
             simDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
             simDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
             printf("active point %d\t,month %d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,simDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth]);
+            simDataAnalysis.cumulatedET0[i][jMonth] /= denominator;
+            simDataAnalysis.cumulatedBIC[i][jMonth] /= denominator;
         }
     }
     fp = fopen("extremes_precipitation_analysis.txt","w");
@@ -605,6 +652,20 @@ int main(int argc, char *argv[])
             fprintf(fp,"%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n",obsDataAnalysis.daysWithMoreThan50mm[i][jMonth],obsDataAnalysis.daysWithMoreThan40mm[i][jMonth],obsDataAnalysis.daysWithMoreThan30mm[i][jMonth],obsDataAnalysis.daysWithMoreThan20mm[i][jMonth],obsDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],obsDataAnalysis.daysWithMoreThan01mm[i][jMonth],obsDataAnalysis.daysWithLessThan01mm[i][jMonth]);
             fprintf(fp,"%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n",simDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth],simDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth]);
             fprintf(fp,"%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n",simDataAnalysis.daysWithMoreThan50mm[i][jMonth]-obsDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth]-obsDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth]-obsDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth]-obsDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth]-obsDataAnalysis.daysWithMoreThan10mm[i][jMonth],simDataAnalysis.daysWithMoreThan05mm[i][jMonth]-obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth]-obsDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth] - obsDataAnalysis.daysWithLessThan01mm[i][jMonth]);
+        }
+    }
+    fclose(fp);
+    fp = fopen("confrontoETO_BIC.txt","w");
+    fprintf(fp,"ETO,BIC\n");
+    for (int i=0;i<nrActivePoints;i++)
+    {
+        fprintf(fp,"site %d\n",i);
+        for (int jMonth=0;jMonth<12;jMonth++)
+        {
+            fprintf(fp,"month %d\n",jMonth+1);
+            fprintf(fp,"obs %.1f,%.1f\n",obsDataAnalysis.cumulatedET0[i][jMonth],obsDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"sim %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"sim-obs %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth]-obsDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]-obsDataAnalysis.cumulatedBIC[i][jMonth]);
         }
     }
     fclose(fp);
@@ -695,12 +756,12 @@ void readFileContents(FILE *fp,int site,TmonthlyData *monthlyData)
 {
     for (int iMonth=0;iMonth<12;iMonth++)
     {
-        for (int iVariable=0;iVariable<13;iVariable++)
+        for (int iVariable=0;iVariable<19;iVariable++)
         {
             char dummy;
-            char variable[100];
+            char variable[10000];
             double variableNumberFormat;
-            for (int i=0;i<100;i++)
+            for (int i=0;i<10000;i++)
             {
                 variable[i] = '\0';
             }
@@ -727,6 +788,12 @@ void readFileContents(FILE *fp,int site,TmonthlyData *monthlyData)
             if (iVariable == 10) monthlyData[site].dryAverageTmax[iMonth] = variableNumberFormat;
             if (iVariable == 11) monthlyData[site].wetAverageTmin[iMonth] = variableNumberFormat;
             if (iVariable == 12) monthlyData[site].wetAverageTmax[iMonth] = variableNumberFormat;
+            if (iVariable == 13) monthlyData[site].dryStdDevTmin[iMonth] = variableNumberFormat;
+            if (iVariable == 14) monthlyData[site].dryStdDevTmax[iMonth] = variableNumberFormat;
+            if (iVariable == 15) monthlyData[site].wetStdDevTmin[iMonth] = variableNumberFormat;
+            if (iVariable == 16) monthlyData[site].wetStdDevTmax[iMonth] = variableNumberFormat;
+            if (iVariable == 17) continue;
+            if (iVariable == 18) continue;
         }
     }
 }
