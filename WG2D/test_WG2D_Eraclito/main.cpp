@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 20;
+    nrYearSimulations = 5;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -156,14 +156,14 @@ int main(int argc, char *argv[])
     int lengthSeries = 0;
     std::vector<float> dailyVariable;
     FILE* fp;
-    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
 
-    fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
 
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
@@ -266,9 +266,10 @@ int main(int argc, char *argv[])
 
     dailyVariable.clear();
     meteoGridDbHandler->closeDatabase();
+    free(meteoGridDbHandler);
     WG2D.initializeData(lengthSeries,nrActivePoints);
     WG2D.setObservedData(obsDataD);
-
+    free(obsDataD);
     ToutputWeatherData* results;
     bool computePrecipitation = true;
     bool computeTemperature = true;
@@ -277,7 +278,7 @@ int main(int argc, char *argv[])
     int lengthArraySimulation;
     static int distributionType = 1;
     lengthArraySimulation = 365 * nrYearSimulations;
-    bool computeStats = true;
+    bool computeStats = false;
     WG2D.initializeParameters(PREC_THRESHOLD, nrYearSimulations, distributionType,
                               computePrecipitation, computeTemperature,computeStats,ROLLING_AVERAGE);
 
@@ -372,6 +373,7 @@ int main(int argc, char *argv[])
         }
     }
     meteoGridDbHandlerWG2D->closeDatabase();
+    free(meteoGridDbHandlerWG2D);
     return 0;
 }
 
