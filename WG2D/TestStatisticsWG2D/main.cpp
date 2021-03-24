@@ -51,7 +51,10 @@ struct TdataAnalysis{
     double** daysWithLessThan01mm;
     double** cumulatedET0;
     double** cumulatedBIC;
-
+    double*** cumulatedET0Year;
+    double*** cumulatedBICYear;
+    double** cumulatedStdDevET0;
+    double** cumulatedStdDevBIC;
 };
 
 void readFileContents(FILE *fp,int site,TmonthlyData* monthlyData);
@@ -201,6 +204,10 @@ int main(int argc, char *argv[])
     obsDataAnalysis.daysWithMoreThan50mm =  (double **) calloc(numberOfCells, sizeof(double*));
     obsDataAnalysis.cumulatedBIC = (double **) calloc(numberOfCells, sizeof(double*));
     obsDataAnalysis.cumulatedET0 = (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.cumulatedStdDevBIC = (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.cumulatedStdDevET0 = (double **) calloc(numberOfCells, sizeof(double*));
+    obsDataAnalysis.cumulatedBICYear = (double ***) calloc(numberOfCells, sizeof(double**));
+    obsDataAnalysis.cumulatedET0Year = (double ***) calloc(numberOfCells, sizeof(double**));
     simDataAnalysis.daysWithLessThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.daysWithMoreThan01mm =  (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.daysWithMoreThan05mm =  (double **) calloc(numberOfCells, sizeof(double*));
@@ -211,6 +218,10 @@ int main(int argc, char *argv[])
     simDataAnalysis.daysWithMoreThan50mm =  (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.cumulatedBIC = (double **) calloc(numberOfCells, sizeof(double*));
     simDataAnalysis.cumulatedET0 = (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.cumulatedStdDevBIC = (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.cumulatedStdDevET0 = (double **) calloc(numberOfCells, sizeof(double*));
+    simDataAnalysis.cumulatedBICYear = (double ***) calloc(numberOfCells, sizeof(double**));
+    simDataAnalysis.cumulatedET0Year = (double ***) calloc(numberOfCells, sizeof(double**));
 
     for (int i=0;i<numberOfCells;i++)
     {
@@ -224,7 +235,10 @@ int main(int argc, char *argv[])
         obsDataAnalysis.daysWithMoreThan50mm[i] =  (double *) calloc(12, sizeof(double));
         obsDataAnalysis.cumulatedBIC[i] =  (double *) calloc(12, sizeof(double));
         obsDataAnalysis.cumulatedET0[i] =  (double *) calloc(12, sizeof(double));
-
+        obsDataAnalysis.cumulatedStdDevBIC[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.cumulatedStdDevET0[i] =  (double *) calloc(12, sizeof(double));
+        obsDataAnalysis.cumulatedBICYear[i] =  (double **) calloc(12, sizeof(double*));
+        obsDataAnalysis.cumulatedET0Year[i] =  (double **) calloc(12, sizeof(double*));
         simDataAnalysis.daysWithLessThan01mm[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.daysWithMoreThan01mm[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.daysWithMoreThan05mm[i] =  (double *) calloc(12, sizeof(double));
@@ -235,6 +249,11 @@ int main(int argc, char *argv[])
         simDataAnalysis.daysWithMoreThan50mm[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.cumulatedBIC[i] =  (double *) calloc(12, sizeof(double));
         simDataAnalysis.cumulatedET0[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.cumulatedStdDevBIC[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.cumulatedStdDevET0[i] =  (double *) calloc(12, sizeof(double));
+        simDataAnalysis.cumulatedBICYear[i] =  (double **) calloc(12, sizeof(double*));
+        simDataAnalysis.cumulatedET0Year[i] =  (double **) calloc(12, sizeof(double*));
+
         for (int j=0;j<12;j++)
         {
             obsDataAnalysis.daysWithLessThan01mm[i][j] =  0;
@@ -247,6 +266,8 @@ int main(int argc, char *argv[])
             obsDataAnalysis.daysWithMoreThan50mm[i][j] =  0;
             obsDataAnalysis.cumulatedBIC[i][j] = 0;
             obsDataAnalysis.cumulatedET0[i][j] = 0;
+            obsDataAnalysis.cumulatedStdDevBIC[i][j] = 0;
+            obsDataAnalysis.cumulatedStdDevET0[i][j] = 0;
             simDataAnalysis.daysWithLessThan01mm[i][j] =  0;
             simDataAnalysis.daysWithMoreThan01mm[i][j] =  0;
             simDataAnalysis.daysWithMoreThan05mm[i][j] =  0;
@@ -257,6 +278,8 @@ int main(int argc, char *argv[])
             simDataAnalysis.daysWithMoreThan50mm[i][j] =  0;
             simDataAnalysis.cumulatedBIC[i][j] = 0;
             simDataAnalysis.cumulatedET0[i][j] = 0;
+            simDataAnalysis.cumulatedStdDevBIC[i][j] = 0;
+            simDataAnalysis.cumulatedStdDevET0[i][j] = 0;
         }
     }
 
@@ -274,6 +297,19 @@ int main(int argc, char *argv[])
     }// !! take out
     fclose(fp);
     printf("numCells %d\n",numberOfCells);
+    for (int i=0;i<numberOfCells;i++)
+    {
+        for (int j=0;j<12;j++)
+        {
+            obsDataAnalysis.cumulatedBICYear[i][j] =  (double *) calloc(1 + lastDay.year() - firstDay.year(), sizeof(double));
+            obsDataAnalysis.cumulatedET0Year[i][j] =  (double *) calloc(1 + lastDay.year() - firstDay.year(), sizeof(double));
+            for (int k=0; k<1 + lastDay.year() - firstDay.year();k++)
+            {
+                obsDataAnalysis.cumulatedBICYear[i][j][k] = 0;
+                obsDataAnalysis.cumulatedET0Year[i][j][k] = 0;
+            }
+        }
+    }
 
     for (int row = 0; row < meteoGridDbHandler->gridStructure().header().nrRows; row++)
     {

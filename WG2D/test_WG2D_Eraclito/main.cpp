@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 5;
+    nrYearSimulations = 50;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
     int lengthArraySimulation;
     static int distributionType = 1;
     lengthArraySimulation = 365 * nrYearSimulations;
-    bool computeStats = false;
+    bool computeStats = true;
     WG2D.initializeParameters(PREC_THRESHOLD, nrYearSimulations, distributionType,
                               computePrecipitation, computeTemperature,computeStats,ROLLING_AVERAGE);
 
