@@ -439,6 +439,7 @@ int main(int argc, char *argv[])
             }
 
             double dailyET0;
+            int yearObsData=0;
             for (int iMonth=0; iMonth<12;iMonth++)
                 validDays[iMonth] = 0;
             if (obsDataD[i][j].prec != NODATA && obsDataD[i][j].tMin != NODATA && obsDataD[i][j].tMax != NODATA)
@@ -447,6 +448,9 @@ int main(int argc, char *argv[])
                 dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),obsDataD[i][j].tMax,obsDataD[i][j].tMin);
                 obsDataAnalysis.cumulatedET0[i][currentDay.month()-1] += dailyET0;
                 obsDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += obsDataD[i][j].prec - dailyET0;
+                yearObsData = currentDay.year() - firstDay.year();
+                obsDataAnalysis.cumulatedET0Year[i][currentDay.month()-1][yearObsData] += dailyET0;
+                obsDataAnalysis.cumulatedBICYear[i][currentDay.month()-1][yearObsData] += obsDataD[i][j].prec - dailyET0;
             }
             currentDay = currentDay.addDays(1);
         }
@@ -462,9 +466,11 @@ int main(int argc, char *argv[])
             obsDataAnalysis.daysWithMoreThan05mm[i][jMonth] /= denominator;
             obsDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
             obsDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;            
-            printf("active point %d,month %d\t,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,obsDataAnalysis.daysWithMoreThan50mm[i][jMonth],obsDataAnalysis.daysWithMoreThan40mm[i][jMonth],obsDataAnalysis.daysWithMoreThan30mm[i][jMonth],obsDataAnalysis.daysWithMoreThan20mm[i][jMonth],obsDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],obsDataAnalysis.daysWithMoreThan01mm[i][jMonth],obsDataAnalysis.daysWithLessThan01mm[i][jMonth]);
+            //printf("active point %d,month %d\t,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,obsDataAnalysis.daysWithMoreThan50mm[i][jMonth],obsDataAnalysis.daysWithMoreThan40mm[i][jMonth],obsDataAnalysis.daysWithMoreThan30mm[i][jMonth],obsDataAnalysis.daysWithMoreThan20mm[i][jMonth],obsDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],obsDataAnalysis.daysWithMoreThan01mm[i][jMonth],obsDataAnalysis.daysWithLessThan01mm[i][jMonth]);
             obsDataAnalysis.cumulatedET0[i][jMonth] /= denominator;
             obsDataAnalysis.cumulatedBIC[i][jMonth] /= denominator;
+            obsDataAnalysis.cumulatedStdDevET0[i][jMonth] =statistics::standardDeviation(obsDataAnalysis.cumulatedET0Year[i][jMonth],denominator);
+            obsDataAnalysis.cumulatedStdDevBIC[i][jMonth] =statistics::standardDeviation(obsDataAnalysis.cumulatedBICYear[i][jMonth],denominator);
         }
     }
 
@@ -496,6 +502,19 @@ int main(int argc, char *argv[])
     //int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
+    for (int i=0;i<numberOfCells;i++)
+    {
+        for (int j=0;j<12;j++)
+        {
+            simDataAnalysis.cumulatedBICYear[i][j] =  (double *) calloc(1 + lastDayWG2D.year() - firstDayWG2D.year(), sizeof(double));
+            simDataAnalysis.cumulatedET0Year[i][j] =  (double *) calloc(1 + lastDayWG2D.year() - firstDayWG2D.year(), sizeof(double));
+            for (int k=0; k<1 + lastDayWG2D.year() - firstDayWG2D.year();k++)
+            {
+                simDataAnalysis.cumulatedBICYear[i][j][k] = 0;
+                simDataAnalysis.cumulatedET0Year[i][j][k] = 0;
+            }
+        }
+    }
 
     //fp = fopen("../test_WG2D_Eraclito/inputData/list_enza_secchia_panaro_30_sites.txt","r"); // !! take out
     fp = fopen("../test_WG2D_Eraclito/inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
@@ -656,6 +675,8 @@ int main(int argc, char *argv[])
                 dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),outputDataD[i][j].tMax,outputDataD[i][j].tMin);
                 simDataAnalysis.cumulatedET0[i][currentDay.month()-1] += dailyET0;
                 simDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += outputDataD[i][j].prec - dailyET0;
+                simDataAnalysis.cumulatedET0Year[i][currentDay.month()-1][currentDay.year()-firstDayWG2D.year()] += dailyET0;
+                simDataAnalysis.cumulatedBICYear[i][currentDay.month()-1][currentDay.year()-firstDayWG2D.year()] += outputDataD[i][j].prec - dailyET0;
             }
             currentDay = currentDay.addDays(1);
         }
@@ -672,9 +693,11 @@ int main(int argc, char *argv[])
             simDataAnalysis.daysWithMoreThan05mm[i][jMonth] /= denominator;
             simDataAnalysis.daysWithMoreThan01mm[i][jMonth] /= denominator;
             simDataAnalysis.daysWithLessThan01mm[i][jMonth] /= denominator;
-            printf("active point %d\t,month %d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,simDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth]);
+            //printf("active point %d\t,month %d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,simDataAnalysis.daysWithMoreThan50mm[i][jMonth],simDataAnalysis.daysWithMoreThan40mm[i][jMonth],simDataAnalysis.daysWithMoreThan30mm[i][jMonth],simDataAnalysis.daysWithMoreThan20mm[i][jMonth],simDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],simDataAnalysis.daysWithMoreThan01mm[i][jMonth],simDataAnalysis.daysWithLessThan01mm[i][jMonth]);
             simDataAnalysis.cumulatedET0[i][jMonth] /= denominator;
             simDataAnalysis.cumulatedBIC[i][jMonth] /= denominator;
+            simDataAnalysis.cumulatedStdDevET0[i][jMonth] = statistics::standardDeviation(simDataAnalysis.cumulatedET0Year[i][jMonth],denominator);
+            simDataAnalysis.cumulatedStdDevBIC[i][jMonth] = statistics::standardDeviation(simDataAnalysis.cumulatedBICYear[i][jMonth],denominator);
         }
     }
     fp = fopen("extremes_precipitation_analysis.txt","w");
@@ -693,15 +716,35 @@ int main(int argc, char *argv[])
     fclose(fp);
     fp = fopen("confrontoETO_BIC.txt","w");
     fprintf(fp,"ETO,BIC\n");
-    for (int i=0;i<nrActivePoints;i++)
+    //for (int i=0;i<nrActivePoints;i++)
+    for (int i=0;i<1;i++)
     {
         fprintf(fp,"site %d\n",i);
         for (int jMonth=0;jMonth<12;jMonth++)
         {
             fprintf(fp,"month %d\n",jMonth+1);
-            fprintf(fp,"obs %.1f,%.1f\n",obsDataAnalysis.cumulatedET0[i][jMonth],obsDataAnalysis.cumulatedBIC[i][jMonth]);
-            fprintf(fp,"sim %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]);
-            fprintf(fp,"sim-obs %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth]-obsDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]-obsDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"average,obs, %.1f,%.1f\n",obsDataAnalysis.cumulatedET0[i][jMonth],obsDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"average,sim, %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"average,sim-obs, %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth]-obsDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]-obsDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"stdDev,obs, %.1f,%.1f\n",obsDataAnalysis.cumulatedStdDevET0[i][jMonth],obsDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
+            fprintf(fp,"stdDev,sim, %.1f,%.1f\n",simDataAnalysis.cumulatedStdDevET0[i][jMonth],simDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
+            fprintf(fp,"stdDev,sim-obs, %.1f,%.1f\n",simDataAnalysis.cumulatedStdDevET0[i][jMonth]-obsDataAnalysis.cumulatedStdDevET0[i][jMonth],simDataAnalysis.cumulatedStdDevBIC[i][jMonth]-obsDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
+            fprintf(fp,"distributionET0,obs");
+            for (int kYear=0;kYear<1+lastDay.year()-firstDay.year();kYear++)
+                fprintf(fp,",%.1f",obsDataAnalysis.cumulatedET0Year[i][jMonth][kYear]);
+            fprintf(fp,"\n");
+            fprintf(fp,"distributionBIC,obs");
+            for (int kYear=0;kYear<1+lastDay.year()-firstDay.year();kYear++)
+                fprintf(fp,",%.1f",obsDataAnalysis.cumulatedBICYear[i][jMonth][kYear]);
+            fprintf(fp,"\n");
+            fprintf(fp,"distributionET0,sim");
+            for (int kYear=0;kYear<1+lastDayWG2D.year()-firstDayWG2D.year();kYear++)
+                fprintf(fp,",%.1f",simDataAnalysis.cumulatedET0Year[i][jMonth][kYear]);
+            fprintf(fp,"\n");
+            fprintf(fp,"distributionBIC,sim");
+            for (int kYear=0;kYear<1+lastDayWG2D.year()-firstDayWG2D.year();kYear++)
+                fprintf(fp,",%.1f",simDataAnalysis.cumulatedBICYear[i][jMonth][kYear]);
+            fprintf(fp,"\n");
         }
     }
     fclose(fp);
