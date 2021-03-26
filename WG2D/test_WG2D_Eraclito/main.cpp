@@ -68,8 +68,8 @@ bool loadMeteoGridDB(QString* errorString)
 
     QString path;
     if (! searchDataPath(&path)) return -1;
-    //QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
-    QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v2.1.xml";
+    QString xmlName = path + "METEOGRID/DBGridXML_Eraclito4.xml";
+    //QString xmlName = path + "METEOGRID/DBGridXML_ERG5_v2.1.xml";
     meteoGridDbHandler = new Crit3DMeteoGridDbHandler();
 
     // todo
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     int nrYearSimulations = NR_SIMULATION_YEARS;
     printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 50;
+    nrYearSimulations = 60;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
     QString myError;
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
-    QDate firstDay(2001,1,1);
+    QDate firstDay(1961,1,1);
     QDate lastDay(2020,12,31);
     QDate currentDay;
     QDate firstDateDB(1,1,1);

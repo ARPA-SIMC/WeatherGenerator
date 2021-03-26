@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
     //Crit3DMeteoPoint* meteoPointTemp = new Crit3DMeteoPoint;
     meteoVariable variable;
-    QDate firstDay(2001,1,1);
+    QDate firstDay(1961,1,1);
     QDate lastDay(2020,12,31);
     QDate currentDay;
     QDate firstDateDB(1,1,1);
@@ -172,7 +172,8 @@ int main(int argc, char *argv[])
 
     TObsDataD** obsDataD = nullptr;
     QString xmlName;
-    xmlName = "METEOGRID/DBGridXML_ERG5_v2.1.xml";
+    xmlName = "METEOGRID/DBGridXML_eraclito4.xml";
+    //xmlName = "METEOGRID/DBGridXML_ERG5_v2.1.xml";
     //xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
 
     QString errorString;
@@ -480,7 +481,7 @@ int main(int argc, char *argv[])
 // read second DB
     printf("second DB\n");
     QDate firstDayWG2D(2001,1,1);
-    QDate lastDayWG2D(2050,12,31);
+    QDate lastDayWG2D(2060,12,31);
 
     TObsDataD** outputDataD = nullptr;
     xmlName = "METEOGRID/DBGridXML_Output_WG2D.xml";
@@ -716,8 +717,8 @@ int main(int argc, char *argv[])
     fclose(fp);
     fp = fopen("confrontoETO_BIC.txt","w");
     fprintf(fp,"ETO,BIC\n");
-    //for (int i=0;i<nrActivePoints;i++)
-    for (int i=0;i<1;i++)
+    for (int i=0;i<nrActivePoints;i++)
+    //for (int i=0;i<1;i++)
     {
         fprintf(fp,"site %d\n",i);
         for (int jMonth=0;jMonth<12;jMonth++)
