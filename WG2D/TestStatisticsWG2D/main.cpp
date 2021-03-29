@@ -446,12 +446,20 @@ int main(int argc, char *argv[])
             if (obsDataD[i][j].prec != NODATA && obsDataD[i][j].tMin != NODATA && obsDataD[i][j].tMax != NODATA)
             {
                 ++validDays[currentDay.month()-1];
-                dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),obsDataD[i][j].tMax,obsDataD[i][j].tMin);
+                /*dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),obsDataD[i][j].tMax,obsDataD[i][j].tMin);
                 obsDataAnalysis.cumulatedET0[i][currentDay.month()-1] += dailyET0;
                 obsDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += obsDataD[i][j].prec - dailyET0;
                 yearObsData = currentDay.year() - firstDay.year();
                 obsDataAnalysis.cumulatedET0Year[i][currentDay.month()-1][yearObsData] += dailyET0;
                 obsDataAnalysis.cumulatedBICYear[i][currentDay.month()-1][yearObsData] += obsDataD[i][j].prec - dailyET0;
+                */
+                //dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),obsDataD[i][j].tMax,obsDataD[i][j].tMin);
+                obsDataAnalysis.cumulatedET0[i][currentDay.month()-1] += (obsDataD[i][j].tMax - obsDataD[i][j].tMin);
+                obsDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += obsDataD[i][j].tMin;
+                yearObsData = currentDay.year() - firstDay.year();
+                obsDataAnalysis.cumulatedET0Year[i][currentDay.month()-1][yearObsData] += (obsDataD[i][j].tMax - obsDataD[i][j].tMin);
+                obsDataAnalysis.cumulatedBICYear[i][currentDay.month()-1][yearObsData] += obsDataD[i][j].tMin;
+
             }
             currentDay = currentDay.addDays(1);
         }
@@ -673,11 +681,18 @@ int main(int argc, char *argv[])
             if (outputDataD[i][j].prec != NODATA && outputDataD[i][j].tMin != NODATA && outputDataD[i][j].tMax != NODATA)
             {
                 ++validDays[currentDay.month()-1];
+                /*
                 dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),outputDataD[i][j].tMax,outputDataD[i][j].tMin);
                 simDataAnalysis.cumulatedET0[i][currentDay.month()-1] += dailyET0;
                 simDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += outputDataD[i][j].prec - dailyET0;
                 simDataAnalysis.cumulatedET0Year[i][currentDay.month()-1][currentDay.year()-firstDayWG2D.year()] += dailyET0;
                 simDataAnalysis.cumulatedBICYear[i][currentDay.month()-1][currentDay.year()-firstDayWG2D.year()] += outputDataD[i][j].prec - dailyET0;
+                */
+                //dailyET0 = ET0_Hargreaves(DEFAULT_TRANSMISSIVITY_SAMANI,44.5,currentDay.dayOfYear(),outputDataD[i][j].tMax,outputDataD[i][j].tMin);
+                simDataAnalysis.cumulatedET0[i][currentDay.month()-1] += (outputDataD[i][j].tMax-outputDataD[i][j].tMin);
+                simDataAnalysis.cumulatedBIC[i][currentDay.month()-1] += outputDataD[i][j].tMin;
+                simDataAnalysis.cumulatedET0Year[i][currentDay.month()-1][currentDay.year()-firstDayWG2D.year()] += (outputDataD[i][j].tMax-outputDataD[i][j].tMin);
+                simDataAnalysis.cumulatedBICYear[i][currentDay.month()-1][currentDay.year()-firstDayWG2D.year()] += outputDataD[i][j].tMin;
             }
             currentDay = currentDay.addDays(1);
         }
