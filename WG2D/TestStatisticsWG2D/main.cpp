@@ -478,8 +478,33 @@ int main(int argc, char *argv[])
             //printf("active point %d,month %d\t,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n press enter to continue\n",i,jMonth+1,obsDataAnalysis.daysWithMoreThan50mm[i][jMonth],obsDataAnalysis.daysWithMoreThan40mm[i][jMonth],obsDataAnalysis.daysWithMoreThan30mm[i][jMonth],obsDataAnalysis.daysWithMoreThan20mm[i][jMonth],obsDataAnalysis.daysWithMoreThan10mm[i][jMonth],obsDataAnalysis.daysWithMoreThan05mm[i][jMonth],obsDataAnalysis.daysWithMoreThan01mm[i][jMonth],obsDataAnalysis.daysWithLessThan01mm[i][jMonth]);
             obsDataAnalysis.cumulatedET0[i][jMonth] /= denominator;
             obsDataAnalysis.cumulatedBIC[i][jMonth] /= denominator;
-            obsDataAnalysis.cumulatedStdDevET0[i][jMonth] =statistics::standardDeviation(obsDataAnalysis.cumulatedET0Year[i][jMonth],denominator);
-            obsDataAnalysis.cumulatedStdDevBIC[i][jMonth] =statistics::standardDeviation(obsDataAnalysis.cumulatedBICYear[i][jMonth],denominator);
+            //obsDataAnalysis.cumulatedStdDevET0[i][jMonth] =statistics::standardDeviation(obsDataAnalysis.cumulatedET0Year[i][jMonth],denominator);
+            //obsDataAnalysis.cumulatedStdDevBIC[i][jMonth] =statistics::standardDeviation(obsDataAnalysis.cumulatedBICYear[i][jMonth],denominator);
+            //obsDataAnalysis.cumulatedStdDevET0[i][jMonth] =
+
+        }
+        for (int jMonth=0;jMonth<12;jMonth++)
+        {
+            double mean=0;
+            double stdDev=0;
+            int validRecord = 0;
+            for (int j=0;j<lengthSeries;j++)
+            {
+
+                if (obsDataD[i][j].date.month == jMonth+1)
+                {
+                    if (obsDataD[i][j].prec != NODATA && obsDataD[i][j].tMin != NODATA && obsDataD[i][j].tMax != NODATA)
+                    {
+                        validRecord++;
+                        mean += obsDataD[i][j].tMax - obsDataD[i][j].tMin;
+                    }
+
+                }
+
+
+                //obsDataAnalysis.cumulatedStdDevET0[i][jMonth] =
+            }
+            mean /= validRecord;
         }
     }
 
