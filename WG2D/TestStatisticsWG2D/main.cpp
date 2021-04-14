@@ -500,11 +500,23 @@ int main(int argc, char *argv[])
                     }
 
                 }
-
-
-                //obsDataAnalysis.cumulatedStdDevET0[i][jMonth] =
             }
             mean /= validRecord;
+            for (int j=0;j<lengthSeries;j++)
+            {
+
+                if (obsDataD[i][j].date.month == jMonth+1)
+                {
+                    if (obsDataD[i][j].prec != NODATA && obsDataD[i][j].tMin != NODATA && obsDataD[i][j].tMax != NODATA)
+                    {
+                        //validRecord++;
+                        stdDev += (obsDataD[i][j].tMax - obsDataD[i][j].tMin - mean)*(obsDataD[i][j].tMax - obsDataD[i][j].tMin - mean);
+                    }
+
+                }
+            }
+            stdDev = pow(stdDev,0.5)/(validRecord-1);
+            obsDataAnalysis.cumulatedStdDevET0[i][jMonth] = stdDev;
         }
     }
 
@@ -740,6 +752,44 @@ int main(int argc, char *argv[])
             simDataAnalysis.cumulatedStdDevET0[i][jMonth] = statistics::standardDeviation(simDataAnalysis.cumulatedET0Year[i][jMonth],denominator);
             simDataAnalysis.cumulatedStdDevBIC[i][jMonth] = statistics::standardDeviation(simDataAnalysis.cumulatedBICYear[i][jMonth],denominator);
         }
+
+        for (int jMonth=0;jMonth<12;jMonth++)
+        {
+            double mean=0;
+            double stdDev=0;
+            int validRecord = 0;
+            for (int j=0;j<lengthSeries;j++)
+            {
+
+                if (outputDataD[i][j].date.month == jMonth+1)
+                {
+                    if (outputDataD[i][j].prec != NODATA && outputDataD[i][j].tMin != NODATA && outputDataD[i][j].tMax != NODATA)
+                    {
+                        validRecord++;
+                        mean += outputDataD[i][j].tMax - outputDataD[i][j].tMin;
+                    }
+
+                }
+            }
+            mean /= validRecord;
+            for (int j=0;j<lengthSeries;j++)
+            {
+
+                if (outputDataD[i][j].date.month == jMonth+1)
+                {
+                    if (outputDataD[i][j].prec != NODATA && outputDataD[i][j].tMin != NODATA && outputDataD[i][j].tMax != NODATA)
+                    {
+                        //validRecord++;
+                        stdDev += (outputDataD[i][j].tMax - outputDataD[i][j].tMin - mean)*(outputDataD[i][j].tMax - outputDataD[i][j].tMin - mean);
+                    }
+
+                }
+            }
+            stdDev = pow(stdDev,0.5)/(validRecord-1);
+            simDataAnalysis.cumulatedStdDevET0[i][jMonth] = stdDev;
+        }
+
+
     }
     fp = fopen("extremes_precipitation_analysis.txt","w");
     fprintf(fp,">50mm,>40mm,>30mm,>20mm,>10mm,>5mm,>1mm,<1mm\n");
@@ -764,12 +814,12 @@ int main(int argc, char *argv[])
         for (int jMonth=0;jMonth<12;jMonth++)
         {
             fprintf(fp,"month %d\n",jMonth+1);
-            fprintf(fp,"average,obs, %.1f,%.1f\n",obsDataAnalysis.cumulatedET0[i][jMonth],obsDataAnalysis.cumulatedBIC[i][jMonth]);
-            fprintf(fp,"average,sim, %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]);
-            fprintf(fp,"average,sim-obs, %.1f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth]-obsDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]-obsDataAnalysis.cumulatedBIC[i][jMonth]);
-            fprintf(fp,"stdDev,obs, %.1f,%.1f\n",obsDataAnalysis.cumulatedStdDevET0[i][jMonth],obsDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
-            fprintf(fp,"stdDev,sim, %.1f,%.1f\n",simDataAnalysis.cumulatedStdDevET0[i][jMonth],simDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
-            fprintf(fp,"stdDev,sim-obs, %.1f,%.1f\n",simDataAnalysis.cumulatedStdDevET0[i][jMonth]-obsDataAnalysis.cumulatedStdDevET0[i][jMonth],simDataAnalysis.cumulatedStdDevBIC[i][jMonth]-obsDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
+            fprintf(fp,"average,obs, %f,%f\n",obsDataAnalysis.cumulatedET0[i][jMonth],obsDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"average,sim, %f,%f\n",simDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"average,sim-obs, %f,%.1f\n",simDataAnalysis.cumulatedET0[i][jMonth]-obsDataAnalysis.cumulatedET0[i][jMonth],simDataAnalysis.cumulatedBIC[i][jMonth]-obsDataAnalysis.cumulatedBIC[i][jMonth]);
+            fprintf(fp,"stdDev,obs, %f,%f\n",obsDataAnalysis.cumulatedStdDevET0[i][jMonth],obsDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
+            fprintf(fp,"stdDev,sim, %f,%f\n",simDataAnalysis.cumulatedStdDevET0[i][jMonth],simDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
+            fprintf(fp,"stdDev,sim-obs, %f,%f\n",simDataAnalysis.cumulatedStdDevET0[i][jMonth]-obsDataAnalysis.cumulatedStdDevET0[i][jMonth],simDataAnalysis.cumulatedStdDevBIC[i][jMonth]-obsDataAnalysis.cumulatedStdDevBIC[i][jMonth]);
             fprintf(fp,"distributionET0,obs");
             for (int kYear=0;kYear<1+lastDay.year()-firstDay.year();kYear++)
                 fprintf(fp,",%.1f",obsDataAnalysis.cumulatedET0Year[i][jMonth][kYear]);
