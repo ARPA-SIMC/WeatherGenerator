@@ -30,18 +30,19 @@ win32:{
 }
 
 INCLUDEPATH +=  ../crit3dDate ../mathFunctions ../gis ../meteo \
-                ../dbMeteoGrid ../soil ../crop ../utilities
+                ../dbMeteoGrid ../soil ../crop ../utilities ../soilFluxes3D/header
 
 SOURCES += \
     criteria1DCase.cpp \
     criteria1DMeteo.cpp \
-    criteria1DSimulation.cpp \
+    criteria1DProject.cpp \
     water1D.cpp
 
 HEADERS += \
     criteria1DCase.h \
+    criteria1DError.h \
     criteria1DMeteo.h \
-    criteria1DSimulation.h \
+    criteria1DProject.h \
     water1D.h
 
 unix {
