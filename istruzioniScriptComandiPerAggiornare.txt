@@ -1,0 +1,87 @@
+8c184698d4efc0d0355085580ea801b06b618df5 token github
+
+cd ..\..\..\..
+cd gitHub
+cd CRITERIA3D
+git commit -a -m "WG2D"
+git pull
+git subtree pull --prefix agrolib agrolib master
+git subtree pull --prefix mapGraphics mapGraphics master
+git subtree push --prefix agrolib agrolib master
+git subtree split --rejoin --prefix agrolib
+git push
+cd ..\PRAGA
+git pull
+
+-----------------------------------------------------------------------
+cd ..\..\..\..
+cd gitHub
+cd CRITERIA3D
+git commit -a -m "WG2D"
+git pull
+git subtree pull --prefix agrolib agrolib master
+git subtree pull --prefix mapGraphics mapGraphics master
+cd ..\PRAGA
+git pull
+
+---------------------------------------------------------------------
+# da aggiungere nel caso mi metta a lavorare su PRAGA ma prima devo creare i subtree di mapGraphics e agrolib
+git commit -a -m "nothing to commit"
+git subtree pull --prefix agrolib agrolib master
+git subtree push --prefix agrolib agrolib master
+git subtree split --rejoin --prefix agrolib
+git subtree pull --prefix mapGraphics mapGraphics master
+git subtree push --prefix mapGraphics mapGraphics master
+git subtree split --rejoin --prefix mapGraphics
+git push
+
+--------------------------------------------------------------------
+cd ..\..\..\..
+cd gitHub
+cd CRITERIA3D
+git commit -a -m "WG2D"
+git pull
+git push
+
+---------------------------------------------------------------------------------------------------------------
+
+cd ..\..\..\..
+cd gitHub
+cd CRITERIA3D
+git pull
+
+----------------------------------------------------------------------------------------------------------------
+
+
+cd ..\..\..\..
+cd gitHub
+cd CRITERIA3D
+git pull
+cd ..\..\vine3D
+git pull bare master
+
+----------------------------------------------------------------------------------------------------------------
+
+cd ..\..\..\..\vine3D
+git pull bare master
+
+
+----------------------------------------------------------------------------------------------------------------
+
+
+cd ..\..\..\..
+cd gitHub
+cd CRITERIA3D
+git pull
+git commit -a -m "WG2D"
+git push
+cd ..\..\vine3D
+git pull bare master
+
+---------------------------------------------------------------------------------------------------------------
+codice Matlab Unibo
+12872-66566-73803-44035-69782
+
+
+git subtree pull --prefix agrolib agrolib master
+git subtree push --prefix agrolib agrolib master
