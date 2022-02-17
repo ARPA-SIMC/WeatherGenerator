@@ -123,15 +123,15 @@ int main(int argc, char *argv[])
     //printf("Do you want to write the output on database? type : 1 (yes) , or 0 (no) \n");
     int writeOnDB;
     //scanf("%d",&writeOnDB);
-    writeOnDB = 0;
+    writeOnDB = 1;
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
     //scanf("%d",&startingYear);
-    startingYear = 2001;
+    startingYear = 2151;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     //printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 3;
+    nrYearSimulations = 50;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
