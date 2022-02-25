@@ -127,11 +127,11 @@ int main(int argc, char *argv[])
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
     //scanf("%d",&startingYear);
-    startingYear = 2001;
+    startingYear = 1901;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     //printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 60;
+    nrYearSimulations = 100;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -165,9 +165,10 @@ int main(int argc, char *argv[])
     //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_shortlisted.txt","r"); // !! take out
-    fp = fopen("./inputData/list_C7.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_monteacuto_00665.txt","r"); // !! take out
+    fp = fopen("./inputData/est.txt","r"); // !! take out
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
@@ -176,9 +177,10 @@ int main(int argc, char *argv[])
     //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_shortlisted.txt","r"); // !! take out
-    fp = fopen("./inputData/list_C7.txt","r"); // !! take out
+    //fp = fopen("./inputData/list_C7.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_monteacuto_00665.txt","r"); // !! take out
+    fp = fopen("./inputData/est.txt","r"); // !! take out
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
     cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
