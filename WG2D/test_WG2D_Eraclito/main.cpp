@@ -127,11 +127,11 @@ int main(int argc, char *argv[])
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
     //scanf("%d",&startingYear);
-    startingYear = 1901;
+    startingYear = 1900;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     //printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 100;
+    nrYearSimulations = 1;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
@@ -168,7 +168,9 @@ int main(int argc, char *argv[])
     //fp = fopen("./inputData/list_C7.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_monteacuto_00665.txt","r"); // !! take out
-    fp = fopen("./inputData/est.txt","r"); // !! take out
+    //fp = fopen("./inputData/est.txt","r"); // !! take out
+    fp = fopen("./inputData/fausto.txt","r");
+
     int numberOfCells; // !! take out
     numberOfCells = readERG5CellListNumber(fp); // !! take out
     fclose(fp); // !! take out
@@ -180,7 +182,9 @@ int main(int argc, char *argv[])
     //fp = fopen("./inputData/list_C7.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_monteacuto_00665.txt","r"); // !! take out
-    fp = fopen("./inputData/est.txt","r"); // !! take out
+    //fp = fopen("./inputData/est.txt","r"); // !! take out
+    fp = fopen("./inputData/fausto.txt","r");
+
     int* cellCode = nullptr; // !! take out
     char* numCell = (char *)calloc(6, sizeof(char)); // !! take out
     cellCode = (int *) calloc(numberOfCells, sizeof(int)); // !! take out
@@ -382,7 +386,7 @@ int main(int argc, char *argv[])
                    //printf("%f  %f  %f\npress enter to continue",meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD[j].tMin,meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD[j].tMax,meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD[j].prec );
 
                }*/
-               meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError, QString::fromStdString(id),row,col,firstDayOutput,lastDayOutput,listMeteoVariable,meteoSettings);
+               meteoGridDbHandlerWG2D->deleteAndWriteCellGridDailyData(myError, QString::fromStdString(id), row, col, firstDayOutput, lastDayOutput, listMeteoVariable, meteoSettings);
                counter++;
                printf("saved table nr. %d\n",counter);
            }
