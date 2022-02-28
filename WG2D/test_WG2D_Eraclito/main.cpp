@@ -386,10 +386,18 @@ int main(int argc, char *argv[])
                    //printf("%f  %f  %f\npress enter to continue",meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD[j].tMin,meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD[j].tMax,meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD[j].prec );
 
                }*/
-               meteoGridDbHandlerWG2D->deleteAndWriteCellGridDailyData(myError, QString::fromStdString(id), row, col, firstDayOutput, lastDayOutput, listMeteoVariable, meteoSettings);
-               //meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError,QString::fromStdString(id),row,col,firstDayOutput,lastDayOutput,listMeteoVariable,meteoSettings);
                counter++;
-               printf("saved table nr. %d\n",counter);
+               if (!meteoGridDbHandlerWG2D->deleteAndWriteCellGridDailyData(myError, QString::fromStdString(id), row, col, firstDayOutput,
+                                                                            lastDayOutput, listMeteoVariable, meteoSettings))
+               {
+                   printf(myError.toStdString().c_str());
+                   printf("\n");
+               }
+               else
+               {
+                   printf("saved table nr. %d\n",counter);
+               }
+               //meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError,QString::fromStdString(id),row,col,firstDayOutput,lastDayOutput,listMeteoVariable,meteoSettings);
            }
            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
         }
