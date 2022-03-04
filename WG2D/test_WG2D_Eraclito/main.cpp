@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
     //scanf("%d",&startingYear);
-    startingYear = 2001;
+    startingYear = 2011;
     int nrYearSimulations = NR_SIMULATION_YEARS;
     //printf("insert the number of years of the the synthethic series:\n");
     //scanf("%d",&nrYearSimulations);
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
     //fp = fopen("./inputData/list_C4.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_farini_00296.txt","r"); // !! take out
-    fp = fopen("./inputData/ovest.txt","r"); // !! take out
+    fp = fopen("./inputData/centro.txt","r"); // !! take out
     //fp = fopen("./inputData/fausto.txt","r");
 
     int numberOfCells; // !! take out
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
     //fp = fopen("./inputData/list_C4.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_farini_00296.txt","r"); // !! take out
-    fp = fopen("./inputData/ovest.txt","r"); // !! take out
+    fp = fopen("./inputData/centro.txt","r"); // !! take out
     //fp = fopen("./inputData/fausto.txt","r");
 
     int* cellCode = nullptr; // !! take out
@@ -387,7 +387,18 @@ int main(int argc, char *argv[])
 
                }*/
                counter++;
-               if (!meteoGridDbHandlerWG2D->deleteAndWriteCellGridDailyData(myError, QString::fromStdString(id), row, col, firstDayOutput,
+               if (!meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError, QString::fromStdString(id), row, col, firstDayOutput,
+                                                                            lastDayOutput, listMeteoVariable, meteoSettings))
+               {
+                   //printf(myError.toStdString().c_str());
+                   printf("\n");
+               }
+               else
+               {
+                   printf("saved table nr. %d\n",counter);
+               }
+
+               /*if (!meteoGridDbHandlerWG2D->deleteAndWriteCellGridDailyData(myError, QString::fromStdString(id), row, col, firstDayOutput,
                                                                             lastDayOutput, listMeteoVariable, meteoSettings))
                {
                    printf(myError.toStdString().c_str());
@@ -396,7 +407,7 @@ int main(int argc, char *argv[])
                else
                {
                    printf("saved table nr. %d\n",counter);
-               }
+               }*/
                //meteoGridDbHandlerWG2D->saveCellGridDailyData(&myError,QString::fromStdString(id),row,col,firstDayOutput,lastDayOutput,listMeteoVariable,meteoSettings);
            }
            meteoGridDbHandlerWG2D->meteoGrid()->meteoPointPointer(row,col)->obsDataD.clear();
