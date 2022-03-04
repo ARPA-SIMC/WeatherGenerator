@@ -13,5 +13,5 @@ git config http.sslVerify false  in caso faccia casino il proxy provare questo.
 
 ultimo proxy:
 
-git config --global http.proxy http://avolta:Physics2203@proxy:8080
+git config --global http.proxy http://avolta:Physics2206@proxy:8080
 
