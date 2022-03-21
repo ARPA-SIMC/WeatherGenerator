@@ -126,12 +126,12 @@ int main(int argc, char *argv[])
     writeOnDB = 1;
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
-    //scanf("%d",&startingYear);
-    startingYear = 2001;
+    scanf("%d",&startingYear);
+    //startingYear = 2001;
     int nrYearSimulations = NR_SIMULATION_YEARS;
-    //printf("insert the number of years of the the synthethic series:\n");
-    //scanf("%d",&nrYearSimulations);
-    nrYearSimulations = 100;
+    printf("insert the number of years of the the synthethic series:\n");
+    scanf("%d",&nrYearSimulations);
+    //nrYearSimulations = 10;
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
