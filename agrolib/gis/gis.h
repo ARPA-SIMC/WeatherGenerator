@@ -148,6 +148,7 @@
             bool initializeGrid(float initValue);
             bool initializeGrid(const Crit3DRasterGrid& initGrid);
             bool initializeGrid(const Crit3DRasterHeader& initHeader);
+            bool initializeGrid(const Crit3DGridHeader& latLonHeader);
             bool initializeGrid(const Crit3DRasterGrid& initGrid, float initValue);
 
             bool copyGrid(const Crit3DRasterGrid& initGrid);
@@ -214,6 +215,7 @@
         bool isMinimum(const Crit3DRasterGrid& myGrid, int row, int col);
         bool isMinimumOrNearMinimum(const Crit3DRasterGrid& myGrid, int row, int col);
         bool isBoundary(const Crit3DRasterGrid& myGrid, int row, int col);
+        bool isBoundaryRunoff(const Crit3DRasterGrid& dem, const Crit3DRasterGrid &aspectMap, int row, int col);
         bool isStrictMaximum(const Crit3DRasterGrid& myGrid, int row, int col);
 
         bool getNorthernEmisphere();
