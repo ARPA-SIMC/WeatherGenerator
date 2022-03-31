@@ -162,13 +162,13 @@ int main(int argc, char *argv[])
     std::vector<float> dailyVariable;
     FILE* fp;
     //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_shortlisted.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C4.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_farini_00296.txt","r"); // !! take out
-    fp = fopen("./inputData/centro.txt","r"); // !! take out
+    //fp = fopen("./inputData/centro.txt","r"); // !! take out
     //fp = fopen("./inputData/fausto.txt","r");
 
     int numberOfCells; // !! take out
@@ -176,13 +176,13 @@ int main(int argc, char *argv[])
     fclose(fp); // !! take out
 
     //fp = fopen("./inputData/list_enza_secchia_panaro.txt","r"); // !! take out
-    //fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
+    fp = fopen("./inputData/list_C7_shortlisted_few_sites.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_shortlisted.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C4.txt","r"); // !! take out
     //fp = fopen("./inputData/list_C7_Russi.txt","r"); // !! take out
     //fp = fopen("./inputData/list_farini_00296.txt","r"); // !! take out
-    fp = fopen("./inputData/centro.txt","r"); // !! take out
+    //fp = fopen("./inputData/centro.txt","r"); // !! take out
     //fp = fopen("./inputData/fausto.txt","r");
 
     int* cellCode = nullptr; // !! take out
