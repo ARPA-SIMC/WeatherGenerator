@@ -26,22 +26,29 @@
             void changeVar(const QString varName);
             void plot();
             void showElaboration();
-            void changeSmooth();
+            void updatePlot();
+            void updatePlotByVal();
+            void computePlot();
+            void on_actionChangeLeftAxis();
+            void on_actionExportGraph();
+            void on_actionExportData();
 
     private:
             bool isGrid;
             Crit3DMeteoPointsDbHandler* meteoPointsDbHandler;
             Crit3DMeteoGridDbHandler* meteoGridDbHandler;
-            Crit3DMeteoSettings *meteoSettings;
-            Crit3DClimateParameters *climateParameters;
-            Crit3DQuality* quality;
-            QSettings *settings;
             Crit3DClimate clima;
             QList<Crit3DMeteoPoint> meteoPoints;
             QDate firstDaily;
             QDate lastDaily;
             QDateTime firstHourly;
             QDateTime lastHourly;
+
+            Crit3DMeteoSettings *meteoSettings;
+            QSettings *settings;
+            Crit3DClimateParameters *climateParameters;
+            Crit3DQuality* quality;
+
             frequencyType currentFrequency;
             QComboBox variable;
             QRadioButton dailyButton;
@@ -63,7 +70,7 @@
             QPushButton deleteStation;
             QPushButton saveToDb;
             QListWidget jointStationsSelected;
-            QComboBox graph;
+            QComboBox graphType;
             QTextEdit availability;
             QTextEdit rate;
             QTextEdit r2;
@@ -72,13 +79,12 @@
             QTextEdit mode;
             QTextEdit median;
             QTextEdit sigma;
-            QTextEdit classWidth;
-            QTextEdit valMax;
-            QTextEdit valMin;
-            QTextEdit smoothing;
-
-    signals:
-        void closePointStatistics();
+            QLineEdit classWidth;
+            QLineEdit valMax;
+            QLineEdit valMin;
+            QLineEdit smoothing;
+            int valMaxValue;
+            int valMinValue;
     };
 
 

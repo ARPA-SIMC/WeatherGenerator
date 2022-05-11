@@ -14,6 +14,8 @@
 #include "qdebug.h"
 #include "iostream"
 
+using namespace std;
+
 bool elaborationOnPoint(QString *myError, Crit3DMeteoPointsDbHandler* meteoPointsDbHandler, Crit3DMeteoGridDbHandler* meteoGridDbHandler,
     Crit3DMeteoPoint* meteoPointTemp, Crit3DClimate* clima, bool isMeteoGrid, QDate startDate, QDate endDate, bool isAnomaly, Crit3DMeteoSettings* meteoSettings)
 {
@@ -4519,28 +4521,48 @@ int computeAnnualSeriesOnPointFromDaily(QString *myError, Crit3DMeteoPointsDbHan
         if (clima->nYears() < 0)
         {
             startDate.setDate(myYear + clima->nYears(), startDate.month(), startDate.day());
-            clima->setYearStart(myYear + clima->nYears());
         }
         else if (clima->nYears() > 0)
         {
             endDate.setDate(myYear + clima->nYears(), endDate.month(), endDate.day());
-            clima->setYearEnd(myYear + clima->nYears());
         }
-        if ( elaborationOnPoint(myError, meteoPointsDbHandler, nullptr, meteoPointTemp, clima, isMeteoGrid, startDate, endDate, isAnomaly, meteoSettings))
+        if (isMeteoGrid)
         {
-            validYears = validYears + 1;
-            if(isAnomaly)
+            if ( elaborationOnPoint(myError, nullptr, meteoGridDbHandler, meteoPointTemp, clima, isMeteoGrid, startDate, endDate, isAnomaly, meteoSettings))
             {
-                outputValues.push_back(meteoPointTemp->anomaly);
+                validYears = validYears + 1;
+                if(isAnomaly)
+                {
+                    outputValues.push_back(meteoPointTemp->anomaly);
+                }
+                else
+                {
+                    outputValues.push_back(meteoPointTemp->elaboration);
+                }
             }
             else
             {
-                outputValues.push_back(meteoPointTemp->elaboration);
+                outputValues.push_back(NODATA);
             }
         }
         else
         {
-            outputValues.push_back(NODATA);
+            if ( elaborationOnPoint(myError, meteoPointsDbHandler, nullptr, meteoPointTemp, clima, isMeteoGrid, startDate, endDate, isAnomaly, meteoSettings))
+            {
+                validYears = validYears + 1;
+                if(isAnomaly)
+                {
+                    outputValues.push_back(meteoPointTemp->anomaly);
+                }
+                else
+                {
+                    outputValues.push_back(meteoPointTemp->elaboration);
+                }
+            }
+            else
+            {
+                outputValues.push_back(NODATA);
+            }
         }
     }
     return validYears;
@@ -4548,7 +4570,7 @@ int computeAnnualSeriesOnPointFromDaily(QString *myError, Crit3DMeteoPointsDbHan
 
 void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, QDate firstDate, QDate lastDate,
                               int smooth, float* dataPresence, Crit3DQuality* qualityCheck, Crit3DClimateParameters* climateParam,
-                               Crit3DMeteoSettings* meteoSettings, std::vector<float> &dailyClima, std::vector<float> &decadeClima, std::vector<float> &monthlyClima)
+                               Crit3DMeteoSettings* meteoSettings, std::vector<float> &dailyClima, std::vector<float> &decadalClima, std::vector<float> &monthlyClima)
 {
 
     int nrDays = int(firstDate.daysTo(lastDate) + 1);
@@ -4566,19 +4588,19 @@ void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, Q
     vector<float> maxMonthlyData;
     vector<float> maxDecadeData;
     vector<float> maxDailyData;
-    for (int fill = 0; fill < 12; fill++)
+    for (int fill = 0; fill <= 12; fill++)
     {
         monthly.push_back(0);
         numMonthlyData.push_back(0);
         maxMonthlyData.push_back(0);
     }
-    for (int fill = 0; fill < 36; fill++)
+    for (int fill = 0; fill <= 36; fill++)
     {
         decadal.push_back(0);
         numDecadeData.push_back(0);
         maxDecadeData.push_back(0);
     }
-    for (int fill = 0; fill < 366; fill++)
+    for (int fill = 0; fill <= 366; fill++)
     {
         daily.push_back(0);
         numDailyData.push_back(0);
@@ -4652,14 +4674,8 @@ void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, Q
     }
     *dataPresence = numDati / numDatiMax * 100;
     float minPerc = meteoSettings->getMinimumPercentage();
-    /*
-     * presenti in vb ma inutili
-    bool dailyClimaLoaded = true;
-    bool decadeClimaLoaded = true;
-    bool monthlyClimaLoaded = true;
-    */
 
-    for (int day = 1; day < 366; day++)
+    for (int day = 1; day <= 366; day++)
     {
         myDate = QDate(2000, 1, 1).addDays(day - 1);
         // daily
@@ -4672,13 +4688,11 @@ void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, Q
             else
             {
                 dailyClima[day] = NODATA;
-                //dailyClimaLoaded = false;
             }
         }
         else
         {
             dailyClima[day] = NODATA;
-            //dailyClimaLoaded = false;
         }
 
         // decadal
@@ -4687,18 +4701,16 @@ void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, Q
         {
             if (numDecadeData[decade] / maxDecadeData[decade] >= (minPerc/100))
             {
-                decadeClima[decade] = decadal[decade] / numDecadeData[decade];
+                decadalClima[decade] = decadal[decade] / numDecadeData[decade];
             }
             else
             {
-                decadeClima[decade] = NODATA;
-                //decadeClimaLoaded = false;
+                decadalClima[decade] = NODATA;
             }
         }
         else
         {
-            decadeClima[decade] = NODATA;
-            //decadeClimaLoaded = false;
+            decadalClima[decade] = NODATA;
         }
 
         // monthly
@@ -4712,13 +4724,11 @@ void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, Q
             else
             {
                 monthlyClima[month] = NODATA;
-                //monthlyClimaLoaded = false;
             }
         }
         else
         {
             monthlyClima[month] = NODATA;
-            //monthlyClimaLoaded = false;
         }
     }
     // smooth
@@ -4728,11 +4738,11 @@ void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, Q
         int doy;
         int nDays;
         float dSum;
-        for (int day = 1; day < 366; day++)
+        for (int day = 1; day <= 366; day++)
         {
             dSum = 0;
             nDays = 0;
-            for (int d = day-smooth; day <= day+smooth; day++)
+            for (int d = day-smooth; d <= day+smooth; d++)
             {
                 doy = d;
                 if (doy < 1)
