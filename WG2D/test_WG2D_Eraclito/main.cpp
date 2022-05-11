@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     //printf("Do you want to write the output on database? type : 1 (yes) , or 0 (no) \n");
     int writeOnDB;
     //scanf("%d",&writeOnDB);
-    writeOnDB = 1;
+    writeOnDB = 0;
     int startingYear = STARTING_YEAR;
     printf("insert the starting year for the synthethic series:\n");
     scanf("%d",&startingYear);
