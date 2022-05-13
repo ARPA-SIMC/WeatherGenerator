@@ -125,8 +125,11 @@ int main(int argc, char *argv[])
     double alpha = 1.5;
     double beta = 0.5;
     double pZero = 0;
+    double mean = 4.5;
+    double variance = 3;
+    getGammaParameters(mean,variance,&alpha,&beta);
     //y = generalizedGammaCDF(x,beta,alpha,pZero);
-    //printf("%f  %f\n",x,y);
+    printf("%f  %f\n",alpha,beta);
     x = inverseGeneralizedGammaCDF(generalizedGammaCDF(x,beta,alpha,pZero),alpha,beta,0.000000001,pZero);
     //
     //y = incompleteGamma(alpha, double(x) / beta);
