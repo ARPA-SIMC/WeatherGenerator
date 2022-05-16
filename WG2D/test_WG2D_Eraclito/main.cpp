@@ -120,8 +120,8 @@ bool saveOnMeteoGridDB(QString* errorString)
 
 int main(int argc, char *argv[])
 {
-    float x = 60;
-    float y;
+    double x = 180;
+    double y;
     double alpha = 1.5;
     double beta = 0.5;
     double pZero = 0;
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     //y = generalizedGammaCDF(x,beta,alpha,pZero);
     printf("%f  %f\n",alpha,beta);
     y = generalizedGammaCDF(x,beta,alpha,pZero);
-    x = inverseGeneralizedGammaCDF(generalizedGammaCDF(x,beta,alpha,pZero),alpha,beta,0.000000001,pZero);
+    x = inverseGeneralizedGammaCDF(generalizedGammaCDF(x,beta,alpha,pZero),alpha,beta,0.000000001,pZero,0.01);
     //
     //y = incompleteGamma(alpha, double(x) / beta);
     //x = inverseGammaCumulativeDistributionFunction(y,alpha,beta,0.000000001);
