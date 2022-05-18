@@ -47,7 +47,7 @@ Crit3DPointStatisticsWidget::Crit3DPointStatisticsWidget(bool isGrid, Crit3DMete
     this->resize(1000, 700);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setAttribute(Qt::WA_DeleteOnClose);
-    
+
     // layout
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QHBoxLayout *upperLayout = new QHBoxLayout();
@@ -77,7 +77,7 @@ Crit3DPointStatisticsWidget::Crit3DPointStatisticsWidget(bool isGrid, Crit3DMete
 
     elaboration.setText("Elaboration");
     elaboration.setEnabled(false);
-    
+
     dailyButton.setText("Daily");
     hourlyButton.setText("Hourly");
     if (firstDaily.isNull() || lastDaily.isNull())
@@ -955,7 +955,7 @@ void Crit3DPointStatisticsWidget::plot()
             int nrValues = int(series.size());
             std::vector<float> sortedSeries = series;
             double beta;
-            double gamma;
+            double alpha;
             double pzero;
 
             int visualizedNrValues = 0;
@@ -974,7 +974,7 @@ void Crit3DPointStatisticsWidget::plot()
                         }
                     }
                 }
-                if (!gammaFitting(series, nrValues, &beta, &gamma,  &pzero))
+                if (!gammaFitting(series, nrValues, &beta, &alpha,  &pzero))
                 {
                     return;
                 }
@@ -1030,14 +1030,11 @@ void Crit3DPointStatisticsWidget::plot()
                     {
                         if (x > 0)
                         {
-                            //float gammaFun = generalizedGammaCDF(x, beta, gamma, pzero);
-                            if (gamma > 0 && beta > 0)
+                            if (alpha > 0 && beta > 0)
                             {
-                                //float probGamma = probabilityGamma(x, 1/beta, gamma, gammaFun);
-                                float probGamma = probabilityGamma(x,gamma,beta);
+                                float probGamma = probabilityGamma(x,alpha,beta);
                                 lineValues.append(QPointF(x, probGamma));
                             }
-
                             else
                             {
                                 QMessageBox::information(nullptr, "Error", "Error in gamma distribution");
@@ -1205,7 +1202,7 @@ void Crit3DPointStatisticsWidget::plot()
         int nrValues = int(series.size());
         std::vector<float> sortedSeries = series;
         double beta;
-        double gamma;
+        double alpha;
         double pzero;
 
         int visualizedNrValues = 0;
@@ -1223,7 +1220,7 @@ void Crit3DPointStatisticsWidget::plot()
                     }
                 }
             }
-            if (!gammaFitting(series, nrValues, &beta, &gamma,  &pzero))
+            if (!gammaFitting(series, nrValues, &beta, &alpha,  &pzero))
             {
                 return;
             }
@@ -1275,16 +1272,15 @@ void Crit3DPointStatisticsWidget::plot()
         for (int i = 0; i<bucket.size(); i++)
         {
             float x = valMinValue + (i*classWidthValue) + (classWidthValue/2.0);
-            if (x < valMaxValue)
+            if (x < float(valMaxValue))
             {
                 if (myVar == precipitation)
                 {
                     if (x > 0)
                     {
-                        float gammaFun = generalizedGammaCDF(x, beta, gamma, pzero);
-                        if (fabs(gammaFun - NODATA) > EPSILON)
+                        if (alpha > 0 && beta > 0)
                         {
-                            float probGamma = probabilityGamma(x, 1/beta, gamma, gammaFun);
+                            float probGamma = probabilityGamma(x,alpha,beta);
                             lineValues.append(QPointF(x,probGamma));
                         }
                         else
@@ -1545,6 +1541,5 @@ void Crit3DPointStatisticsWidget::on_actionExportData()
         return;
     }
 }
-
 
 
