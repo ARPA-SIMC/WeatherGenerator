@@ -50,7 +50,9 @@ int main(int argc, char *argv[])
                 settingsFileName = argv[1];
             else
             {
-                std::cout << "USAGE:\nWG.exe [settings.ini]\n";
+                std::cout << "USAGE:" << std::endl;
+                std::cout << "WG.exe [settings.ini]" << std::endl;
+                std::cout << std::flush;
                 return 0;
             }
         #endif
@@ -73,5 +75,6 @@ int main(int argc, char *argv[])
     }
 
     std::cout << "\nEND\n";
+    std::cout << std::flush;
 }
 
