@@ -30,6 +30,15 @@
 //#define TEST_WG_CLIMATE 1
 //#define TEST_WG_SEASONAL 2
 
+void usage()
+{
+    std::cout << "\nUSAGE:" << std::endl;
+    std::cout << "   WG1D.exe [settingsFile.ini]" << std::endl;
+    std::cout << "Example:" << std::endl;
+    std::cout << "   WG1D.exe ../data/testWG.ini" << std::endl;
+    std::cout << std::flush;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -38,7 +47,7 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "Weather Generator 1D\n";
+    std::cout << "\n*** Weather Generator 1D ***\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "testWG_Climate.ini";
@@ -50,9 +59,7 @@ int main(int argc, char *argv[])
                 settingsFileName = argv[1];
             else
             {
-                std::cout << "USAGE:" << std::endl;
-                std::cout << "WG.exe [settings.ini]" << std::endl;
-                std::cout << std::flush;
+                usage();
                 return 0;
             }
         #endif

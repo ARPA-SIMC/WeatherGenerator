@@ -18,6 +18,9 @@
         float minDataPercentage;
         float rainfallThreshold;
 
+        int firstYear;
+        int nrYears;
+
         WGSettings();
     };
 

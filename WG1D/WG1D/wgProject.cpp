@@ -21,8 +21,12 @@ WGSettings::WGSettings()
     this->isSeasonalForecast = false;
 
     this->valuesSeparator = ',';
+
     this->minDataPercentage = 0.8f;
     this->rainfallThreshold = 0.2f;
+
+    this->firstYear = 2001;
+    this->nrYears = 1;
 }
 
 
@@ -91,7 +95,15 @@ bool readWGSettings(QString settingsFileName, WGSettings* wgSettings)
     wgSettings->outputPath = mySettings->value("output").toString();
     if (wgSettings->outputPath.left(1) == ".")
     {
-        wgSettings->outputPath = pathSettingsFile + wgSettings->outputPath;
+        wgSettings->outputPath = QDir::cleanPath(pathSettingsFile + wgSettings->outputPath);
+    }
+
+    if (wgSettings->outputPath != "")
+    {
+        if (! QDir(wgSettings->outputPath).exists())
+        {
+            QDir().mkdir(wgSettings->outputPath);
+        }
     }
 
     //check output directory
@@ -105,8 +117,12 @@ bool readWGSettings(QString settingsFileName, WGSettings* wgSettings)
 
     QString mySeparator = mySettings->value("separator").toString();
     wgSettings->valuesSeparator = mySeparator.toStdString().c_str()[0];
+
     wgSettings->minDataPercentage = mySettings->value("minDataPercentage").toFloat();
     wgSettings->rainfallThreshold = mySettings->value("rainfallThreshold").toFloat();
+
+    wgSettings->firstYear = mySettings->value("firstYear").toInt();
+    wgSettings->nrYears = mySettings->value("nrYears").toInt();
 
     return true;
 }
@@ -242,6 +258,7 @@ bool WG_Climate(WGSettings wgSettings)
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
+    std::vector<ToutputDailyMeteo> outputDailyData;
 
     for (int i = 0; i < fileList.size(); ++i)
     {
@@ -255,7 +272,7 @@ bool WG_Climate(WGSettings wgSettings)
         if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, &climateDailyObsData) )
             return false;
 
-        //check climate dates
+        // check climate dates
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLenght-1);
 
@@ -270,9 +287,18 @@ bool WG_Climate(WGSettings wgSettings)
             qDebug() << "Climate OK";
 
             /* initialize random seed: */
-            srand (time(nullptr));
+            srand(unsigned(time(nullptr)));
 
-            // TODO: generate x years (add number to .ini)
+            outputDailyData.clear();
+
+            if (! computeClimate(wGenClimate, wgSettings.firstYear, wgSettings.nrYears,
+                                wgSettings.rainfallThreshold, outputDailyData))
+            {
+                qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+            }
+
+            qDebug() << "\n...write output:" << outputFileName;
+            writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData);
         }
 
         clearInputData(&climateDailyObsData);
