@@ -35,7 +35,7 @@ void usage()
     std::cout << "\nUSAGE:" << std::endl;
     std::cout << "   WG1D.exe [settingsFile.ini]" << std::endl;
     std::cout << "Example:" << std::endl;
-    std::cout << "   WG1D.exe ../data/testWG.ini" << std::endl;
+    std::cout << "   WG1D.exe ../data/TEST/testWG_Climate.ini" << std::endl;
     std::cout << std::flush;
 }
 
@@ -50,10 +50,10 @@ int main(int argc, char *argv[])
     std::cout << "\n*** Weather Generator 1D ***\n";
 
     #ifdef TEST_WG_CLIMATE
-        settingsFileName = dataPath + "testWG_Climate.ini";
+        settingsFileName = dataPath + "TEST/testWG_Climate.ini";
     #else
         #ifdef TEST_WG_SEASONAL
-            settingsFileName = dataPath + "testWG_Seasonal.ini";
+            settingsFileName = dataPath + "TEST/testWG_Seasonal.ini";
         #else
             if (argc > 1)
                 settingsFileName = argv[1];
