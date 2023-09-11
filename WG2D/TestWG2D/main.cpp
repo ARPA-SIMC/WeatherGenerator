@@ -28,15 +28,11 @@
 #include <chrono>
 
 #include "commonConstants.h"
-#include "furtherMathFunctions.h"
 #include "wg2D.h"
 #include "readPragaFormatData.h"
 #include "crit3dDate.h"
-#include "statistics.h"
 
-#include "utilities.h"
 #include "dbMeteoGrid.h"
-#include "meteo.h"
 #include "meteoPoint.h"
 
 
