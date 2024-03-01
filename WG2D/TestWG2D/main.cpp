@@ -12,7 +12,7 @@
 #define COMPUTE_MONTHLY_STATISTICS true  // aut true aut false
 
 //************************************************************************************************************
-
+//
 #include <QString>
 #include <QFile>
 #include <QDateTime>
