@@ -170,17 +170,19 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         //check observed data
         isOk = true;
         testFile = new QFile(observedFileName);
-        if (!testFile->exists())
+        if (! testFile->exists())
         {
             qDebug() << "ERROR: missing observed data:" << fileName;
             isOk = false;
         }
 
         // check xml file
-        if (! QDir(xmlFileName).exists())
+        testFile = new QFile(xmlFileName);
+        if (! testFile->exists())
         {
             xmlFileName = wgSettings.seasonalForecastPath + "/" + "GRD_" + fileName.left(fileName.length()-4) + ".xml";
-            if (! QDir(xmlFileName).exists())
+            testFile = new QFile(xmlFileName);
+            if (! testFile->exists())
             {
                 qDebug() << "ERROR: missing seasonal forecast:" << xmlFileName;
                 isOk = false;
