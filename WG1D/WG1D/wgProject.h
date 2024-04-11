@@ -11,9 +11,11 @@
         QString observedPath;
         QString climatePath;
         QString seasonalForecastPath;
+        QString scenarioPath;
         QString outputPath;
 
         bool isSeasonalForecast;
+        bool isScenario;
         char valuesSeparator;
         float minDataPercentage;
         float rainfallThreshold;
@@ -26,6 +28,7 @@
 
     bool readWGSettings(QString settingsFileName, WGSettings &wgSettings);
     bool WG_SeasonalForecast(const WGSettings &wgSettings);
+    bool WG_Scenario(const WGSettings &wgSettings);
     bool WG_Climate(const WGSettings &wgSettings);
 
 

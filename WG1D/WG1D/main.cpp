@@ -29,6 +29,7 @@
 // uncomment TEST_WG_CLIMATE or TEST_WG_SEASONAL to execute test
 //#define TEST_WG_CLIMATE 1
 //#define TEST_WG_SEASONAL 2
+//#define TEST_WG_SCENARIO 3
 
 void usage()
 {
@@ -54,13 +55,17 @@ int main(int argc, char *argv[])
             settingsFileName = dataPath + "TEST/testWG_Seasonal.ini";
             //settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt2024_MJJ/wg/WG_2024_MJJ_MN.ini";
         #else
-            if (argc > 1)
-                settingsFileName = argv[1];
-            else
-            {
-                usage();
-                return 0;
-            }
+            #ifdef TEST_WG_SCENARIO
+                settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
+            #else
+                if (argc > 1)
+                    settingsFileName = argv[1];
+                else
+                {
+                    usage();
+                    return 0;
+                }
+            #endif
         #endif
     #endif
 
@@ -80,10 +85,26 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
+    else if (wgSettings.isScenario)
+    {
+        if (! WG_Scenario(wgSettings))
+        {
+            qDebug() << "*** Error in Scenario computation!";
+            return -1;
+        }
+        else
+        {
+            qDebug() << "Scenario ok!";
+        }
+    }
     else
     {
+        // CLIMATE
         if (! WG_Climate(wgSettings))
+        {
+            qDebug() << "*** Error in Climate computation!";
             return -1;
+        }
     }
 
     std::cout << "\nEND\n";

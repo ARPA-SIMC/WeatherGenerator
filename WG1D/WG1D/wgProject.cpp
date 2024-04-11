@@ -16,9 +16,11 @@ WGSettings::WGSettings()
     this->observedPath = "";
     this->climatePath = "";
     this->seasonalForecastPath = "";
+    this->scenarioPath = "";
     this->outputPath = "";
 
     this->isSeasonalForecast = false;
+    this->isScenario = false;
 
     this->valuesSeparator = ',';
 
@@ -78,6 +80,19 @@ bool readWGSettings(QString settingsFileName, WGSettings &wgSettings)
         if (wgSettings.seasonalForecastPath.left(1) == ".")
         {
             wgSettings.seasonalForecastPath = pathSettingsFile + wgSettings.seasonalForecastPath;
+        }
+    }
+
+    // scenarios
+    wgSettings.isScenario = false;
+    myValue = mySettings->value("scenario");
+    if (myValue.isValid())
+    {
+        wgSettings.isScenario = true;
+        wgSettings.scenarioPath = myValue.toString();
+        if (wgSettings.scenarioPath.left(1) == ".")
+        {
+            wgSettings.scenarioPath = pathSettingsFile + wgSettings.scenarioPath;
         }
     }
 
@@ -188,11 +203,11 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             XMLAnomaly.printInfo();
 
             // read CLIMATE data
-            if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
+            if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
                 return false;
 
             // read OBSERVED data (at least last 9 months)
-            if ( !readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, lastYearDailyObsData) )
+            if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, lastYearDailyObsData) )
                 return false;
 
             //check climate dates
@@ -214,7 +229,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             else
             {
                 // weather generator - computes climate without anomaly
-                if (!climateGenerator(climateDailyObsData.dataLenght, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+                if (! climateGenerator(climateDailyObsData.dataLenght, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
                 {
                     qDebug() << "Error in climateGenerator";
                     qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -240,6 +255,14 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             clearInputData(lastYearDailyObsData);
         }
     }
+    return true;
+}
+
+
+bool WG_Scenario(const WGSettings &wgSettings)
+{
+    // TODO Antonio
+
     return true;
 }
 
@@ -273,7 +296,7 @@ bool WG_Climate(const WGSettings &wgSettings)
         Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLenght-1);
 
         // weather generator - computes climate
-        if (!climateGenerator(climateDailyObsData.dataLenght, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+        if (! climateGenerator(climateDailyObsData.dataLenght, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
         {
             qDebug() << "Error in climateGenerator";
             qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
