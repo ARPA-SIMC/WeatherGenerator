@@ -32,10 +32,8 @@
 
 void usage()
 {
-    std::cout << "\nUSAGE:" << std::endl;
-    std::cout << "   WG1D.exe [settingsFile.ini]" << std::endl;
-    std::cout << "Example:" << std::endl;
-    std::cout << "   WG1D.exe ../data/TEST/testWG_Climate.ini" << std::endl;
+    std::cout << std::endl << "USAGE:" << std::endl;
+    std::cout << " WG1D.exe [settingsFile.ini]" << std::endl;
     std::cout << std::flush;
 }
 
@@ -47,13 +45,14 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "\n*** Weather Generator 1D ***\n";
+    std::cout << "\n*** 1D Weather Generator ***\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
     #else
         #ifdef TEST_WG_SEASONAL
             settingsFileName = dataPath + "TEST/testWG_Seasonal.ini";
+            //settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt2024_MJJ/wg/WG_2024_MJJ_MN.ini";
         #else
             if (argc > 1)
                 settingsFileName = argv[1];
@@ -67,13 +66,19 @@ int main(int argc, char *argv[])
 
     // read settings
     WGSettings wgSettings;
-    if (!readWGSettings(settingsFileName, &wgSettings))
+    if (! readWGSettings(settingsFileName, wgSettings))
+    {
+        qDebug() << "*** Error in reading settings file!";
         return -1;
+    }
 
     if (wgSettings.isSeasonalForecast)
     {
         if (! WG_SeasonalForecast(wgSettings))
+        {
+            qDebug() << "*** Error in Seasonal forecast computation!";
             return -1;
+        }
     }
     else
     {

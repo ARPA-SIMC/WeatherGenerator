@@ -24,9 +24,9 @@
         WGSettings();
     };
 
-    bool readWGSettings(QString settingsFileName, WGSettings* wgSettings);
-    bool WG_SeasonalForecast(WGSettings wgSettings);
-    bool WG_Climate(WGSettings wgSettings);
+    bool readWGSettings(QString settingsFileName, WGSettings &wgSettings);
+    bool WG_SeasonalForecast(const WGSettings &wgSettings);
+    bool WG_Climate(const WGSettings &wgSettings);
 
 
 #endif // WGPROJECT_H

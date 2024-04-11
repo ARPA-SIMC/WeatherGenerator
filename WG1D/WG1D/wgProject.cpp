@@ -30,10 +30,10 @@ WGSettings::WGSettings()
 }
 
 
-bool readWGSettings(QString settingsFileName, WGSettings* wgSettings)
+bool readWGSettings(QString settingsFileName, WGSettings &wgSettings)
 {
     QFile myFile(settingsFileName);
-    if (!myFile.exists())
+    if (! myFile.exists())
     {
         qDebug() << "Error!" << "\nMissing settings file:" << settingsFileName;
         return false;
@@ -46,20 +46,26 @@ bool readWGSettings(QString settingsFileName, WGSettings* wgSettings)
     QSettings* mySettings = new QSettings(settingsFileName, QSettings::IniFormat);
     mySettings->beginGroup("settings");
 
-    wgSettings->climatePath = mySettings->value("climate").toString();
-    if (wgSettings->climatePath.left(1) == ".")
+    wgSettings.climatePath = mySettings->value("climate").toString();
+    if (wgSettings.climatePath.left(1) == ".")
     {
-        wgSettings->climatePath = pathSettingsFile + wgSettings->climatePath;
+        wgSettings.climatePath = pathSettingsFile + wgSettings.climatePath;
     }
 
-    wgSettings->observedPath = mySettings->value("observed").toString();
-    if (wgSettings->observedPath.left(1) == ".")
+    if (wgSettings.climatePath == "")
     {
-        wgSettings->observedPath = pathSettingsFile + wgSettings->observedPath;
+        qDebug() << "Missing climate path in file .ini";
+        return false;
+    }
+
+    wgSettings.observedPath = mySettings->value("observed").toString();
+    if (wgSettings.observedPath.left(1) == ".")
+    {
+        wgSettings.observedPath = pathSettingsFile + wgSettings.observedPath;
     }
 
     // seasonal forecast
-    wgSettings->isSeasonalForecast = false;
+    wgSettings.isSeasonalForecast = false;
     QVariant myValue = mySettings->value("seasonalForecast");
     if (! myValue.isValid())
     {
@@ -67,51 +73,51 @@ bool readWGSettings(QString settingsFileName, WGSettings* wgSettings)
     }
     if (myValue.isValid())
     {
-        wgSettings->isSeasonalForecast = true;
-        wgSettings->seasonalForecastPath = myValue.toString();
-        if (wgSettings->seasonalForecastPath.left(1) == ".")
+        wgSettings.isSeasonalForecast = true;
+        wgSettings.seasonalForecastPath = myValue.toString();
+        if (wgSettings.seasonalForecastPath.left(1) == ".")
         {
-            wgSettings->seasonalForecastPath = pathSettingsFile + wgSettings->seasonalForecastPath;
+            wgSettings.seasonalForecastPath = pathSettingsFile + wgSettings.seasonalForecastPath;
         }
     }
 
-    wgSettings->outputPath = mySettings->value("output").toString();
-    if (wgSettings->outputPath.left(1) == ".")
+    wgSettings.outputPath = mySettings->value("output").toString();
+    if (wgSettings.outputPath.left(1) == ".")
     {
-        wgSettings->outputPath = QDir::cleanPath(pathSettingsFile + wgSettings->outputPath);
+        wgSettings.outputPath = QDir::cleanPath(pathSettingsFile + wgSettings.outputPath);
     }
 
-    if (wgSettings->outputPath != "")
+    if (wgSettings.outputPath != "")
     {
-        if (! QDir(wgSettings->outputPath).exists())
+        if (! QDir(wgSettings.outputPath).exists())
         {
-            QDir().mkdir(wgSettings->outputPath);
+            QDir().mkdir(wgSettings.outputPath);
         }
     }
 
     //check output directory
-    QDir outputDirectory(wgSettings->outputPath);
-    if (!outputDirectory.exists())
-        if (!outputDirectory.mkdir(wgSettings->outputPath))
+    QDir outputDirectory(wgSettings.outputPath);
+    if (! outputDirectory.exists())
+        if (! outputDirectory.mkdir(wgSettings.outputPath))
         {
-            qDebug() << "Error: missing output directory" << wgSettings->outputPath;
+            qDebug() << "Error: missing output directory" << wgSettings.outputPath;
             return false;
         }
 
     QString mySeparator = mySettings->value("separator").toString();
-    wgSettings->valuesSeparator = mySeparator.toStdString().c_str()[0];
+    wgSettings.valuesSeparator = mySeparator.toStdString().c_str()[0];
 
-    wgSettings->minDataPercentage = mySettings->value("minDataPercentage").toFloat();
-    wgSettings->rainfallThreshold = mySettings->value("rainfallThreshold").toFloat();
+    wgSettings.minDataPercentage = mySettings->value("minDataPercentage").toFloat();
+    wgSettings.rainfallThreshold = mySettings->value("rainfallThreshold").toFloat();
 
-    wgSettings->firstYear = mySettings->value("firstYear").toInt();
-    wgSettings->nrYears = mySettings->value("nrYears").toInt();
+    wgSettings.firstYear = mySettings->value("firstYear").toInt();
+    wgSettings.nrYears = mySettings->value("nrYears").toInt();
 
     return true;
 }
 
 
-bool WG_SeasonalForecast(WGSettings wgSettings)
+bool WG_SeasonalForecast(const WGSettings &wgSettings)
 {
     XMLSeasonalAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
@@ -128,6 +134,13 @@ bool WG_SeasonalForecast(WGSettings wgSettings)
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
+
+    // check
+    if (fileList.size() == 0)
+    {
+        qDebug() << "Missing climate files in path: " + wgSettings.climatePath;
+        return false;
+    }
 
     bool isOk;
     QFile *testFile;
@@ -175,11 +188,11 @@ bool WG_SeasonalForecast(WGSettings wgSettings)
             XMLAnomaly.printInfo();
 
             // read CLIMATE data
-            if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, &climateDailyObsData) )
+            if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
                 return false;
 
             // read OBSERVED data (at least last 9 months)
-            if ( !readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, &lastYearDailyObsData) )
+            if ( !readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, lastYearDailyObsData) )
                 return false;
 
             //check climate dates
@@ -223,15 +236,15 @@ bool WG_SeasonalForecast(WGSettings wgSettings)
                 }
             }
 
-            clearInputData(&climateDailyObsData);
-            clearInputData(&lastYearDailyObsData);
+            clearInputData(climateDailyObsData);
+            clearInputData(lastYearDailyObsData);
         }
     }
     return true;
 }
 
 
-bool WG_Climate(WGSettings wgSettings)
+bool WG_Climate(const WGSettings &wgSettings)
 {
     TinputObsData climateDailyObsData;
     TweatherGenClimate wGenClimate;
@@ -252,7 +265,7 @@ bool WG_Climate(WGSettings wgSettings)
         qDebug() << "\n...Compute climate:" << fileName;
 
         // read CLIMATE data
-        if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, &climateDailyObsData) )
+        if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
             return false;
 
         // check climate dates
@@ -285,7 +298,7 @@ bool WG_Climate(WGSettings wgSettings)
             writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData);
         }
 
-        clearInputData(&climateDailyObsData);
+        clearInputData(climateDailyObsData);
     }
     return true;
 }
