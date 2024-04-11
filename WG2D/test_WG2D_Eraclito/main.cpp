@@ -88,7 +88,7 @@ bool loadMeteoGridDB(QString* errorString)
 
     if (! meteoGridDbHandler->loadCellProperties(errorString)) return false;
 
-    if (! meteoGridDbHandler->updateGridDate(errorString)) return false;
+    if (! meteoGridDbHandler->updateMeteoGridDate(*errorString)) return false;
 
     logInfo("Meteo Grid = " + xmlName);
 

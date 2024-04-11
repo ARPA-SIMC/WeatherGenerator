@@ -26,7 +26,7 @@
         WGSettings();
     };
 
-    bool readWGSettings(QString settingsFileName, WGSettings &wgSettings);
+    bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings);
     bool WG_SeasonalForecast(const WGSettings &wgSettings);
     bool WG_Scenario(const WGSettings &wgSettings);
     bool WG_Climate(const WGSettings &wgSettings);

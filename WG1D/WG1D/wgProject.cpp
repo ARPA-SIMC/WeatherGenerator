@@ -32,7 +32,7 @@ WGSettings::WGSettings()
 }
 
 
-bool readWGSettings(QString settingsFileName, WGSettings &wgSettings)
+bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
 {
     QFile myFile(settingsFileName);
     if (! myFile.exists())
@@ -194,12 +194,12 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             qDebug() << "\nCompute seasonal:" << fileName;
 
             // read SEASONAL PREDICTIONS
-            if (! parseXMLSeasonal(xmlFileName, &XMLAnomaly))
+            if (! parseXMLSeasonal(xmlFileName, XMLAnomaly))
                 return false;
 
             // compute first and last day of the year of the season period
             season = XMLAnomaly.anomalySeason.toUpper();
-            getDoyFromSeason(season, XMLAnomaly.anomalyYear, &wgDoy1, &wgDoy2);
+            getDoyFromSeason(season, XMLAnomaly.anomalyYear, wgDoy1, wgDoy2);
 
             // set climate dates
             climateDateIni = Crit3DDate(1,1,XMLAnomaly.climatePeriod.yearFrom);
