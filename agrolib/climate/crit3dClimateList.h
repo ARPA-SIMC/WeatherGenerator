@@ -4,13 +4,10 @@
     #ifndef METEO_H
         #include "meteo.h"
     #endif
-    #ifndef STATISTICS_H
-        #include "statistics.h"
-    #endif
 
-    #ifndef QDATETIME_H
-        #include <QDateTime>
-    #endif
+    #include "QList"
+    #include "QString"
+    #include "QDate"
 
 
     enum period{ dailyPeriod, decadalPeriod, monthlyPeriod, seasonalPeriod, annualPeriod, genericPeriod, noPeriodType};
@@ -103,7 +100,7 @@
         std::vector<float> listParam2() const;
         void setListParam2(const std::vector<float> &listParam2);
 
-        void parserElaboration();
+        void parserElaboration(QString &errorStr);
         bool parserGenericPeriodString(int index);
 
         void insertDailyCumulated(bool dailyCumulated);

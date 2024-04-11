@@ -59,7 +59,7 @@
 
         // SOIL
         soil::Crit3DSoil mySoil;
-        std::vector<soil::Crit3DLayer> soilLayers;
+        std::vector<soil::Crit1DLayer> soilLayers;
         std::vector<Crit3DCarbonNitrogenLayer> carbonNitrogenLayers;
         soil::Crit3DFittingOptions fittingOptions;
 
@@ -75,10 +75,11 @@
         Crit1DCase();
 
         bool initializeSoil(std::string &error);
-        void initializeWaterContent(Crit3DDate myDate);
+        bool initializeWaterContent(Crit3DDate myDate);
         bool computeDailyModel(Crit3DDate &myDate, std::string &error);
 
-        double getWaterContent(double computationDepth);
+        double getVolumetricWaterContent(double computationDepth);
+        double getDegreeOfSaturation(double computationDepth);
         double getWaterPotential(double computationDepth);
         double getFractionAW(double computationDepth);
         double getSlopeStability(double computationDepth);
@@ -99,7 +100,7 @@
         bool computeNumericalFluxes(const Crit3DDate &myDate, std::string &error);
         bool computeWaterFluxes(const Crit3DDate &myDate, std::string &error);
         double checkIrrigationDemand(int doy, double currentPrec, double nextPrec, double maxTranspiration);
-        void saveWaterContent();
+        void storeWaterContent();
         void restoreWaterContent();
         double getTotalWaterContent();
 

@@ -2,7 +2,10 @@
 #include "commonConstants.h"
 #include "crit3dDate.h"
 #include "math.h"
+#include "qjsonobject.h"
 
+#include <QJsonDocument>
+#include <QJsonArray>
 #include <QVariant>
 #include <QSqlDriver>
 #include <QSqlRecord>
@@ -43,6 +46,13 @@ QList<QString> getFieldsUpperCase(const QSqlQuery& query)
         fieldList.append(record.fieldName(i).toUpper());
 
     return fieldList;
+}
+
+
+bool fieldExists(const QSqlQuery &query, const QString fieldName)
+{
+    QList<QString> fieldList = getFieldsUpperCase(query);
+    return fieldList.contains(fieldName.toUpper());
 }
 
 
@@ -418,7 +428,6 @@ bool getPeriodDates(QString periodSelected, int year, QDate myDate, QDate* start
 
 }
 
-
 std::vector <float> StringListToFloat(QList<QString> myList)
 {
     std::vector <float> myVector;
@@ -429,8 +438,26 @@ std::vector <float> StringListToFloat(QList<QString> myList)
     return myVector;
 }
 
+std::vector <double> StringListToDouble(QList<QString> myList)
+{
+    std::vector <double> myVector;
+    myVector.resize(unsigned(myList.size()));
+    for (unsigned i=0; i < unsigned(myList.size()); i++)
+        myVector[i] = myList[int(i)].toFloat();
+
+    return myVector;
+}
 
 QStringList FloatVectorToStringList(std::vector <float> myVector)
+{
+    QList<QString> myList;
+    for (unsigned i=0; i < unsigned(myVector.size()); i++)
+        myList.push_back(QString::number(double(myVector[i])));
+
+    return myList;
+}
+
+QStringList DoubleVectorToStringList(std::vector <double> myVector)
 {
     QList<QString> myList;
     for (unsigned i=0; i < unsigned(myVector.size()); i++)
@@ -549,21 +576,24 @@ QList<QString> readListSingleColumn(QString fileName, QString& error)
     }
     else
     {
-        error = "Error opening list file: " + fileName;
+        error = "Wrong file format (must be a text file): " + fileName;
     }
 
     return myList;
 }
 
 
-QList<QString> removeList(QList<QString> list, QList<QString> toDelete)
+QList<QString> removeList(const QList<QString> &list, QList<QString> &toDelete)
 {
+    QList<QString> newList = list;
+
     QList<QString>::iterator i;
     for (i = toDelete.begin(); i != toDelete.end(); ++i)
     {
-        list.removeAll(*i);
+        newList.removeAll(*i);
     }
-    return list;
+
+    return newList;
 }
 
 
@@ -590,4 +620,86 @@ void removeOldFiles(const QString &targetPath, const QString &targetStr, int nrD
             }
         }
     }
+}
+
+
+bool parseCSV(const QString &csvFileName, QList<QString> &csvFields, QList<QList<QString>> &csvData, QString &errorString)
+{
+    if (csvFileName.isEmpty() || ! QFile(csvFileName).exists() || ! QFileInfo(csvFileName).isFile())
+    {
+        errorString = "Missing file: " + csvFileName;
+        return false;
+    }
+
+    QFile myFile(csvFileName);
+    if (! myFile.open(QIODevice::ReadOnly))
+    {
+        errorString = "Open failed: " + csvFileName + "\n " + myFile.errorString();
+        return false;
+    }
+
+    QTextStream myStream (&myFile);
+    if (myStream.atEnd())
+    {
+        errorString = "File is void";
+        myFile.close();
+        return false;
+    }
+    else
+    {
+        csvFields = myStream.readLine().split(',');
+    }
+
+    csvData.clear();
+    while(! myStream.atEnd())
+    {
+        QList<QString> line = myStream.readLine().split(',');
+
+        // skip void lines
+        if (line.size() <= 1) continue;
+        csvData.append(line);
+    }
+
+    myFile.close();
+    return true;
+}
+
+bool writeJson(const QString & ancestor, const std::vector <QString> &fieldNames, const std::vector <QString> dataType, const std::vector <std::vector <QString>> &values, const QString & jsonFilename)
+{
+    QJsonObject content;
+    QJsonArray records;
+    QJsonObject recordObject;
+
+    bool isFloat = false;
+
+    for (int i=0; i < values.size(); i++)
+    {
+        if (values[i].size() != fieldNames.size() || values[i].size() != dataType.size()) return false;
+
+        recordObject.empty();
+        for (int j=0; j < values[i].size(); j++)
+        {
+            if (dataType[j] == "float")
+                recordObject.insert(fieldNames[j], values[i][j].toFloat(&isFloat));
+            else
+                recordObject.insert(fieldNames[j], values[i][j]);
+        }
+
+        records.push_back(recordObject);
+    }
+
+    content.insert(ancestor, records);
+
+    QJsonDocument doc(content);
+    QByteArray bytes = doc.toJson(QJsonDocument::Indented);
+    QFile file(jsonFilename);
+    if(file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate ))
+    {
+        QTextStream iStream( &file );
+        iStream << bytes;
+        file.close();
+        return true;
+    }
+    else
+        return false;
 }

@@ -33,6 +33,7 @@
 #include <QLayout>
 #include <QDate>
 
+
 Crit3DProxyWidget::Crit3DProxyWidget(Crit3DInterpolationSettings* interpolationSettings, Crit3DMeteoPoint *meteoPoints, int nrMeteoPoints, frequencyType currentFrequency, QDate currentDate, int currentHour, Crit3DQuality *quality, Crit3DInterpolationSettings* SQinterpolationSettings, Crit3DMeteoSettings *meteoSettings, Crit3DClimateParameters *climateParam, bool checkSpatialQuality)
 :interpolationSettings(interpolationSettings), meteoPoints(meteoPoints), nrMeteoPoints(nrMeteoPoints), currentFrequency(currentFrequency), currentDate(currentDate), currentHour(currentHour), quality(quality), SQinterpolationSettings(SQinterpolationSettings), meteoSettings(meteoSettings), climateParam(climateParam), checkSpatialQuality(checkSpatialQuality)
 {
@@ -51,7 +52,7 @@ Crit3DProxyWidget::Crit3DProxyWidget(Crit3DInterpolationSettings* interpolationS
     QHBoxLayout *selectionOptionEditLayout = new QHBoxLayout;
 
     detrended.setText("Detrended data");
-    climatologicalLR.setText("Climatological lapse rate");
+    climatologicalLR.setText("Climate lapserate");
     modelLR.setText("Model lapse rate");
     
     QLabel *r2Label = new QLabel(tr("R2"));
@@ -103,7 +104,8 @@ Crit3DProxyWidget::Crit3DProxyWidget(Crit3DInterpolationSettings* interpolationS
         }
         myVar = getKeyMeteoVarMeteoMap(MapHourlyMeteoVarToString, comboVariable.currentText().toStdString());
     }
-    comboVariable.setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    //comboVariable.setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    comboVariable.setMinimumWidth(100);
     
     selectionChartLayout->addWidget(variableLabel);
     selectionChartLayout->addWidget(&comboVariable);
@@ -284,17 +286,22 @@ void Crit3DProxyWidget::plot()
     chartView->cleanScatterSeries();
     outInterpolationPoints.clear();
 
+    std::string errorStdStr;
     if (detrended.isChecked())
     {
         outInterpolationPoints.clear();
+
         checkAndPassDataToInterpolation(quality, myVar, meteoPoints, nrMeteoPoints, getCurrentTime(), SQinterpolationSettings,
-                                        interpolationSettings, meteoSettings, climateParam, outInterpolationPoints, checkSpatialQuality);
+                                        interpolationSettings, meteoSettings, climateParam,
+                                        outInterpolationPoints, checkSpatialQuality, errorStdStr);
+
         detrending(outInterpolationPoints, interpolationSettings->getSelectedCombination(), interpolationSettings, climateParam, myVar, getCurrentTime());
     }
     else
     {
         checkAndPassDataToInterpolation(quality, myVar, meteoPoints, nrMeteoPoints, getCurrentTime(), SQinterpolationSettings,
-                                        interpolationSettings, meteoSettings, climateParam, outInterpolationPoints, checkSpatialQuality);
+                                        interpolationSettings, meteoSettings, climateParam,
+                                        outInterpolationPoints, checkSpatialQuality, errorStdStr);
     }
     QList<QPointF> pointListPrimary, pointListSecondary, pointListSupplemental, pointListMarked;
     QMap< QString, QPointF > idPointMap1;
@@ -346,8 +353,8 @@ void Crit3DProxyWidget::plot()
     chartView->axisY->setMin(floor(chartView->axisY->min()));
     chartView->axisY->setMax(ceil(chartView->axisY->max()));
 
-    if (comboAxisX.currentText() != "elevation")
-    {
+    if (comboAxisX.currentText() == "elevation")
+/*    {
         chartView->cleanClimLapseRate();
         climatologicalLR.setVisible(false);
 
@@ -371,7 +378,7 @@ void Crit3DProxyWidget::plot()
             chartView->axisX->setTickCount(11);
         }
     }
-    else
+    else */
     {
         climatologicalLR.setVisible(true);
         if (climatologicalLR.isChecked())
@@ -498,9 +505,10 @@ void Crit3DProxyWidget::modelLRClicked(int toggled)
             point.setY(regressionIntercept + regressionSlope * xMax);
             point_vector.append(point);
 
-            if (interpolationSettings->getProxy(proxyPos)->getRegressionR2() != NODATA)
+            float regressionR2 = interpolationSettings->getProxy(proxyPos)->getRegressionR2();
+            if (regressionR2 != NODATA)
             {
-                r2.setText(QString("%1").arg(interpolationSettings->getProxy(proxyPos)->getRegressionR2(), 0, 'f', 4));
+                r2.setText(QString("%1").arg(regressionR2, 0, 'f', 2));
             }
             lapseRate.setText(QString("%1").arg(regressionSlope, 0, 'f', 2));
         }

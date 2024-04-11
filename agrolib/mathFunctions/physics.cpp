@@ -1,37 +1,34 @@
-/*-----------------------------------------------------------------------------------
+/*!
+    \copyright 2023
+    Fausto Tomei, Gabriele Antolini, Antonio Volta
 
-    CRITERIA 3D
-    Copyright (C) 2011 Fausto Tomei, Gabriele Antolini, Alberto Pistocchi,
-    Antonio Volta, Giulia Villani, Marco Bittelli
+    This file is part of AGROLIB distribution.
+    AGROLIB has been developed under contract issued by A.R.P.A. Emilia-Romagna
 
-    This file is part of CRITERIA3D.
-    CRITERIA3D has been developed under contract issued by A.R.P.A. Emilia-Romagna
-
-    CRITERIA3D is free software: you can redistribute it and/or modify
+    AGROLIB is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    CRITERIA3D is distributed in the hope that it will be useful,
+    AGROLIB is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with CRITERIA3D.  If not, see <http://www.gnu.org/licenses/>.
+    along with AGROLIB.  If not, see <http://www.gnu.org/licenses/>.
 
-    contacts:
-    ftomei@arpa.emr.it
-    fausto.tomei@gmail.com
-    gantolini@arpa.emr.it
-    alberto.pistocchi@gecosistema.it
-    marco.bittelli@unibo.it
------------------------------------------------------------------------------------*/
+    Contacts:
+    ftomei@arpae.it
+    gantolini@arpae.it
+    avolta@arpae.it
+*/
 
 #include <math.h>
-#include "physics.h"
-#include "basicMath.h"
+
 #include "commonConstants.h"
+#include "basicMath.h"
+#include "physics.h"
 
 
 /*!
@@ -101,8 +98,8 @@ double vaporConcentrationFromPressure(double myPressure, double myT)
 
 
 double airVolumetricSpecificHeat(double myPressure, double myT)
-{ // (J m-3 K-1) volumetric specific heat of air
-
+// (J m-3 K-1) volumetric specific heat of air
+{
     double myMolarDensity = airMolarDensity(myPressure, myT); // mol m-3
     double mySpHeat = (HEAT_CAPACITY_AIR_MOLAR * myMolarDensity);
     return (mySpHeat);
@@ -225,18 +222,20 @@ double aerodynamicConductance(double heightTemperature,
         H = K * Ch * (soilSurfaceTemperature - airTemperature);
         Sp = -VON_KARMAN_CONST * heightWind * GRAVITY * H / (Ch * airTemperature * (pow(uStar, 3)));
         if (Sp > 0)
-        {// stability
+        {
+            // stability
             psiH = 6 * log(1 + Sp);
             psiM = psiH;
         }
         else
-        {// unstability
+        {
+            // unstability
             psiH = -2 * log((1 + sqrt(1 - 16 * Sp)) / 2);
             psiM = 0.6 * psiH;
         }
     }
 
-    return (K);
+    return K;
 
 }
 

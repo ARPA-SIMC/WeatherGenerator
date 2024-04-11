@@ -52,6 +52,17 @@
     #define PATH_OUTPUT "OUTPUT/"
     #define PATH_TD "TD/"
     #define PATH_STATES "STATES/"
+    #define PATH_NETCDF "NETCDF/"
+
+    // --------------- PRAGA constants  ----------------
+    #define PRAGA_OK 0
+    #define PRAGA_ERROR 100
+    #define PRAGA_INVALID_COMMAND 101
+    #define PRAGA_MISSING_FILE 102
+    #define PRAGA_ENV_ERROR 103
+    #define NO_ACTIVE -8888
+    #define MAXDAYS_DOWNLOAD_DAILY 180
+    #define MAXDAYS_DOWNLOAD_HOURLY 10
 
     // --------------- soilFluxes3D ----------------
     #define NOLINK -1
@@ -73,14 +84,6 @@
 
     #define CRIT1D_OK 0
     #define CRIT3D_OK 1
-
-    // --------------- PRAGA constants  ----------------
-    #define PRAGA_OK 0
-    #define PRAGA_ERROR 100
-    #define PRAGA_INVALID_COMMAND 101
-    #define PRAGA_MISSING_FILE 102
-    #define PRAGA_ENV_ERROR 103
-    #define NO_ACTIVE -8888
 
     #define VANGENUCHTEN 0
     #define MODIFIEDVANGENUCHTEN 1
@@ -175,7 +178,7 @@
 
     // [W m-2 K-4] Stefan-Boltzmann constant
     #define STEFAN_BOLTZMANN 5.670373E-8
-    // [] Von Kármán constant
+    // [-] Von Kármán constant
     #define VON_KARMAN_CONST 0.41
     // [J kg-1 K-1] specific heat at constant pressure
     #define CP 1013.
@@ -214,7 +217,7 @@
         #define PI 3.141592653589793238462643383
     #endif
     #ifndef EPSILON
-        #define EPSILON 0.000001
+        #define EPSILON 0.0000001
     #endif
     #define EULER 2.718281828459
     #define DEG_TO_RAD 0.0174532925

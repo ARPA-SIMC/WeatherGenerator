@@ -3,6 +3,7 @@
 
     #include <QtWidgets>
     #include <QtCharts>
+    #include "meteo.h"
     #include "meteoPoint.h"
     #include "callout.h"
 
@@ -13,20 +14,30 @@
         Q_OBJECT
 
         public:
-            Crit3DMeteoWidget(bool isGrid, QString projectPath, Crit3DMeteoSettings* meteoSettings_);
+            Crit3DMeteoWidget(bool isGrid_, QString projectPath, Crit3DMeteoSettings* meteoSettings_);
             ~Crit3DMeteoWidget() override;
+
             int getMeteoWidgetID() const;
             void setMeteoWidgetID(int value);
+
             void setCurrentDate(QDate myDate);
-            void setDateInterval(QDate date0, QDate date1);
-            void draw(Crit3DMeteoPoint mp, bool isAppend);
+            void setDateIntervalDaily(QDate firstDate, QDate lastDate);
+            void setDateIntervalHourly(QDate firstDate, QDate lastDate);
+            void setDateIntervalMonthly(QDate firstDate, QDate lastDate);
+
             void addMeteoPointsEnsemble(Crit3DMeteoPoint mp);
+
+            void updateTimeRange();
+            void drawMeteoPoint(Crit3DMeteoPoint mp, bool isAppend);
             void drawEnsemble();
+
             void resetValues();
             void resetEnsembleValues();
             void drawDailyVar();
             void drawEnsembleDailyVar();
             void drawHourlyVar();
+            void drawMonthlyVar();
+            void showMonthlyGraph();
             void showDailyGraph();
             void showHourlyGraph();
             void updateSeries();
@@ -36,8 +47,10 @@
             void showTable();
             void showVar();
             void tooltipLineSeries(QPointF point, bool state);
+            void editLineSeries();
             bool computeTooltipLineSeries(QLineSeries *series, QPointF point, bool state);
             void tooltipBar(bool state, int index, QBarSet *barset);
+            void editBar();
             void handleMarkerClicked();
             void closeEvent(QCloseEvent *event) override;
             void setIsEnsemble(bool value);
@@ -47,6 +60,11 @@
             void on_actionChangeRightAxis();
             void on_actionExportGraph();
             void on_actionRemoveStation();
+            void on_actionInfoPoint();
+            void on_actionDataAvailability();
+            void on_actionDataSum();
+            void drawSum();
+            void checkExistingData();
 
     private:
             int meteoWidgetID;
@@ -54,10 +72,25 @@
             bool isEnsemble;
             bool isInitialized;
             int nrMembers;
+
+            QVector<Crit3DMeteoPoint> meteoPoints;
+            QVector<Crit3DMeteoPoint> meteoPointsEnsemble;
             Crit3DMeteoSettings* meteoSettings;
+
+            frequencyType currentFreq;
+            QDate firstDailyDate;
+            QDate lastDailyDate;
+            QDate firstHourlyDate;
+            QDate lastHourlyDate;
+            QDate firstMonthlyDate;
+            QDate lastMonthlyDate;
+            QDate currentDate;
+
+            QAction* dataSum;
             QPushButton *addVarButton;
             QPushButton *dailyButton;
             QPushButton *hourlyButton;
+            QPushButton *monthlyButton;
             QPushButton *tableButton;
             QPushButton *redrawButton;
             QPushButton *shiftPreviousButton;
@@ -87,14 +120,8 @@
             QVector<QVector<QBarSet*>> setVector;
             QList<QString> categories;
             QList<QString> categoriesVirtual;
-            QVector<Crit3DMeteoPoint> meteoPoints;
-            QVector<Crit3DMeteoPoint> meteoPointsEnsemble;
-            frequencyType currentFreq;
-            QDate firstDailyDate;
-            QDate lastDailyDate;
-            QDate firstHourlyDate;
-            QDate lastHourlyDate;
-            QDate currentDate;
+            QList<QString> varToSumList;
+
             bool isLine;
             bool isBar;
             Callout *m_tooltip;

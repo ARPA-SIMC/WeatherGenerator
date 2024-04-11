@@ -44,12 +44,11 @@ TabWaterRetentionCurve::TabWaterRetentionCurve()
     setLayout(mainLayout);
     setMouseTracking(true);
     fillElement = false;
-
 }
+
 
 void TabWaterRetentionCurve::resetAll()
 {
-
     // delete all Widgets
     barHorizons.clear();
 
@@ -70,8 +69,8 @@ void TabWaterRetentionCurve::resetAll()
     m_tooltip = new Callout(chart);
     m_tooltip->hide();
     fillElement = false;
-
 }
+
 
 bool TabWaterRetentionCurve::getFillElement() const
 {
@@ -106,8 +105,8 @@ void TabWaterRetentionCurve::insertElements(soil::Crit3DSoil *soil)
         QLineSeries* curve = new QLineSeries();
         curve->setColor(color);
         double factor = 1.2;
-        x = dxMin;
-        while (x < dxMax*factor)
+        x = xMin;
+        while (x <= (xMax * factor))
         {
             double y = soil::thetaFromSignPsi(-x, mySoil->horizon[i]);
             if (y != NODATA)

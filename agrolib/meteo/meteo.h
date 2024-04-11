@@ -100,9 +100,15 @@
                     dailyBIC, monthlyBIC, dailyHeatingDegreeDays, dailyCoolingDegreeDays,
                     snowWaterEquivalent, snowFall, snowSurfaceTemperature, snowInternalEnergy, snowSurfaceEnergy,
                     snowAge, snowLiquidWaterContent, snowMelt, sensibleHeat, latentHeat,
-                    dailyWaterTableDepth,
+                    dailyWaterTableDepth, leafAreaIndex,
                     anomaly, elaboration, noMeteoTerrain,
                     noMeteoVar};
+
+
+    enum criteria3DVariable {volumetricWaterContent, waterTotalPotential, waterMatricPotential,
+                              availableWaterContent, degreeOfSaturation, soilTemperature,
+                              soilSurfaceMoisture, bottomDrainage, waterDeficit, waterInflow, waterOutflow,
+                              factorOfSafety};
 
 
     const std::map<std::string, meteoVariable> MapDailyMeteoVar = {
@@ -172,7 +178,8 @@
       { dailyCoolingDegreeDays, "DAILY_DEGREEDAYS_COOLING" },
       { dailyWaterTableDepth, "DAILY_WATER_TABLE_DEPTH" },
       { elaboration, "ELABORATION" },
-      { anomaly, "ANOMALY" }
+      { anomaly, "ANOMALY" },
+      { noMeteoVar, "NO_VARIABLE" }
     };
 
     const std::map<std::string, meteoVariable> MapHourlyMeteoVar = {
@@ -197,6 +204,7 @@
       { "ATM_PRESSURE", atmPressure },
       { "ACTUAL_EVAPO", actualEvaporation }
     };
+
 
     const std::map<meteoVariable, std::string> MapHourlyMeteoVarToString = {
         { airTemperature, "TAVG" },
@@ -226,7 +234,8 @@
         { snowSurfaceEnergy, "SNOW_SURF_ENERGY"},
         { snowInternalEnergy, "SNOW_INT_ENERGY"},
         { sensibleHeat, "SENSIBLE_HEAT"},
-        { latentHeat, "LATENT_HEAT"}
+        { latentHeat, "LATENT_HEAT"},
+        { noMeteoVar, "NO_VARIABLE" }
     };
 
     const std::map<std::string, meteoVariable> MapMonthlyMeteoVar = {
@@ -249,10 +258,11 @@
         { monthlyGlobalRadiation, "MONTHLY_RAD" }
     };
 
+    // se cambiano le unità di misura, controllare le procedure che generano i netcdf e ne controllano la unit, come quelle di mapping
     const std::map<std::vector<meteoVariable>, std::string> MapVarUnit = {
-        { {dailyAirTemperatureMin,airTemperature,monthlyAirTemperatureMin}, "°C"} ,
-        { {dailyAirTemperatureMax,monthlyAirTemperatureMax}, "°C"} ,
-        { {dailyAirTemperatureAvg,dailyAirTemperatureRange,monthlyAirTemperatureAvg}, "°C"} ,
+        { {dailyAirTemperatureMin,airTemperature,monthlyAirTemperatureMin}, "C"} ,
+        { {dailyAirTemperatureMax,monthlyAirTemperatureMax}, "C"} ,
+        { {dailyAirTemperatureAvg,dailyAirTemperatureRange,monthlyAirTemperatureAvg}, "C"} ,
         { {dailyPrecipitation,precipitation,monthlyPrecipitation}, "mm"} ,
         { {dailyReferenceEvapotranspirationHS,dailyReferenceEvapotranspirationPM,referenceEvapotranspiration,monthlyReferenceEvapotranspirationHS}, "mm"} ,
         { {dailyAirRelHumidityMin,dailyAirRelHumidityMax,dailyAirRelHumidityAvg,airRelHumidity}, "%"} ,
@@ -263,13 +273,32 @@
         { {dailyWindVectorDirectionPrevailing, dailyWindVectorIntensityMax, windVectorDirection}, "deg"} ,
         { {windVectorIntensity, windVectorX, windVectorY}, "m s-1"} ,
         { {dailyLeafWetness,leafWetness}, "h"} ,
-        { {dailyHeatingDegreeDays,dailyCoolingDegreeDays}, "°D"} ,
+        { {dailyHeatingDegreeDays,dailyCoolingDegreeDays}, "D"} ,
         { {airRelHumidity,dailyAirRelHumidityMin,dailyAirRelHumidityMax,dailyAirRelHumidityAvg}, "%"} ,
-        { {airDewTemperature}, "°C"} ,
+        { {airDewTemperature}, "C"} ,
         { {dailyThomAvg,dailyThomDaytime,dailyThomNighttime,thom}, "-"} ,
         { {dailyWaterTableDepth,snowWaterEquivalent,snowFall,snowMelt,snowLiquidWaterContent}, "mm"} ,
-        { {snowSurfaceTemperature}, "°C"} ,
+        { {snowSurfaceTemperature}, "C"} ,
         { {snowInternalEnergy,snowSurfaceEnergy,sensibleHeat,latentHeat}, "kJ m-2"} ,
+    };
+
+
+    const std::map<criteria3DVariable, std::string> MapCriteria3DVarToString = {
+        { volumetricWaterContent , "VOL_WC" },
+        { waterTotalPotential , "TOT_WP" },
+        { waterMatricPotential , "WP" },
+        { availableWaterContent , "AWC" },
+        { degreeOfSaturation , "SATDEG" },
+        { factorOfSafety, "FOS" }
+    };
+
+    const std::map<std::string, criteria3DVariable> MapCriteria3DVar = {
+        { "VOL_WC", volumetricWaterContent },
+        { "TOT_WP", waterTotalPotential },
+        { "WP", waterMatricPotential },
+        { "AWC", availableWaterContent },
+        { "SATDEG", degreeOfSaturation },
+        { "FOS", factorOfSafety }
     };
 
 
@@ -336,13 +365,18 @@
     std::string getKeyStringMeteoMap(std::map<std::string, meteoVariable> map, meteoVariable value);
     meteoVariable getKeyMeteoVarMeteoMap(std::map<meteoVariable,std::string> map, const std::string &value);
     meteoVariable getKeyMeteoVarMeteoMapWithoutUnderscore(std::map<meteoVariable,std::string> map, const std::string& value);
+
     meteoVariable getMeteoVar(std::string varString);
     meteoVariable getHourlyMeteoVar(std::string varString);
     std::string getMeteoVarName(meteoVariable var);
-    std::string getLapseRateCodeName(lapseRateCodeType code);
 
+    std::string getCriteria3DVarName(criteria3DVariable var);
+
+    std::string getLapseRateCodeName(lapseRateCodeType code);
     bool checkLapseRateCode(lapseRateCodeType myType, bool useLapseRateCode, bool useSupplemental);
+
     meteoVariable getDailyMeteoVarFromHourly(meteoVariable myVar, aggregationMethod myAggregation);
+
     meteoVariable updateMeteoVariable(meteoVariable myVar, frequencyType myFreq);
 
 

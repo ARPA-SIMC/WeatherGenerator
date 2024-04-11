@@ -4,9 +4,6 @@
     #ifndef METEO_H
         #include "meteo.h"
     #endif
-    #ifndef STATISTICS_H
-        #include "statistics.h"
-    #endif
     #ifndef DBMETEOPOINTS_H
         #include "dbMeteoPointsHandler.h"
     #endif
@@ -135,8 +132,8 @@
     bool parseXMLPeriodType(QDomNode ancestor, QString attributePeriod, Crit3DElabList *listXMLElab, Crit3DAnomalyList *listXMLAnomaly, 
 						bool isAnomaly, bool isRefPeriod, QString* period, QString *myError);
     
-	bool parseXMLPeriodTag(QDomNode child, Crit3DElabList *listXMLElab, Crit3DAnomalyList *listXMLAnomaly, bool isAnomaly, bool isRefPeriod,
-                        QString period, QString firstYear, QString *myError);
+    bool parseXMLPeriodTag(QDomNode child, Crit3DElabList *listXMLElab, Crit3DAnomalyList *listXMLAnomaly, bool isAnomaly, bool isRefPeriod,
+                        QString period, QString *myError);
 
     bool checkYears(QString firstYear, QString lastYear);
 
@@ -148,13 +145,13 @@
 
     bool appendXMLAnomaly(Crit3DAnomalyList *listXMLAnomaly, QString xmlFileName, QString *myError);
 
-    bool monthlyAggregateDataGrid(Crit3DMeteoGridDbHandler* meteoGridDbHandler, QDate firstDate, QDate lastDate, 
-					std::vector<meteoVariable> dailyMeteoVar, Crit3DMeteoSettings* meteoSettings, 
-					Crit3DQuality *qualityCheck, Crit3DClimateParameters *climateParam);
+    bool monthlyAggregateDataGrid(Crit3DMeteoGridDbHandler* meteoGridDbHandler, QDate firstDate, QDate lastDate,
+                    std::vector<meteoVariable> dailyMeteoVar, Crit3DMeteoSettings* meteoSettings,
+                    Crit3DQuality *qualityCheck, Crit3DClimateParameters *climateParam, QString &myError);
 
     int computeAnnualSeriesOnPointFromDaily(QString *myError, Crit3DMeteoPointsDbHandler* meteoPointsDbHandler, Crit3DMeteoGridDbHandler* meteoGridDbHandler,
-                    Crit3DMeteoPoint* meteoPointTemp, Crit3DClimate* clima, bool isMeteoGrid, bool isAnomaly, 
-					Crit3DMeteoSettings* meteoSettings, std::vector<float> &outputValues, bool dataAlreadyLoaded);
+                    Crit3DMeteoPoint* meteoPointTemp, Crit3DClimate* clima, bool isMeteoGrid, bool isAnomaly,
+                    Crit3DMeteoSettings* meteoSettings, std::vector<float> &outputValues, std::vector<int> &vectorYears, bool dataAlreadyLoaded);
     
 	void computeClimateOnDailyData(Crit3DMeteoPoint meteoPoint, meteoVariable var, QDate firstDate, QDate lastDate,
                     int smooth, float* dataPresence, Crit3DQuality* qualityCheck, Crit3DClimateParameters* climateParam,

@@ -1,26 +1,27 @@
 /*!
-    \copyright 2016 Fausto Tomei, Gabriele Antolini,
-    Alberto Pistocchi, Marco Bittelli, Antonio Volta, Laura Costantini
+    \copyright 2023
+    Fausto Tomei, Gabriele Antolini, Antonio Volta
 
-    This file is part of CRITERIA3D.
-    CRITERIA3D has been developed under contract issued by A.R.P.A. Emilia-Romagna
+    This file is part of AGROLIB distribution.
+    AGROLIB has been developed under contract issued by A.R.P.A. Emilia-Romagna
 
-    CRITERIA3D is free software: you can redistribute it and/or modify
+    AGROLIB is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    CRITERIA3D is distributed in the hope that it will be useful,
+    AGROLIB is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with CRITERIA3D.  If not, see <http://www.gnu.org/licenses/>.
+    along with AGROLIB.  If not, see <http://www.gnu.org/licenses/>.
 
     Contacts:
-    fausto.tomei@gmail.com
     ftomei@arpae.it
+    gantolini@arpae.it
+    avolta@arpae.it
 */
 
 #include <math.h>
@@ -496,6 +497,150 @@ namespace statistics
         free(X2);
         free(X2Inverse);
         free(roots);
+    }
+
+    void weightedMultiRegressionLinearWithStats(const std::vector <std::vector <float>> &x, std::vector <float> &y, const std::vector <float> &weight,float* q,std::vector <float> &m,bool calculateR2, bool calculateStdError,float* R2, float* stdError, float *qSE,std::vector <float> &mSE)
+    {
+        int nrPredictors = int(x[0].size());
+        int nrItems = int(x.size());
+        double** XT = (double**)calloc(nrPredictors+1, sizeof(double*));
+        double** X = (double**)calloc(nrItems, sizeof(double*));
+        double** X2 = (double**)calloc(nrPredictors+1, sizeof(double*));
+        double** X2Inverse = (double**)calloc(nrPredictors+1, sizeof(double*));
+        for (int i=0;i<nrPredictors+1;i++)
+        {
+            XT[i]= (double*)calloc(nrItems, sizeof(double));
+            X2[i]= (double*)calloc(nrItems, sizeof(double));
+            X2Inverse[i]= (double*)calloc(nrItems, sizeof(double));
+        }
+        for (int i=0;i<nrItems;i++)
+        {
+            X[i]= (double*)calloc(nrPredictors+1, sizeof(double));
+        }
+
+        for (int j=0;j<nrPredictors+1;j++)
+        {
+            for (int i=0;i<nrItems;i++)
+            {
+                if (j == 0)
+                {
+                    XT[j][i] = 1.;
+                }
+                else
+                {
+                    XT[j][i] = x[i][j-1];
+                }
+            }
+        }
+        matricial::transposedMatrix(XT,nrPredictors+1,nrItems,X);
+        for (int j=0;j<nrPredictors+1;j++)
+        {
+            for (int i =0; i<nrItems; i++)
+            {
+                X[i][j]= 1./weight[i]*X[i][j];
+            }
+        }
+        matricial::matrixProduct(XT,X,nrItems,nrPredictors+1,nrPredictors+1,nrItems,X2);
+        matricial::inverse(X2,X2Inverse,nrPredictors+1);
+        //matricial::matrixProduct(X2Inverse,XT,nrPredictors+1,nrPredictors+1,nrItems,nrPredictors+1,X);
+        for (int i=0;i<nrItems;i++)
+        {
+            y[i] /= weight[i];
+        }
+        double* roots = (double*)calloc(nrPredictors+1, sizeof(double));
+        for (int j=0;j<nrPredictors+1;j++)
+        {
+            roots[j]=0;
+            for (int i=0;i<nrItems;i++)
+            {
+                roots[j] += (XT[j][i]*y[i]);
+            }
+        }
+        *q=0;
+        for (int j=0;j<nrPredictors;j++)
+        {
+            m.push_back(0);
+            mSE.push_back(0);
+        }
+        for (int i=0;i<nrPredictors+1;i++)
+        {
+            *q += float(X2Inverse[0][i]*roots[i]);
+        }
+
+        for (int j=1;j<nrPredictors+1;j++)
+        {
+            for (int i=0;i<nrPredictors+1;i++)
+            {
+                m[j-1] += float(X2Inverse[j][i]*roots[i]);
+            }
+        }
+
+        if (calculateR2)
+        {
+            std::vector <double> ySim(nrItems);
+            std::vector <double> yObs(nrItems);
+            std::vector <double> weightDouble(nrItems);
+            for (int i=0;i<nrItems;i++)
+            {
+                ySim[i]=(*q);
+                for (int j=0;j<nrPredictors;j++)
+                {
+                    ySim[i]+=x[i][j]*m[j];
+                }
+                yObs[i]=y[i];
+                weightDouble[i]=weight[i];
+            }
+            *R2 = float(interpolation::computeWeighted_R2(yObs,ySim,weightDouble));
+        }
+        if (calculateStdError)
+        {
+            std::vector <double> ySim(nrItems);
+            std::vector <double> yObs(nrItems);
+            std::vector <double> weightDouble(nrItems);
+            for (int i=0;i<nrItems;i++)
+            {
+                ySim[i]=(*q);
+                for (int j=0;j<nrPredictors;j++)
+                {
+                    ySim[i]+=x[i][j]*m[j];
+                }
+                yObs[i]=y[i];
+                weightDouble[i]=weight[i];
+            }
+            *stdError = float(interpolation::computeWeighted_StandardError(yObs,ySim,weightDouble,nrPredictors+1));
+            matricial::transposedMatrix(XT,nrPredictors+1,nrItems,X);
+            for (int j=0;j<nrPredictors+1;j++)
+            {
+                for (int i =0; i<nrItems; i++)
+                {
+                    X[i][j]= weight[i]*X[i][j];
+                }
+            }
+            matricial::matrixProduct(XT,X,nrItems,nrPredictors+1,nrPredictors+1,nrItems,X2);
+            matricial::inverse(X2,X2Inverse,nrPredictors+1);
+            *qSE = (*stdError) * float(sqrt(X2Inverse[0][0]));
+            for (int j=1;j<nrPredictors+1;j++)
+            {
+                mSE[j-1]= (*stdError) * float(sqrt(X2Inverse[j][j]));
+            }
+        }
+
+        for (int j=0;j<nrPredictors+1;j++)
+        {
+            free(XT[j]);
+            free(X2[j]);
+            free(X2Inverse[j]);
+        }
+        for (int i=0;i<nrItems;i++)
+        {
+            free(X[i]);
+        }
+        free(X);
+        free(XT);
+        free(X2);
+        free(X2Inverse);
+        free(roots);
+
     }
 
     void multiRegressionLinear(float** x,  float* y, long nrItems,float* q,float* m, int nrPredictors)

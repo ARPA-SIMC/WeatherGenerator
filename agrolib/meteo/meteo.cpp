@@ -770,8 +770,11 @@ bool setColorScale(meteoVariable variable, Crit3DColorScale *colorScale)
         case dailyAirTemperatureMin: case dailyAirTemperatureRange:
         case airDewTemperature:
         case snowSurfaceTemperature:
-        case elaboration:
+        case dailyHeatingDegreeDays:
             setTemperatureScale(colorScale);
+            break;
+        case elaboration:
+            setDefaultScale(colorScale);
             break;
         case airRelHumidity: case dailyAirRelHumidityAvg: case dailyAirRelHumidityMax:
         case dailyAirRelHumidityMin: case leafWetness: case dailyLeafWetness:
@@ -801,15 +804,18 @@ bool setColorScale(meteoVariable variable, Crit3DColorScale *colorScale)
         case atmPressure:
             setWindIntensityScale(colorScale);
             break;
+        case leafAreaIndex:
+            setLAIScale(colorScale);
+            break;
         case anomaly:
             setAnomalyScale(colorScale);
             break;
         case noMeteoTerrain:
-            setDefaultDEMScale(colorScale);
+            setDTMScale(colorScale);
             break;
 
         default:
-            setDefaultDEMScale(colorScale);
+            setDefaultScale(colorScale);
     }
 
     return true;
@@ -910,6 +916,10 @@ std::string getVariableString(meteoVariable myVar)
         return "Sensible heat (kJ m-2)";
     else if (myVar == latentHeat)
         return "Latent heat (kJ m-2)";
+    else if (myVar == dailyHeatingDegreeDays)
+        return "Heating degree days (°D)";
+    else if (myVar == leafAreaIndex)
+            return "Leaf area index (m2 m-2)";
 
     else if (myVar == noMeteoTerrain)
         return "Elevation (m)";
@@ -1000,6 +1010,7 @@ frequencyType getVarFrequency(meteoVariable myVar)
         return noFrequency;
 }
 
+
 meteoVariable getMeteoVar(std::string varString)
 {
     auto search = MapDailyMeteoVar.find(varString);
@@ -1021,11 +1032,11 @@ meteoVariable getMeteoVar(std::string varString)
                 return search->second;
             }
         }
-
     }
 
     return noMeteoVar;
 }
+
 
 std::string getMeteoVarName(meteoVariable var)
 {
@@ -1036,11 +1047,34 @@ std::string getMeteoVarName(meteoVariable var)
     else
     {
         search = MapHourlyMeteoVarToString.find(var);
-        if (search != MapHourlyMeteoVarToString.end()) return search->second;
+        if (search != MapHourlyMeteoVarToString.end())
+            return search->second;
+        else
+        {
+            search = MapMonthlyMeteoVarToString.find(var);
+            if (search != MapMonthlyMeteoVarToString.end())
+                return search->second;
+        }
     }
 
     return "";
 }
+
+
+std::string getCriteria3DVarName(criteria3DVariable var)
+{
+    auto search = MapCriteria3DVarToString.find(var);
+
+    if (search != MapCriteria3DVarToString.end())
+    {
+        return search->second;
+    }
+    else
+    {
+        return "";
+    }
+}
+
 
 std::string getLapseRateCodeName(lapseRateCodeType code)
 {

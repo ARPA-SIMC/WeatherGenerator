@@ -98,6 +98,33 @@ void Crit3DMeteoPoint::setName(std::string name)
     this->name = name;
 }
 
+void Crit3DMeteoPoint::setAltitude(double altitude)
+{
+    this->point.z = altitude;
+}
+
+void Crit3DMeteoPoint::setLapseRateCode(std::string lapseRateCode)
+{
+    if (lapseRateCode == "primary")
+    {
+        this->lapseRateCode = primary;
+    }
+    else if (lapseRateCode == "secondary")
+    {
+        this->lapseRateCode = secondary;
+    }
+    else if (lapseRateCode == "supplemental")
+    {
+        this->lapseRateCode = supplemental;
+    }
+
+}
+
+void Crit3DMeteoPoint::setDataset(std::string dataset)
+{
+    this->dataset = dataset;
+}
+
 void Crit3DMeteoPoint::initializeObsDataH(int myHourlyFraction, int numberOfDays, const Crit3DDate& firstDate)
 {
     this->cleanObsDataH();
@@ -1175,9 +1202,9 @@ float Crit3DMeteoPoint::getProxyValue(unsigned pos)
         return NODATA;
 }
 
-std::vector <float> Crit3DMeteoPoint::getProxyValues()
+std::vector <double> Crit3DMeteoPoint::getProxyValues()
 {
-    std::vector <float> myValues;
+    std::vector <double> myValues;
     for (unsigned int i=0; i < proxyValues.size(); i++)
         myValues.push_back(getProxyValue(i));
 
@@ -1271,10 +1298,11 @@ bool Crit3DMeteoPoint::computeMonthlyAggregate(Crit3DDate firstDate, Crit3DDate 
             currentMonth = actualDate.addDays(1).month;
             nrDays = getDaysInMonth(currentMonth, actualDate.year);
         }
-
     }
+
     return aggregateDailyInMonthly;
 }
+
 
 TObsDataH *Crit3DMeteoPoint::getObsDataH() const
 {

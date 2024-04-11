@@ -65,7 +65,7 @@ namespace soil
         this->mRestriction = true;
     }
 
-    Crit3DLayer::Crit3DLayer()
+    Crit1DLayer::Crit1DLayer()
     {
         this->depth = NODATA;
         this->thickness = NODATA;
@@ -188,7 +188,7 @@ namespace soil
         nrHorizons = nrHorizons - 1;
     }
 
-    int Crit3DSoil::getHorizonIndex(double depth)
+    int Crit3DSoil::getHorizonIndex(double depth) const
     {
        for (unsigned int index = 0; index < nrHorizons; index++)
        {
@@ -216,7 +216,7 @@ namespace soil
     }
 
 
-    bool Crit3DLayer::setLayer(Crit3DHorizon *horizonPointer)
+    bool Crit1DLayer::setLayer(Crit3DHorizon *horizonPointer)
     {
         if (horizonPointer == nullptr)
             return false;
@@ -470,7 +470,7 @@ namespace soil
     }
 
 
-    int getSoilLayerIndex(const std::vector<soil::Crit3DLayer> &soilLayers, double depth)
+    int getSoilLayerIndex(const std::vector<soil::Crit1DLayer> &soilLayers, double depth)
     {
        for (unsigned int index = 0; index < soilLayers.size(); index++)
        {
@@ -669,10 +669,10 @@ namespace soil
     /*!
      * \brief get water content corresponding to a specific water potential
      * \param psi: water potential  [kPa]
-     * \param layer: pointer to Crit3DLayer class
+     * \param layer: pointer to Crit1DLayer class
      * \return water content        [mm]
      */
-    double getWaterContentFromPsi(double psi, const Crit3DLayer &layer)
+    double getWaterContentFromPsi(double psi, const Crit1DLayer &layer)
     {
         double theta = soil::thetaFromSignPsi(-psi, *(layer.horizonPtr));
         return theta * layer.thickness * layer.soilFraction * 1000;
@@ -682,10 +682,10 @@ namespace soil
     /*!
      * \brief get water content corresponding to a specific available water
      * \param availableWater    [-] (0: wilting point, 1: field capacity)
-     * \param layer: Crit3DLayer class
+     * \param layer: Crit1DLayer class
      * \return  water content   [mm]
      */
-    double getWaterContentFromAW(double availableWater, const Crit3DLayer& layer)
+    double getWaterContentFromAW(double availableWater, const Crit1DLayer& layer)
     {
         if (availableWater < 0)
             return layer.WP;
@@ -701,7 +701,7 @@ namespace soil
     /*!
      * \brief return current volumetric water content [m3 m^3]
      */
-    double Crit3DLayer::getVolumetricWaterContent()
+    double Crit1DLayer::getVolumetricWaterContent()
     {
         // waterContent [mm]
         // thickness [m]
@@ -709,10 +709,11 @@ namespace soil
         return theta;
     }
 
+
     /*!
      * \brief return degree of saturation [-]
      */
-    double Crit3DLayer::getDegreeOfSaturation()
+    double Crit1DLayer::getDegreeOfSaturation()
     {
         double theta = getVolumetricWaterContent();
         return (theta - horizonPtr->vanGenuchten.thetaR) / (horizonPtr->vanGenuchten.thetaS - horizonPtr->vanGenuchten.thetaR);
@@ -723,7 +724,7 @@ namespace soil
      * \brief get current water potential
      * \return water potential [kPa]
      */
-    double Crit3DLayer::getWaterPotential()
+    double Crit1DLayer::getWaterPotential()
     {
         double theta = getVolumetricWaterContent();
         return psiFromTheta(theta, *horizonPtr);
@@ -734,7 +735,7 @@ namespace soil
      * \brief get current water conductivity
      * \return hydraulic conductivity   [cm day^-1]
      */
-    double Crit3DLayer::getWaterConductivity()
+    double Crit1DLayer::getWaterConductivity()
     {
         double theta = getVolumetricWaterContent();
         double degreeOfSaturation = SeFromTheta(theta, *horizonPtr);
@@ -747,7 +748,7 @@ namespace soil
      * \return factor of safety FoS [-]
      * if fos < 1 the slope is unstable
      */
-    double Crit3DLayer::computeSlopeStability(double slope)
+    double Crit1DLayer::computeSlopeStability(double slope, double rootCohesion)
     {
         double suctionStress = -waterPotential * getDegreeOfSaturation();    // [kPa]
 
@@ -759,8 +760,8 @@ namespace soil
 
         double frictionEffect =  tanFrictionAngle / tanAngle;
 
-        double unitWeight = horizonPtr->bulkDensity * GRAVITY;                   // [kN m-3]
-        double cohesionEffect = 2 * horizonPtr->effectiveCohesion / (unitWeight * depth * sin(2*slopeAngle));
+        double unitWeight = horizonPtr->bulkDensity * GRAVITY;                // [kN m-3]
+        double cohesionEffect = 2 * (horizonPtr->effectiveCohesion + rootCohesion) / (unitWeight * depth * sin(2*slopeAngle));
 
         double suctionEffect = (suctionStress * (tanAngle + 1/tanAngle) * tanFrictionAngle) / (unitWeight * depth);
 
@@ -959,7 +960,9 @@ namespace soil
      */
     bool fittingWaterRetentionCurve(Crit3DHorizon &horizon, const Crit3DFittingOptions &fittingOptions)
     {
-        if (! fittingOptions.useWaterRetentionData || horizon.dbData.waterRetention.size() == 0)
+        unsigned int nrObsValues = unsigned(horizon.dbData.waterRetention.size());
+
+        if (! fittingOptions.useWaterRetentionData || nrObsValues == 0)
         {
             // nothing to do
             return true;
@@ -971,8 +974,6 @@ namespace soil
             return false;
         }
 
-        unsigned int nrObsValues = unsigned(horizon.dbData.waterRetention.size());
-
         // search theta max
         double psiMin = 10000;      // [kpa]
         double thetaMax = 0;        // [m3 m-3]
@@ -981,6 +982,7 @@ namespace soil
             psiMin = std::min(psiMin, horizon.dbData.waterRetention[i].water_potential);
             thetaMax = std::max(thetaMax, horizon.dbData.waterRetention[i].water_content);
         }
+        // add theta sat if minimum observed value is greater than 3 kPa
         bool addThetaSat = ((thetaMax < horizon.vanGenuchten.thetaS) && (psiMin > 3));
 
         // set values
@@ -1034,7 +1036,7 @@ namespace soil
         // water content residual [m^3 m^-3]
         param[1] = horizon.vanGenuchten.thetaR;
         pmin[1] = 0;
-        pmax[1] = horizon.vanGenuchten.thetaR;
+        pmax[1] = std::max(0.1, horizon.vanGenuchten.thetaR*2);
 
         // air entry [kPa]
         param[2] = horizon.vanGenuchten.he;
@@ -1045,8 +1047,28 @@ namespace soil
         }
         else
         {
-            pmin[2] = 0.01;
-            pmax[2] = 10;
+            double heMin = 0.01;                            // kPa
+            double heMax = 10;                              // kPa
+
+            // search air entry interval
+            if (! addThetaSat)
+            {
+                for (unsigned int i = 0; i < nrObsValues; i++)
+                {
+                    double delta = (thetaMax - horizon.dbData.waterRetention[i].water_content);
+                    double psi = horizon.dbData.waterRetention[i].water_potential;
+                    if (delta <= 0.0002)
+                    {
+                       heMin = std::max(heMin, psi);
+                    }
+                    if (delta >= 0.002)
+                    {
+                       heMax = std::min(heMax, psi);
+                    }
+                }
+            }
+            pmin[2] = heMin;
+            pmax[2] = heMax;
         }
 
         // Van Genuchten alpha parameter [kPa^-1]
@@ -1112,7 +1134,7 @@ namespace soil
 
 
     bool Crit3DSoil::setSoilLayers(double layerThicknessMin, double geometricFactor,
-                                   std::vector<Crit3DLayer> &soilLayers, std::string &myError)
+                                   std::vector<Crit1DLayer> &soilLayers, std::string &myError)
     {
         soilLayers.clear();
 
@@ -1128,7 +1150,7 @@ namespace soil
 
         while ((totalDepth - upperDepth) >= 0.001)
         {
-            Crit3DLayer newLayer;
+            Crit1DLayer newLayer;
             newLayer.thickness = round(currentThikness*100) / 100;
             newLayer.depth = upperDepth + newLayer.thickness * 0.5;
 
@@ -1162,7 +1184,7 @@ namespace soil
             i++;
         }
 
-        if (! isEqual(upperDepth,totalDepth))
+        if (! isEqual(upperDepth, totalDepth))
         {
             totalDepth = upperDepth;
         }

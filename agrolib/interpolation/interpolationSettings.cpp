@@ -141,7 +141,7 @@ void Crit3DInterpolationSettings::setSelectedCombination(const Crit3DProxyCombin
 
 void Crit3DInterpolationSettings::setValueSelectedCombination(unsigned int index, bool isActive)
 {
-    selectedCombination.setValue(index, isActive);
+    selectedCombination.setProxyActive(index, isActive);
 }
 
 unsigned Crit3DInterpolationSettings::getIndexHeight() const
@@ -276,6 +276,36 @@ void Crit3DInterpolationSettings::setMinPointsLocalDetrending(int newMinPointsLo
     minPointsLocalDetrending = newMinPointsLocalDetrending;
 }
 
+std::vector<std::vector<double> > Crit3DInterpolationSettings::getFittingParameters() const
+{
+    return fittingParameters;
+}
+
+void Crit3DInterpolationSettings::setFittingParameters(const std::vector<std::vector<double> > &newFittingParameters)
+{
+    fittingParameters = newFittingParameters;
+}
+
+std::vector<std::function<double (double, std::vector<double> &)>> Crit3DInterpolationSettings::getFittingFunction() const
+{
+    return fittingFunction;
+}
+
+void Crit3DInterpolationSettings::setFittingFunction(const std::vector<std::function<double (double, std::vector<double> &)> > &newFittingFunction)
+{
+    fittingFunction = newFittingFunction;
+}
+
+bool Crit3DInterpolationSettings::getProxiesComplete() const
+{
+    return proxiesComplete;
+}
+
+void Crit3DInterpolationSettings::setProxiesComplete(bool newProxiesComplete)
+{
+    proxiesComplete = newProxiesComplete;
+}
+
 Crit3DInterpolationSettings::Crit3DInterpolationSettings()
 {
     initialize();
@@ -315,6 +345,7 @@ void Crit3DInterpolationSettings::initialize()
     maxHeightInversion = 1000.;
     indexPointCV = NODATA;
     minPointsLocalDetrending = 20;
+    proxiesComplete = true;
 
     Kh_series.clear();
     Kh_error_series.clear();
@@ -529,6 +560,16 @@ void Crit3DProxy::setStdDevThreshold(float newStdDevThreshold)
     stdDevThreshold = newStdDevThreshold;
 }
 
+std::vector<double> Crit3DProxy::getFittingParametersRange() const
+{
+    return fittingParametersRange;
+}
+
+void Crit3DProxy::setFittingParametersRange(const std::vector<double> &newFittingParametersRange)
+{
+    fittingParametersRange = newFittingParametersRange;
+}
+
 Crit3DProxy::Crit3DProxy()
 {
     name = "";
@@ -606,7 +647,7 @@ void Crit3DProxy::setRegressionSlope(float myValue)
 float Crit3DProxy::getRegressionSlope()
 { return regressionSlope;}
 
-float Crit3DProxy::getValue(unsigned int pos, std::vector <float> proxyValues)
+double Crit3DProxy::getValue(unsigned int pos, std::vector <double> proxyValues)
 {
     if (pos < proxyValues.size())
         return proxyValues[pos];
@@ -633,17 +674,17 @@ void Crit3DInterpolationSettings::addProxy(Crit3DProxy myProxy, bool isActive_)
 {
     currentProxy.push_back(myProxy);
 
-    if (getProxyPragaName(myProxy.getName()) == height)
+    if (getProxyPragaName(myProxy.getName()) == proxyHeight)
         setIndexHeight(int(currentProxy.size())-1);
 
-    selectedCombination.addValue(isActive_);
-    optimalCombination.addValue(isActive_);
+    selectedCombination.addProxyActive(isActive_);
+    optimalCombination.addProxyActive(isActive_);
 }
 
 std::string Crit3DInterpolationSettings::getProxyName(unsigned pos)
 { return currentProxy[pos].getName();}
 
-float Crit3DInterpolationSettings::getProxyValue(unsigned pos, std::vector <float> proxyValues)
+double Crit3DInterpolationSettings::getProxyValue(unsigned pos, std::vector <double> proxyValues)
 {
     if (pos < currentProxy.size())
         return currentProxy[pos].getValue(pos, proxyValues);
@@ -651,50 +692,19 @@ float Crit3DInterpolationSettings::getProxyValue(unsigned pos, std::vector <floa
         return NODATA;
 }
 
-std::deque<bool> Crit3DProxyCombination::getIsActive() const
-{
-    return isActive;
-}
-
-void Crit3DProxyCombination::setIsActive(const std::deque<bool> &value)
-{
-    isActive = value;
-}
 
 Crit3DProxyCombination::Crit3DProxyCombination()
 {
-    setUseThermalInversion(false);
+    clear();
 }
+
 
 void Crit3DProxyCombination::clear()
 {
-    isActive.clear();
+    _isActiveList.clear();
+    _useThermalInversion = false;
 }
 
-void Crit3DProxyCombination::addValue(bool isActive_)
-{
-    isActive.push_back(isActive_);
-}
-
-void Crit3DProxyCombination::setValue(unsigned index, bool isActive_)
-{
-    isActive[index] = isActive_;
-}
-
-bool Crit3DProxyCombination::getValue(unsigned index)
-{
-    return isActive[index];
-}
-
-bool Crit3DProxyCombination::getUseThermalInversion() const
-{
-    return useThermalInversion;
-}
-
-void Crit3DProxyCombination::setUseThermalInversion(bool value)
-{
-    useThermalInversion = value;
-}
 
 bool Crit3DInterpolationSettings::getCombination(int combinationInteger, Crit3DProxyCombination &outCombination)
 {
@@ -705,11 +715,15 @@ bool Crit3DInterpolationSettings::getCombination(int combinationInteger, Crit3DP
 
     // avoid combinations with inversion (last index) and without orography
     if (combinationInteger % 2 == 1)
+    {
         if (indexHeight == NODATA || binaryString[indexHeight] == '0')
             return false;
+    }
 
     for (unsigned int i=0; i < binaryString.length()-1; i++)
-        outCombination.setValue(i, binaryString[i] == '1' && selectedCombination.getValue(i));
+    {
+        outCombination.setProxyActive(i, (binaryString[i] == '1' && selectedCombination.isProxyActive(i)) );
+    }
 
     outCombination.setUseThermalInversion(binaryString[binaryString.length()-1] == '1' && selectedCombination.getUseThermalInversion());
 

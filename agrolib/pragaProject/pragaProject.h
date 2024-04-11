@@ -21,8 +21,8 @@
         #include "netcdfHandler.h"
     #endif
 
-    #ifndef IMPORTDATAXML_H
-        #include "importDataXML.h"
+    #ifndef INOUTDATAXML_H
+        #include "inOutDataXML.h"
     #endif
 
     #ifndef DROUGHT_H
@@ -49,7 +49,9 @@
             void deleteSynchWidget();
 
     public:
+        QString projectPragaFolder;
         QList<QString> users;
+
         gis::Crit3DRasterGrid dataRaster;
         Crit3DDailyMeteoMaps* pragaDailyMaps;
         PragaHourlyMeteoMaps* pragaHourlyMaps;
@@ -71,9 +73,13 @@
         Crit3DPointStatisticsWidget* pointStatisticsWidget;
         Crit3DHomogeneityWidget* homogeneityWidget;
         Crit3DSynchronicityWidget* synchronicityWidget;
+
         std::string synchReferencePoint;
-        ImportDataXML* importData;
-        QString projectPragaFolder;
+
+        InOutDataXML* inOutData;
+
+        Crit3DMeteoPointsDbHandler* outputMeteoPointsDbHandler;
+        bool outputMeteoPointsLoaded;
 
         #ifdef NETCDF
             NetCDFHandler netCDF;
@@ -91,19 +97,27 @@
         bool loadPragaProject(QString myFileName);
         bool loadPragaSettings();
 
+        void closeOutputMeteoPointsDB();
+        bool loadOutputMeteoPointsDB(const QString &fileName);
+        bool writeMeteoPointsProperties(const QList<QString> &joinedPropertiesList, const QList<QString> &csvFields,
+                                        const QList<QList<QString>> &csvData, bool isOutputPoints);
+
         gis::Crit3DRasterGrid* getPragaMapFromVar(meteoVariable myVar);
 
         bool downloadDailyDataArkimet(QList<QString> variables, bool prec0024, QDate startDate, QDate endDate, bool showInfo);
         bool downloadHourlyDataArkimet(QList<QString> variables, QDate startDate, QDate endDate, bool showInfo);
 
+        bool interpolationOutputPointsPeriod(QDate dateIni, QDate lastDate, QList <meteoVariable> variables);
+
         bool interpolationMeteoGrid(meteoVariable myVar, frequencyType myFrequency, const Crit3DTime& myTime);
-        bool interpolationMeteoGridPeriod(QDate dateIni, QDate dateFin, QList <meteoVariable> variables, QList<meteoVariable> aggrVariables, bool saveRasters, int nrDaysLoading, int nrDaysSaving);
+        bool interpolationMeteoGridPeriod(QDate dateIni, QDate dateFin, QList <meteoVariable> variables,
+                                          QList<meteoVariable> aggrVariables, bool saveRasters, int nrDaysLoading, int nrDaysSaving);
+
         bool saveGrid(meteoVariable myVar, frequencyType myFrequency, const Crit3DTime& myTime, bool showInfo);
         bool timeAggregateGridVarHourlyInDaily(meteoVariable dailyVar, Crit3DDate dateIni, Crit3DDate dateFin);
         bool timeAggregateGrid(QDate dateIni, QDate dateFin, QList <meteoVariable> variables, bool loadData, bool saveData);
         bool computeDailyVariablesPoint(Crit3DMeteoPoint *meteoPoint, QDate first, QDate last, QList <meteoVariable> variables);
         bool hourlyDerivedVariablesGrid(QDate first, QDate last, bool loadData, bool saveData);
-
         bool elaborationPointsCycle(bool isAnomaly, bool showInfo);
         bool elaborationPointsCycleGrid(bool isAnomaly, bool showInfo);
         bool elaborationCheck(bool isMeteoGrid, bool isAnomaly);
@@ -123,11 +137,14 @@
         bool dbMeteoGridMissingData(QDate myFirstDate, QDate myLastDate, meteoVariable myVar, QList<QDate> &dateList, QList<QString> &idList);
 
         int executePragaCommand(QList<QString> argumentList, bool* isCommandFound);
-        bool parserXMLImportData(QString xmlName, bool isGrid);
+        bool parserXMLImportExportData(QString xmlName, bool isGrid);
         bool loadXMLImportData(QString fileName);
-        bool monthlyVariablesGrid(QDate first, QDate last, QList <meteoVariable> variables);
-        bool computeDroughtIndexAll(droughtIndex index, int firstYear, int lastYear, QDate date, int timescale, meteoVariable myVar);
+        bool loadXMLExportData(QString code, QDateTime myFirstTime, QDateTime myLastTime);
+        bool loadXMLExportDataGrid(QString code, QDateTime myFirstTime, QDateTime myLastTime);
+        bool monthlyAggregateVariablesGrid(const QDate &firstDate, const QDate &lastDate, QList <meteoVariable> &variablesList);
+        bool computeDroughtIndexGrid(droughtIndex index, int firstYear, int lastYear, QDate date, int timescale, meteoVariable myVar);
         bool computeDroughtIndexPoint(droughtIndex index, int timescale, int refYearStart, int refYearEnd);
+        bool computeDroughtIndexPointGUI(droughtIndex index, int timescale, int refYearStart, int refYearEnd, QDate myDate);
         void showPointStatisticsWidgetPoint(std::string idMeteoPoint);
         void showHomogeneityTestWidgetPoint(std::string idMeteoPoint);
         void showSynchronicityTestWidgetPoint(std::string idMeteoPoint);
@@ -138,7 +155,8 @@
         bool getGriddingTasks(std::vector<QDateTime> &timeCreation, std::vector<QDate> &dateStart, std::vector<QDate> &dateEnd,
                                                         std::vector<QString> &users, std::vector<QString> &notes);
         bool removeGriddingTask(QDateTime dateCreation, QString user, QDate dateStart, QDate dateEnd);
-        bool computeClimaFromXMLSaveOnDB(QString xmlName);
+        bool computeClimatePointXML(QString xmlName);
+        bool cleanClimatePoint();
         bool saveLogProceduresGrid(QString nameProc, QDate date);
 
         #ifdef NETCDF

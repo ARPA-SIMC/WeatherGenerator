@@ -64,14 +64,13 @@ TabRootDepth::TabRootDepth()
     setLayout(mainLayout);
 }
 
-void TabRootDepth::computeRootDepth(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoPoint, int firstYear, int lastYear, QDate lastDBMeteoDate, const std::vector<soil::Crit3DLayer> &soilLayers)
+void TabRootDepth::computeRootDepth(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoPoint, int firstYear, int lastYear, QDate lastDBMeteoDate, const std::vector<soil::Crit1DLayer> &soilLayers)
 {
     unsigned int nrLayers = unsigned(soilLayers.size());
     double totalSoilDepth = 0;
     if (nrLayers > 0) totalSoilDepth = soilLayers[nrLayers-1].depth + soilLayers[nrLayers-1].thickness / 2;
 
     int prevYear = firstYear - 1;
-    double waterTableDepth = NODATA;
     std::string error;
 
     Crit3DDate firstDate = Crit3DDate(1, 1, prevYear);
@@ -84,8 +83,7 @@ void TabRootDepth::computeRootDepth(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoP
     {
         lastDate = Crit3DDate(lastDBMeteoDate.day(), lastDBMeteoDate.month(), lastYear);
     }
-    double tmin;
-    double tmax;
+    double tmin, tmax, waterTableDepth;
     QDateTime x;
 
     chart->removeSeries(seriesRootDepth);
@@ -100,6 +98,7 @@ void TabRootDepth::computeRootDepth(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoP
     {
         tmin = meteoPoint->getMeteoPointValueD(myDate, dailyAirTemperatureMin);
         tmax = meteoPoint->getMeteoPointValueD(myDate, dailyAirTemperatureMax);
+        waterTableDepth = meteoPoint->getMeteoPointValueD(myDate, dailyWaterTableDepth);
 
         if (!myCrop->dailyUpdate(myDate, meteoPoint->latitude, soilLayers, tmin, tmax, waterTableDepth, error))
         {

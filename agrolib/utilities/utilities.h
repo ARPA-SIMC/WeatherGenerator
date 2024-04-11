@@ -30,6 +30,7 @@
     QList<QString> getFields(QSqlDatabase* db_, QString tableName);
     QList<QString> getFields(const QSqlQuery& query);
     QList<QString> getFieldsUpperCase(const QSqlQuery &query);
+    bool fieldExists(const QSqlQuery &query, const QString fieldName);
 
     bool getValue(QVariant myRs);
     bool getValue(QVariant myRs, int* myValue);
@@ -43,7 +44,9 @@
     QString getFileName(const QString &fileNameComplete);
 
     std::vector <float> StringListToFloat(QList<QString> myList);
+    std::vector <double> StringListToDouble(QList<QString> myList);
     QStringList FloatVectorToStringList(std::vector <float> myVector);
+    QStringList DoubleVectorToStringList(std::vector <double> myVector);
     QList<QString> readListSingleColumn(QString fileName, QString& error);
 
     bool removeDirectory(QString myPath);
@@ -52,8 +55,11 @@
 
     void removeOldFiles(const QString &targetPath, const QString &targetStr, int nrDays);
 
-    void clearDir( const QString path );
-    QList<QString> removeList(QList<QString> list, QList<QString> toDelete);
+    void clearDir( const QString path);
+    QList<QString> removeList(const QList<QString> &list, QList<QString> &toDelete);
 
+    bool parseCSV(const QString &csvFileName, QList<QString> &csvFields, QList<QList<QString>> &csvData, QString &errorString);
+
+    bool writeJson(const QString &ancestor, const std::vector<QString> &fieldNames, const std::vector<QString> dataType, const std::vector<std::vector<QString> > &values, const QString &jsonFilename);
 
 #endif // UTILITIES_H

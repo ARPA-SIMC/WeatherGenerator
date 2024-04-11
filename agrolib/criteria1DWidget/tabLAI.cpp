@@ -103,16 +103,13 @@ TabLAI::TabLAI()
 
 
 void TabLAI::computeLAI(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoPoint, int firstYear, int lastYear,
-                        const QDate &lastDBMeteoDate, const std::vector<soil::Crit3DLayer> &soilLayers)
+                        const QDate &lastDBMeteoDate, const std::vector<soil::Crit1DLayer> &soilLayers)
 {
     unsigned int nrLayers = unsigned(soilLayers.size());
     double totalSoilDepth = 0;
     if (nrLayers > 0) totalSoilDepth = soilLayers[nrLayers-1].depth + soilLayers[nrLayers-1].thickness / 2;
 
     int prevYear = firstYear - 1;
-
-    double waterTableDepth = NODATA;
-    std::string error;
 
     Crit3DDate firstDate = Crit3DDate(1, 1, prevYear);
     Crit3DDate lastDate;
@@ -124,11 +121,12 @@ void TabLAI::computeLAI(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoPoint, int fi
     {
         lastDate = Crit3DDate(lastDBMeteoDate.day(), lastDBMeteoDate.month(), lastYear);
     }
-    double tmin;
-    double tmax;
+
+    double tmin, tmax, waterTableDepth;
     QDateTime x;
     double dailyEt0;
     int doy;
+    std::string errorStr;
 
     chart->removeSeries(seriesLAI);
     chart->removeSeries(seriesPotentialEvap);
@@ -147,10 +145,11 @@ void TabLAI::computeLAI(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoPoint, int fi
     {
         tmin = meteoPoint->getMeteoPointValueD(myDate, dailyAirTemperatureMin);
         tmax = meteoPoint->getMeteoPointValueD(myDate, dailyAirTemperatureMax);
+        waterTableDepth = meteoPoint->getMeteoPointValueD(myDate, dailyWaterTableDepth);
 
-        if (!myCrop->dailyUpdate(myDate, meteoPoint->latitude, soilLayers, tmin, tmax, waterTableDepth, error))
+        if (!myCrop->dailyUpdate(myDate, meteoPoint->latitude, soilLayers, tmin, tmax, waterTableDepth, errorStr))
         {
-            QMessageBox::critical(nullptr, "Error!", QString::fromStdString(error));
+            QMessageBox::critical(nullptr, "Error!", QString::fromStdString(errorStr));
             return;
         }
 
@@ -189,8 +188,8 @@ void TabLAI::computeLAI(Crit3DCrop* myCrop, Crit3DMeteoPoint *meteoPoint, int fi
     {
         QObject::connect(marker, &QLegendMarker::clicked, this, &TabLAI::handleMarkerClicked);
     }
-
 }
+
 
 void TabLAI::tooltipLAI(QPointF point, bool state)
 {

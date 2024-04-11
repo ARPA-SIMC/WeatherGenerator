@@ -12,15 +12,15 @@
 #include "basicMath.h"
 
 
-bool openDbMeteo(QString dbName, QSqlDatabase* dbMeteo, QString* error)
+bool openDbMeteo(QString dbName, QSqlDatabase &dbMeteo, QString &error)
 {
 
-    *dbMeteo = QSqlDatabase::addDatabase("QSQLITE", QUuid::createUuid().toString());
-    dbMeteo->setDatabaseName(dbName);
+    dbMeteo = QSqlDatabase::addDatabase("QSQLITE", QUuid::createUuid().toString());
+    dbMeteo.setDatabaseName(dbName);
 
-    if (!dbMeteo->open())
+    if (!dbMeteo.open())
     {
-       *error = "Connection with database fail";
+       error = "Connection with database fail: " + dbName;
        return false;
     }
 
@@ -30,19 +30,28 @@ bool openDbMeteo(QString dbName, QSqlDatabase* dbMeteo, QString* error)
 
 bool getMeteoPointList(const QSqlDatabase &dbMeteo, QList<QString> &idMeteoList, QString &errorStr)
 {
-    QString queryString = "SELECT id_meteo FROM meteo_locations";
+    errorStr = "";
+    QString queryString = "SELECT id_meteo FROM point_properties";
     QSqlQuery query = dbMeteo.exec(queryString);
-
     query.first();
+
+    if (! query.isValid())
+    {
+        // previous code version
+        queryString = "SELECT id_meteo FROM meteo_locations";
+        query = dbMeteo.exec(queryString);
+        query.first();
+    }
+
     if (! query.isValid())
     {
         errorStr = query.lastError().text();
         return false;
     }
 
-    QString idMeteo;
     do
     {
+        QString idMeteo;
         getValue(query.value("id_meteo"), &idMeteo);
         if (idMeteo != "")
         {
@@ -55,61 +64,46 @@ bool getMeteoPointList(const QSqlDatabase &dbMeteo, QList<QString> &idMeteoList,
 }
 
 
-bool getLatLonFromIdMeteo(QSqlDatabase* dbMeteo, QString idMeteo, QString* lat, QString* lon, QString *error)
+bool getLatLonFromIdMeteo(QSqlDatabase &dbMeteo, QString idMeteo, QString &lat, QString &lon, QString &errorStr)
 {
-    *error = "";
-    QString queryString = "SELECT * FROM meteo_locations WHERE id_meteo='" + idMeteo +"'";
-
-    QSqlQuery query = dbMeteo->exec(queryString);
+    errorStr = "";
+    QString queryString = "SELECT * FROM point_properties WHERE id_meteo='" + idMeteo +"'";
+    QSqlQuery query = dbMeteo.exec(queryString);
     query.last();
 
     if (! query.isValid())
     {
-        *error = query.lastError().text();
+        // previous code version
+        queryString = "SELECT * FROM meteo_locations WHERE id_meteo='" + idMeteo +"'";
+        query = dbMeteo.exec(queryString);
+        query.last();
+    }
+
+    if (! query.isValid())
+    {
+        errorStr = query.lastError().text();
         return false;
     }
 
-    getValue(query.value("latitude"), lat);
-    getValue(query.value("longitude"), lon);
+    getValue(query.value("latitude"), &lat);
+    getValue(query.value("longitude"), &lon);
 
     return true;
 }
 
-bool updateLatLonFromIdMeteo(QSqlDatabase* dbMeteo, QString idMeteo, QString lat, QString lon, QString *error)
+
+bool updateLatFromIdMeteo(QSqlDatabase& dbMeteo, QString idMeteo, QString lat, QString& error)
 {
-    QSqlQuery qry(*dbMeteo);
-    *error = "";
+    error = "";
+
+    QSqlQuery qry(dbMeteo);
     if (idMeteo.isEmpty())
     {
-        *error = "id_meteo missing";
+        error = "id_meteo missing";
         return false;
     }
-    qry.prepare( "UPDATE meteo_locations SET longitude = :longitude, "
-                 "latitude = :latitude WHERE id_meteo = :id_meteo");
 
-    qry.bindValue(":longitude", lon);
-    qry.bindValue(":latitude", lat);
-
-    qry.bindValue(":id_meteo", idMeteo);
-
-    if( !qry.exec() )
-    {
-        *error = qry.lastError().text();
-        return false;
-    }
-    return true;
-}
-
-bool updateLatFromIdMeteo(QSqlDatabase* dbMeteo, QString idMeteo, QString lat, QString *error)
-{
-    QSqlQuery qry(*dbMeteo);
-    *error = "";
-    if (idMeteo.isEmpty())
-    {
-        *error = "id_meteo missing";
-        return false;
-    }
-    qry.prepare( "UPDATE meteo_locations SET "
+    qry.prepare( "UPDATE point_properties SET "
                  "latitude = :latitude WHERE id_meteo = :id_meteo");
 
     qry.bindValue(":latitude", lat);
@@ -118,29 +112,37 @@ bool updateLatFromIdMeteo(QSqlDatabase* dbMeteo, QString idMeteo, QString lat, Q
 
     if( !qry.exec() )
     {
-        *error = qry.lastError().text();
+        error = qry.lastError().text();
         return false;
     }
+
     return true;
 }
 
 
-QString getTableNameFromIdMeteo(QSqlDatabase* dbMeteo, QString idMeteo, QString *error)
+QString getTableNameFromIdMeteo(QSqlDatabase &dbMeteo, QString idMeteo, QString &errorStr)
 {
-    *error = "";
-    QString queryString = "SELECT * FROM meteo_locations WHERE id_meteo='" + idMeteo +"'";
-
-    QSqlQuery query = dbMeteo->exec(queryString);
+    errorStr = "";
+    QString queryString = "SELECT table_name FROM point_properties WHERE id_meteo='" + idMeteo + "'";
+    QSqlQuery query = dbMeteo.exec(queryString);
     query.last();
 
     if (! query.isValid())
     {
-        *error = query.lastError().text();
+        // previous code version
+        queryString = "SELECT table_name FROM meteo_locations WHERE id_meteo='" + idMeteo + "'";
+        query = dbMeteo.exec(queryString);
+        query.last();
+    }
+
+    if (! query.isValid())
+    {
+        errorStr = query.lastError().text();
         return "";
     }
 
     QString table_name;
-    getValue(query.value("table_name"), &table_name);
+    getValue(query.value(0), &table_name);
 
     return table_name;
 }
@@ -500,11 +502,12 @@ bool getLastDateGrid(QSqlDatabase dbMeteo, QString table, QString fieldTime, QSt
 }
 
 
-bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime, int varCodeTmin, int varCodeTmax, int varCodePrec, QString year, QString *error)
+bool checkYearMeteoGrid(const QSqlDatabase &dbMeteo, const QString &tableD, const QString &fieldTime,
+                        int varCodeTmin, int varCodeTmax, int varCodePrec, const QString &year, QString &error)
 {
     QSqlQuery qry(dbMeteo);
 
-    *error = "";
+    error = "";
 
     QString TMIN_MIN = "-50.0";
     QString TMIN_MAX = "40.0";
@@ -522,13 +525,13 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
 
     if( !qry.exec(statement) )
     {
-        *error = qry.lastError().text();
+        error = qry.lastError().text();
         return false;
     }
     qry.first();
     if (! qry.isValid())
     {
-        *error = qry.lastError().text();
+        error = qry.lastError().text();
         return false;
     }
     int count;
@@ -540,7 +543,7 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
     // 3 variables
     if (count/3 < (daysInYear-MAX_MISSING_TOT_DAYS))
     {
-        *error = "incomplete year, valid data missing more than MAX_MISSING_DAYS";
+        error = "incomplete year, valid data missing more than MAX_MISSING_DAYS";
         return false;
     }
 
@@ -550,14 +553,14 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
                         "ORDER BY `%2`").arg(tableD, fieldTime, year).arg(varCodeTmin, varCodeTmax, varCodePrec);
     if( !qry.exec(statement) )
     {
-        *error = qry.lastError().text();
+        error = qry.lastError().text();
         return false;
     }
 
     qry.first();
     if (! qry.isValid())
     {
-        *error = qry.lastError().text();
+        error = qry.lastError().text();
         return false;
     }
 
@@ -592,13 +595,13 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
             // 2 days missing
             if (previousDateTmin.daysTo(date) > (MAX_MISSING_CONSECUTIVE_DAYS_T+1))
             {
-                *error = "incomplete year, missing more than 1 consecutive days";
+                error = "incomplete year, missing more than 1 consecutive days";
                 return false;
             }
             // 1 day missing, the next one invalid temp
             if ( (previousDateTmin.daysTo(date) == (MAX_MISSING_CONSECUTIVE_DAYS_T+1)) && (tmin < tmin_min || tmin > tmin_max) )
             {
-                *error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
+                error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
                 return false;
             }
             // no day missing, check valid temp
@@ -607,7 +610,7 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
                 invalidTempMin = invalidTempMin + 1;
                 if (invalidTempMin > 1)
                 {
-                    *error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
+                    error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
                     return false;
                 }
             }
@@ -623,13 +626,13 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
             // 2 days missing
             if (previousDateTmax.daysTo(date) > (MAX_MISSING_CONSECUTIVE_DAYS_T+1))
             {
-                *error = "incomplete year, missing more than 1 consecutive days";
+                error = "incomplete year, missing more than 1 consecutive days";
                 return false;
             }
             // 1 day missing, the next one invalid temp
             if ( (previousDateTmax.daysTo(date) == (MAX_MISSING_CONSECUTIVE_DAYS_T+1)) && (tmax < tmax_min || tmax > tmax_max) )
             {
-                *error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
+                error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
                 return false;
             }
             // no day missing, check valid temp
@@ -638,7 +641,7 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
                 invalidTempMax = invalidTempMax + 1;
                 if (invalidTempMax > 1)
                 {
-                    *error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
+                    error = "incomplete year, missing valid data (temp) more than 1 consecutive days";
                     return false;
                 }
             }
@@ -658,7 +661,7 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
                 // 7 day missing, the next one invalid temp
                 if ( invalidPrec > MAX_MISSING_CONSECUTIVE_DAYS_PREC )
                 {
-                     *error = "incomplete year, missing valid data (prec) more than 7 consecutive days";
+                     error = "incomplete year, missing valid data (prec) more than 7 consecutive days";
                      return false;
                 }
             }
@@ -675,20 +678,20 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
     // check last day (tempMin)
     if (date.daysTo(lastDate) > MAX_MISSING_CONSECUTIVE_DAYS_T || (date.daysTo(lastDate) == MAX_MISSING_CONSECUTIVE_DAYS_T && invalidTempMin > 0) )
     {
-        *error = "incomplete year, missing more than 1 consecutive days (tempMin)";
+        error = "incomplete year, missing more than 1 consecutive days (tempMin)";
         return false;
     }
     // check last day (tempMax)
     if (date.daysTo(lastDate) > MAX_MISSING_CONSECUTIVE_DAYS_T || (date.daysTo(lastDate) == MAX_MISSING_CONSECUTIVE_DAYS_T && invalidTempMax > 0) )
     {
-        *error = "incomplete year, missing more than 1 consecutive days (tempMax)";
+        error = "incomplete year, missing more than 1 consecutive days (tempMax)";
         return false;
     }
 
     // check last day (prec)
     if (date.daysTo(lastDate) > MAX_MISSING_CONSECUTIVE_DAYS_PREC || (date.daysTo(lastDate) + invalidPrec > MAX_MISSING_CONSECUTIVE_DAYS_PREC ) )
     {
-        *error = "incomplete year, missing more than 1 consecutive days (prec)";
+        error = "incomplete year, missing more than 1 consecutive days (prec)";
         return false;
     }
 
@@ -696,11 +699,11 @@ bool checkYearMeteoGrid(QSqlDatabase dbMeteo, QString tableD, QString fieldTime,
 }
 
 
-bool fillDailyTempPrecCriteria1D(QSqlDatabase* dbMeteo, QString table, Crit3DMeteoPoint *meteoPoint, QString validYear, QString *error)
+bool fillDailyTempPrecCriteria1D(QSqlDatabase* dbMeteo, QString table, Crit3DMeteoPoint *meteoPoint, int validYear, QString *error)
 {
     *error = "";
 
-    QString queryString = "SELECT * FROM '" + table +"'" + " WHERE strftime('%Y',date) = '" + validYear +"'";
+    QString queryString = "SELECT * FROM '" + table +"'" + " WHERE strftime('%Y',date) = '" + QString::number(validYear) +"'";
     QSqlQuery query = dbMeteo->exec(queryString);
 
     query.first();
@@ -711,8 +714,8 @@ bool fillDailyTempPrecCriteria1D(QSqlDatabase* dbMeteo, QString table, Crit3DMet
     }
 
     QDate date;
-    QDate previousDate(validYear.toInt()-1, 12, 31);
-    QDate lastDate(validYear.toInt(), 12, 31);
+    QDate previousDate(validYear-1, 12, 31);
+    QDate lastDate(validYear, 12, 31);
     float tmin = NODATA;
     float tmax = NODATA;
     float tavg = NODATA;
@@ -724,7 +727,6 @@ bool fillDailyTempPrecCriteria1D(QSqlDatabase* dbMeteo, QString table, Crit3DMet
 
     const float tmax_min = -40;
     const float tmax_max = 60;
-
 
     do
     {
@@ -767,7 +769,7 @@ bool fillDailyTempPrecCriteria1D(QSqlDatabase* dbMeteo, QString table, Crit3DMet
     }
     while(query.next());
 
-    QDate firstDate(validYear.toInt(), 1, 1);
+    QDate firstDate(validYear, 1, 1);
     int daysInYear = firstDate.daysInYear();
     float prevTmin = NODATA;
     float prevTmax = NODATA;
@@ -846,6 +848,7 @@ bool fillDailyTempPrecCriteria1D(QSqlDatabase* dbMeteo, QString table, Crit3DMet
  * \details date format: "yyyy-mm-dd"
  * \return true if data are correctly loaded
  * \note meteoPoint have to be initialized BEFORE function
+ * \note maxNrDays = NODATA: read all data
  */
 bool readDailyDataCriteria1D(QSqlQuery &query, Crit3DMeteoPoint &meteoPoint, int maxNrDays, QString &error)
 {
@@ -884,7 +887,7 @@ bool readDailyDataCriteria1D(QSqlQuery &query, Crit3DMeteoPoint &meteoPoint, int
 
         if (! myDate.isValid())
         {
-            if (currentIndex < (maxNrDays-1))
+            if (maxNrDays != NODATA && currentIndex < (maxNrDays-1))
             {
                 error = meteoID + "Wrong date format: " + query.value("date").toString();
                 return false;

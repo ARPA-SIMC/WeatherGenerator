@@ -31,11 +31,11 @@
     #ifndef METEOMAPS_H
         #include "meteoMaps.h"
     #endif
-    #ifndef IMPORTPROPERTIESCSV_H
-        #include "importPropertiesCSV.h"
-    #endif
     #ifndef PROXYWIDGET_H
         #include "proxyWidget.h"
+    #endif
+    #ifndef LOCALPROXYWIDGET_H
+        #include "localProxyWidget.h"
     #endif
 
     #ifndef _FSTREAM_
@@ -53,6 +53,7 @@
     #define ERROR_STR_MISSING_DEM "Load a Digital Elevation Model (DEM) before."
     #define ERROR_STR_MISSING_PROJECT "Open a project before."
     #define ERROR_STR_MISSING_GRID "Load a meteo grid DB before."
+    #define ERROR_STR_MISSING_POINT_GRID "Load meteo Points or grid."
 
     class Crit3DMeteoWidget;
     class FormInfo;
@@ -66,7 +67,6 @@
         QString projectPath;
         bool computeOnlyPoints;
         FormInfo* formLog;
-        ImportPropertiesCSV* importProperties;
 
         void clearMeteoPoints();
         bool createDefaultProject(QString fileName);
@@ -114,6 +114,7 @@
         Crit3DMeteoPointsDbHandler* meteoPointsDbHandler;
         Crit3DOutputPointsDbHandler* outputPointsDbHandler;
         Crit3DAggregationsDbHandler* aggregationDbHandler;
+        QDateTime meteoPointsDbFirstTime;
         QDateTime meteoPointsDbLastTime;
 
         Crit3DColorScale* meteoPointsColorScale;
@@ -146,6 +147,7 @@
         QList<Crit3DMeteoWidget*> meteoWidgetGridList;
 
         Crit3DProxyWidget* proxyWidget;
+        Crit3DLocalProxyWidget* localProxyWidget;
 
         Project();
 
@@ -241,9 +243,8 @@
         bool loadTopographicDistanceMaps(bool onlyWithData, bool showInfo);
         void passInterpolatedTemperatureToHumidityPoints(Crit3DTime myTime, Crit3DMeteoSettings *meteoSettings);
 
-        bool checkInterpolationMain(meteoVariable myVar);
-        bool checkInterpolationMainSimple(meteoVariable myVar);
-        bool interpolationGridMain(meteoVariable myVar, const Crit3DTime& myTime);
+        bool checkInterpolation(meteoVariable myVar);
+        bool checkInterpolationGrid(meteoVariable myVar);
         bool interpolationGrid(meteoVariable myVar, const Crit3DTime& myTime);
         bool interpolationDemMain(meteoVariable myVar, const Crit3DTime& myTime, gis::Crit3DRasterGrid *myRaster);
         bool interpolationDem(meteoVariable myVar, const Crit3DTime& myTime, gis::Crit3DRasterGrid *myRaster);
@@ -261,13 +262,13 @@
         bool checkMeteoGridForExport();
         void importHourlyMeteoData(const QString& fileName, bool importAllFiles, bool deletePreviousData);
 
-        bool parseMeteoPointsPropertiesCSV(QString csvFileName, QList<QString> *csvFields);
-        bool writeMeteoPointsProperties(QList<QString> joinedList);
-
         gis::Crit3DRasterGrid* getHourlyMeteoRaster(meteoVariable myVar);
-        void showMeteoWidgetPoint(std::string idMeteoPoint, std::string namePoint, bool isAppend);
+        void showMeteoWidgetPoint(std::string idMeteoPoint, std::string namePoint, std::string dataset,
+                                  double altitude, std::string lapseRateCode, bool isAppend);
         void showMeteoWidgetGrid(std::string idCell, bool isAppend);
         void showProxyGraph();
+        void showLocalProxyGraph(gis::Crit3DGisSettings gisSettings, double x, double y);
+        bool setTempParametersRange(meteoVariable myVar);
 
         void clearSelectedPoints();
         void clearSelectedOutputPoints();
@@ -279,11 +280,15 @@
         bool deleteMeteoPointsData(const QList<QString>& pointList);
         bool loadOutputPointList(QString fileName);
         bool writeOutputPointList(QString fileName);
+
         bool exportMeteoGridToCsv(QString fileName);
         bool exportMeteoGridToRasterFlt(QString fileName, double cellSize);
+        bool exportMeteoPointsDailyDataCsv(bool isTPrec, QDate firstDate, QDate lastDate, QString idListFileName, QString outputPath);
+
+        bool loadAndExportMeteoGridToRasterFlt(QString fileName, double cellSize, meteoVariable myVar, QDate dateIni, QDate dateFin);
         int computeDefaultCellSizeFromMeteoGrid(float resolutionRatio);
 
-        void setComputeOnlyPoints(bool isOnlyPoints);
+        void setComputeOnlyPoints(bool value);
         bool getComputeOnlyPoints();
 
     private slots:

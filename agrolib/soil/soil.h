@@ -152,10 +152,13 @@
             Crit3DDriessen Driessen;
 
             Crit3DHorizon();
+
+            double getSoilFraction()
+                { return (1.0 - coarseFragments); }
         };
 
 
-        class Crit3DLayer
+        class Crit1DLayer
         {
         public:
             double depth;               /*!<   [m] */
@@ -174,14 +177,14 @@
 
             Crit3DHorizon *horizonPtr;
 
-            Crit3DLayer();
+            Crit1DLayer();
 
             bool setLayer(Crit3DHorizon *horizonPointer);
             double getVolumetricWaterContent();
             double getDegreeOfSaturation();
             double getWaterPotential();
             double getWaterConductivity();
-            double computeSlopeStability(double slope);
+            double computeSlopeStability(double slope, double normalizedRootDensity);
         };
 
 
@@ -201,10 +204,10 @@
             void cleanSoil();
             void addHorizon(int nHorizon, const Crit3DHorizon &newHorizon);
             void deleteHorizon(int nHorizon);
-            int getHorizonIndex(double depth);
+            int getHorizonIndex(double depth) const;
 
             bool setSoilLayers(double layerThicknessMin, double geometricFactor,
-                               std::vector<Crit3DLayer> &soilLayers, std::string &myError);
+                               std::vector<Crit1DLayer> &soilLayers, std::string &myError);
         };
 
 
@@ -228,7 +231,7 @@
         int getUSCSClass(const Crit3DHorizon &horizon);
 
         int getHorizonIndex(const Crit3DSoil &soil, double depth);
-        int getSoilLayerIndex(const std::vector<Crit3DLayer> &soilLayers, double depth);
+        int getSoilLayerIndex(const std::vector<Crit1DLayer> &soilLayers, double depth);
 
         double getFieldCapacity(double clayContent, soil::units unit);
         double getWiltingPoint(soil::units unit);
@@ -254,8 +257,8 @@
         double estimateTotalPorosity(const Crit3DHorizon &horizon, double bulkDensity);
         double estimateThetaSat(const Crit3DHorizon &horizon, double bulkDensity);
 
-        double getWaterContentFromPsi(double signPsi, const Crit3DLayer &layer);
-        double getWaterContentFromAW(double availableWater, const Crit3DLayer &layer);
+        double getWaterContentFromPsi(double signPsi, const Crit1DLayer &layer);
+        double getWaterContentFromAW(double availableWater, const Crit1DLayer &layer);
 
         bool setHorizon(Crit3DHorizon &horizon, const std::vector<Crit3DTextureClass> &textureClassList,
                         const std::vector<Crit3DGeotechnicsClass> &geotechnicsClassList,

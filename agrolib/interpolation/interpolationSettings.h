@@ -1,7 +1,8 @@
 #ifndef INTERPOLATIONSETTINGS_H
 #define INTERPOLATIONSETTINGS_H
 
-    #ifndef INTERPOLATIONCONSTS_H
+#include <functional>
+#ifndef INTERPOLATIONCONSTS_H
         #include "interpolationConstants.h"
     #endif
     #ifndef GIS_H
@@ -33,6 +34,7 @@
         float regressionR2;
         float regressionSlope;
         float regressionIntercept;
+        std::vector <double> fittingParametersRange;
 
         float avg;
         float stdDev;
@@ -63,7 +65,7 @@
         float getRegressionR2();
         void setRegressionSlope(float myValue);
         float getRegressionSlope();
-        float getValue(unsigned int pos, std::vector <float> proxyValues);
+        double getValue(unsigned int pos, std::vector<double> proxyValues);
         float getLapseRateH1() const;
         void setLapseRateH1(float value);
         float getLapseRateH0() const;
@@ -92,27 +94,31 @@
         void setStdDev(float newStdDev);
         float getStdDevThreshold() const;
         void setStdDevThreshold(float newStdDevThreshold);
+        std::vector<double> getFittingParametersRange() const;
+        void setFittingParametersRange(const std::vector<double> &newFittingParametersRange);
     };
+
 
     class Crit3DProxyCombination
     {
     private:
-        std::deque<bool> isActive;
-        bool useThermalInversion;
-
+        std::vector<bool> _isActiveList;
+        bool _useThermalInversion;
 
     public:
         Crit3DProxyCombination();
 
         void clear();
-        bool getUseThermalInversion() const;
-        void setUseThermalInversion(bool value);
-        void addValue(bool isActive_);
-        void setValue(unsigned index, bool isActive_);
-        bool getValue(unsigned index);
-        std::deque<bool> getIsActive() const;
-        void setIsActive(const std::deque<bool> &value);
+        void addProxyActive(bool value) { _isActiveList.push_back(value); }
+        void setProxyActive(unsigned index, bool value) { _isActiveList[index] = value; }
+        bool isProxyActive(unsigned index) { return _isActiveList[index]; }
+
+        unsigned int getProxySize() const { return unsigned(_isActiveList.size()); }
+
+        bool getUseThermalInversion() const { return _useThermalInversion; }
+        void setUseThermalInversion(bool value) { _useThermalInversion = value; }
     };
+
 
     class Crit3DInterpolationSettings
     {
@@ -146,11 +152,15 @@
         std::vector <float> Kh_error_series;
 
         bool proxyLoaded;
+        bool proxiesComplete;
         std::vector <Crit3DProxy> currentProxy;
         Crit3DProxyCombination optimalCombination;
         Crit3DProxyCombination selectedCombination;
         Crit3DProxyCombination currentCombination;
         unsigned indexHeight;
+
+        std::vector <std::vector<double>> fittingParameters;
+        std::vector<std::function<double(double, std::vector<double>&)>> fittingFunction;
 
     public:
         Crit3DInterpolationSettings();
@@ -162,7 +172,7 @@
         std::string getProxyName(unsigned pos);
         size_t getProxyNr();
         void addProxy(Crit3DProxy myProxy, bool isActive_);
-        float getProxyValue(unsigned pos, std::vector <float> proxyValues);
+        double getProxyValue(unsigned pos, std::vector<double> proxyValues);
         bool getCombination(int combinationInteger, Crit3DProxyCombination &outCombination);
         int getProxyPosFromName(TProxyVar name);
 
@@ -234,6 +244,12 @@
         void setLocalRadius(float newLocalRadius);
         int getMinPointsLocalDetrending() const;
         void setMinPointsLocalDetrending(int newMinPointsLocalDetrending);
+        std::vector<std::vector <double>> getFittingParameters() const;
+        void setFittingParameters(const std::vector<std::vector <double>> &newFittingParameters);
+        std::vector<std::function<double (double, std::vector<double> &)> > getFittingFunction() const;
+        void setFittingFunction(const std::vector<std::function<double (double, std::vector<double> &)> > &newFittingFunction);
+        bool getProxiesComplete() const;
+        void setProxiesComplete(bool newProxiesComplete);
     };
 
 #endif // INTERPOLATIONSETTINGS_H

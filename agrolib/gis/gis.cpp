@@ -160,6 +160,7 @@ namespace gis
     {
         nrRows = 0;
         nrCols = 0;
+        nrBytes = 4;
         cellSize = NODATA;
         flag = NODATA;
     }
@@ -168,6 +169,7 @@ namespace gis
     {
         nrRows = 0;
         nrCols = 0;
+        nrBytes = 4;
         dx = NODATA;
         dy = NODATA;
         flag = NODATA;
@@ -358,8 +360,10 @@ namespace gis
         mapTime.setNullTime();
         minimum = NODATA;
         maximum = NODATA;
+
         header->nrRows = 0;
         header->nrCols = 0;
+        header->nrBytes = 4;
         header->cellSize = NODATA;
         header->llCorner.initialize();
 
@@ -367,12 +371,14 @@ namespace gis
     }
 
 
+    // clean the grid (all NO DATA)
     void Crit3DRasterGrid::emptyGrid()
     {
         for (int row = 0; row < header->nrRows; row++)
             for (int col = 0; col < header->nrCols; col++)
                 value[row][col] = header->flag;
     }
+
 
     Crit3DRasterGrid::~Crit3DRasterGrid()
     {
@@ -453,7 +459,7 @@ namespace gis
     }
 
 
-    void convertNodataRasterGrid(Crit3DRasterGrid& myGrid)
+    void convertFlagToNodata(Crit3DRasterGrid& myGrid)
     {
         if (myGrid.header->flag == NODATA)
             return;
@@ -707,7 +713,6 @@ namespace gis
      */
     void latLonToUtm(double lat, double lon, double *utmEasting, double *utmNorthing, int *zoneNumber)
     {
-
         static double ellipsoidK0 = 0.9996;
         double eccSquared, lonOrigin, eccPrimeSquared, ae, a, n;
         double t, c,m,lonTemp, latRad,lonRad,lonOriginRad;
@@ -768,17 +773,18 @@ namespace gis
         if (lat < 0) (*utmNorthing) += 10000000.;
     }
 
+
     void getUtmFromLatLon(int zoneNumber, const Crit3DGeoPoint& geoPoint, Crit3DUtmPoint* utmPoint)
     {
         latLonToUtmForceZone(zoneNumber, geoPoint.latitude, geoPoint.longitude, &(utmPoint->x), &(utmPoint->y));
     }
 
+
+    /*!
+          \brief equivalent to latLonToUtm forcing UTM zone.
+    */
     void latLonToUtmForceZone(int zoneNumber, double lat, double lon, double *utmEasting, double *utmNorthing)
     {
-
-        /*!
-          equivalent to LatLonToUTM forcing UTM zone.
-        */
         double eccSquared, lonOrigin, eccPrimeSquared, ae, a, n , t, c,m,lonTemp, latRad,lonRad,lonOriginRad;
         static double ellipsoidK0 = 0.9996;
 

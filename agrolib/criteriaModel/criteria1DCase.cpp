@@ -34,6 +34,7 @@
 #include "criteria1DCase.h"
 #include "soilFluxes3D.h"
 #include "soil.h"
+#include "crop.h"
 
 
 Crit1DOutput::Crit1DOutput()
@@ -105,16 +106,24 @@ bool Crit1DCase::initializeSoil(std::string &error)
 }
 
 
-// meteoPoint has to be loaded
-void Crit1DCase::initializeWaterContent(Crit3DDate myDate)
+bool Crit1DCase::initializeWaterContent(Crit3DDate myDate)
 {
-    initializeWater(soilLayers);
-
-    // water table
-    if (unit.useWaterTableData)
+    if (soilLayers.size() > 0)
     {
-        double waterTable = double(meteoPoint.getMeteoPointValueD(myDate, dailyWaterTableDepth));
-        computeCapillaryRise(soilLayers, waterTable);
+        initializeWater(soilLayers);
+
+        // water table
+        if (unit.useWaterTableData)
+        {
+            float waterTable = meteoPoint.getMeteoPointValueD(myDate, dailyWaterTableDepth);
+            computeCapillaryRise(soilLayers, double(waterTable));
+        }
+
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -352,7 +361,7 @@ bool Crit1DCase::computeNumericalFluxes(const Crit3DDate &myDate, std::string &e
 }
 
 
-void Crit1DCase::saveWaterContent()
+void Crit1DCase::storeWaterContent()
 {
     prevWaterContent.clear();
     prevWaterContent.resize(soilLayers.size());
@@ -448,8 +457,9 @@ double Crit1DCase::checkIrrigationDemand(int doy, double currentPrec, double nex
     double threshold = 1. - crop.stressTolerance;
 
     double waterStress = 0;
-    crop.computeTranspiration(maxTranspiration, soilLayers, waterStress);
-    if (waterStress <= threshold)
+    double waterExcessStress = 0;
+    crop.computeTranspiration(maxTranspiration, soilLayers, waterStress, waterExcessStress);
+    if ((waterStress - waterExcessStress)  <= threshold)
         return 0;
 
     // check irrigation shift
@@ -525,11 +535,12 @@ bool Crit1DCase::computeDailyModel(Crit3DDate &myDate, std::string &error)
     // Maximum evaporation and transpiration
     output.dailyMaxEvaporation = crop.getMaxEvaporation(output.dailyEt0);
     output.dailyMaxTranspiration = crop.getMaxTranspiration(output.dailyEt0);
-
     output.dailyIrrigation = 0;
+
     // Water fluxes (first computation)
-    saveWaterContent();
+    storeWaterContent();
     if (! computeWaterFluxes(myDate, error)) return false;
+
     // Irrigation
     double irrigation = checkIrrigationDemand(doy, prec, precTomorrow, output.dailyMaxTranspiration);
 
@@ -550,9 +561,35 @@ bool Crit1DCase::computeDailyModel(Crit3DDate &myDate, std::string &error)
     if (computeFactorOfSafety)
     {
         unsigned int nrLayers = unsigned(soilLayers.size());
+        double rootDensityMax = 0;
         for (unsigned int l = 1; l < nrLayers; l++)
         {
-            soilLayers[l].factorOfSafety = soilLayers[l].computeSlopeStability(unit.slope);
+            rootDensityMax = std::max(rootDensityMax, crop.roots.rootDensity[l]);
+        }
+
+        for (unsigned int l = 1; l < nrLayers; l++)
+        {
+            double rootDensityNorm;
+            if (rootDensityMax == 0)
+            {
+                rootDensityNorm = 0;
+            }
+            else
+            {
+                rootDensityNorm = crop.roots.rootDensity[l] / rootDensityMax;
+            }
+
+            double rootCohesion;
+            if (isEqual(crop.roots.rootsAdditionalCohesion, NODATA))
+            {
+                rootCohesion = 0;
+            }
+            else
+            {
+                rootCohesion = crop.roots.rootsAdditionalCohesion * rootDensityNorm;
+            }
+
+            soilLayers[l].factorOfSafety = soilLayers[l].computeSlopeStability(unit.slope, rootCohesion);
         }
     }
 
@@ -571,12 +608,13 @@ bool Crit1DCase::computeDailyModel(Crit3DDate &myDate, std::string &error)
 
     // Transpiration
     double waterStress = 0;
-    output.dailyTranspiration = crop.computeTranspiration(output.dailyMaxTranspiration, soilLayers, waterStress);
+    double waterExcessStress = 0;
+    output.dailyTranspiration = crop.computeTranspiration(output.dailyMaxTranspiration, soilLayers, waterStress, waterExcessStress);
 
     // assign transpiration
     if (output.dailyTranspiration > 0)
     {
-        for (unsigned int i = unsigned(crop.roots.firstRootLayer); i <= unsigned(crop.roots.lastRootLayer); i++)
+        for (int i = crop.roots.firstRootLayer; i <= crop.roots.lastRootLayer; i++)
         {
             soilLayers[i].waterContent -= crop.layerTranspiration[i];
         }
@@ -618,11 +656,11 @@ double Crit1DCase::getTotalWaterContent()
 
 
 /*!
- * \brief getWaterContent
+ * \brief getVolumetricWaterContent
  * \param computationDepth = computation soil depth  [cm]
- * \return volumetric water content at specific depth [-]
+ * \return volumetric water content (soil moisture) at specific depth [m3 m-3]
  */
-double Crit1DCase::getWaterContent(double computationDepth)
+double Crit1DCase::getVolumetricWaterContent(double computationDepth)
 {
     computationDepth /= 100;        // [cm] --> [m]
 
@@ -637,6 +675,34 @@ double Crit1DCase::getWaterContent(double computationDepth)
         if (computationDepth >= upperDepth && computationDepth <= lowerDepth)
         {
             return soilLayers[i].waterContent / (soilLayers[i].thickness * 1000);
+        }
+    }
+
+    return NODATA;
+}
+
+
+/*!
+ * \brief getDegreeOfSaturation
+ * \param computationDepth = computation soil depth  [cm]
+ * \return degree of saturation at specific depth [-]
+ */
+double Crit1DCase::getDegreeOfSaturation(double computationDepth)
+{
+    computationDepth /= 100;        // [cm] --> [m]
+    if (computationDepth <= 0 || computationDepth > mySoil.totalDepth)
+    {
+        return NODATA;
+    }
+
+    double upperDepth, lowerDepth;
+    for (unsigned int i = 1; i < soilLayers.size(); i++)
+    {
+        upperDepth = soilLayers[i].depth - soilLayers[i].thickness * 0.5;
+        lowerDepth = soilLayers[i].depth + soilLayers[i].thickness * 0.5;
+        if (computationDepth >= upperDepth && computationDepth <= lowerDepth)
+        {
+            return soilLayers[i].waterContent / soilLayers[i].SAT;
         }
     }
 
@@ -743,7 +809,7 @@ double Crit1DCase::getWaterDeficitSum(double computationDepth)
 
 /*!
  * \brief getWaterCapacity
- * \param computationDepth = computation soil depth  [cm]
+ * \param computationDepth = computation soil depth [cm]
  * \return sum of available water capacity (FC-WP) from zero to computationDepth (mm)
  */
 double Crit1DCase::getWaterCapacitySum(double computationDepth)

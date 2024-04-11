@@ -2,7 +2,10 @@
 #include "commonConstants.h"
 #include "basicMath.h"
 #include "gammaFunction.h"
+#include "meteo.h"
+
 #include <algorithm>
+
 
 Drought::Drought(droughtIndex index, int firstYear, int lastYear, Crit3DDate date, Crit3DMeteoPoint* meteoPoint, Crit3DMeteoSettings* meteoSettings)
 {
@@ -79,28 +82,28 @@ void Drought::setComputeAll(bool value)
     computeAll = value;
 }
 
+
 float Drought::computeDroughtIndex()
 {
-
     timeScale = timeScale - 1; // index start from 0
     if (index == INDEX_SPI)
     {
-        if (!computeSpiParameters())
+        if (! computeSpiParameters())
         {
             return NODATA;
         }
     }
     else if (index == INDEX_SPEI)
     {
-        if (!computeSpeiParameters())
+        if (! computeSpeiParameters())
         {
             return NODATA;
         }
     }
-    int start;
-    int end;
+
+    int start, end;
     std::vector<float> mySum(meteoPoint->nrObsDataDaysM);
-    for (int i = 0; i<meteoPoint->nrObsDataDaysM; i++)
+    for (int i = 0; i < meteoPoint->nrObsDataDaysM; i++)
     {
         droughtResults.push_back(NODATA);
     }
@@ -133,7 +136,7 @@ float Drought::computeDroughtIndex()
     for (int j = start; j <= end; j++)
     {
         mySum[j] = 0;
-        for(int i = 0; i<=timeScale; i++)
+        for(int i = 0; i <= timeScale; i++)
         {
             if ((j-i)>=0 && j < meteoPoint->nrObsDataDaysM)
             {
@@ -193,8 +196,10 @@ float Drought::computeDroughtIndex()
             }
         }
     }
+
     return droughtResults[end];
 }
+
 
 bool Drought::computeSpiParameters()
 {
@@ -224,6 +229,7 @@ bool Drought::computeSpiParameters()
     int nTot = 0;
     std::vector<float> mySums;
     std::vector<float> monthSeries;
+    float minPerc = meteoSettings->getMinimumPercentage();
 
     for (int j = indexStart; j<meteoPoint->nrObsDataDaysM; j++)
     {
@@ -249,7 +255,7 @@ bool Drought::computeSpiParameters()
                     break;
             }
         }
-        if ( (count / nTot) < (meteoSettings->getMinimumPercentage() / 100) )
+        if ( (float)count / nTot < (minPerc / 100) )
         {
             mySums[n] = NODATA;
         }
@@ -271,7 +277,7 @@ bool Drought::computeSpiParameters()
             }
         }
 
-        if (n / (mySums.size()/12) >= meteoSettings->getMinimumPercentage() / 100)
+        if ((float)n / (mySums.size()/12) >= minPerc / 100)
         {
             generalizedGammaFitting(monthSeries, n, &(currentGamma[myMonth-1].beta), &(currentGamma[myMonth-1].gamma),  &(currentGamma[myMonth-1].pzero));
         }
@@ -309,6 +315,7 @@ bool Drought::computeSpeiParameters()
     std::vector<float> mySums;
     std::vector<float> monthSeries;
     std::vector<float> pwm(3);
+    float minPerc = meteoSettings->getMinimumPercentage();
 
     for (int j = indexStart; j<meteoPoint->nrObsDataDaysM; j++)
     {
@@ -334,7 +341,7 @@ bool Drought::computeSpeiParameters()
                     break;
             }
         }
-        if ( (count / nTot) < (meteoSettings->getMinimumPercentage() / 100))
+        if ( (float)count / nTot < (minPerc / 100))
         {
             mySums[n] = NODATA;
         }
@@ -356,7 +363,7 @@ bool Drought::computeSpeiParameters()
             }
         }
 
-        if (n / (mySums.size()/12) >= meteoSettings->getMinimumPercentage() / 100)
+        if ((float)n / (mySums.size()/12) >= minPerc / 100)
         {
             // Sort values
             sorting::quicksortAscendingFloat(monthSeries, 0, monthSeries.size()-1);
@@ -389,6 +396,7 @@ bool Drought::computePercentileValuesCurrentDay()
     std::vector<float> myValues;
     int nValid = 0;
     int nTot = 0;
+    float minPerc = meteoSettings->getMinimumPercentage();
 
     for (int j = indexStart+myMonth-1; j < meteoPoint->nrObsDataDaysM ; j=j+12)
     {
@@ -411,7 +419,7 @@ bool Drought::computePercentileValuesCurrentDay()
     }
     if (nTot > 0)
     {
-        if (nValid/nTot >= meteoSettings->getMinimumPercentage() / 100)
+        if ((float)nValid/nTot >= minPerc / 100)
         {
             int index = (date.year - meteoPoint->obsDataM[0]._year)*12 + date.month -meteoPoint->obsDataM[0]._month; // starts from 0
             if (index < meteoPoint->nrObsDataDaysM)

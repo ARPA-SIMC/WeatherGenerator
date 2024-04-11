@@ -7,7 +7,7 @@
     #ifndef _STRING_
         #include <string>
     #endif
-
+#include <functional>
 enum estimatedFunction {FUNCTION_CODE_SPHERICAL, FUNCTION_CODE_LINEAR, FUNCTION_CODE_PARABOLIC,
                    FUNCTION_CODE_EXPONENTIAL, FUNCTION_CODE_LOGARITMIC,
                    FUNCTION_CODE_TWOPARAMETERSPOLYNOMIAL, FUNCTION_CODE_FOURIER_2_HARMONICS,
@@ -45,8 +45,12 @@ enum estimatedFunction {FUNCTION_CODE_SPHERICAL, FUNCTION_CODE_LINEAR, FUNCTION_
     double errorFunctionPrimitive(double x);
     float gaussianFunction(TfunctionInput fInput);
     float gaussianFunction(float x, float mean, float devStd);
-    float lapseRateSigmoidalFunction(float x, float par1, float par2, float par3, float par4, float par5);
-
+    double functionSum(std::vector<std::function<double (double, std::vector<double> &)> > &functions, std::vector<double>& x, std::vector <std::vector <double>>& par);
+    double functionLinear(double x, std::vector <double>& par);
+    double lapseRatePiecewise_three(double x, std::vector <double>& par);
+    double lapseRatePiecewise_two(double x, std::vector <double>& par);
+    double lapseRateFrei(double x, std::vector <double>& par);
+    double lapseRateRotatedSigmoid(double x, std::vector <double> par);
 
     namespace integration
     {
@@ -83,29 +87,43 @@ enum estimatedFunction {FUNCTION_CODE_SPHERICAL, FUNCTION_CODE_LINEAR, FUNCTION_
 
         double modifiedVanGenuchten(double psi, double *parameters, bool isRestricted);
         double cubicSpline(double x , double *firstColumn , double *secondColumn, int dim); // not working to be checked
-        void punctualSecondDerivative(int dim, double *firstColumn , double *secondColumn, double* secondDerivative); // not working to be checked
+        bool punctualSecondDerivative(int dim, double *firstColumn , double *secondColumn, double* secondDerivative); // not working to be checked
         void tridiagonalThomasAlgorithm (int n, double *subDiagonal, double *mainDiagonal, double *superDiagonal, double *constantTerm, double* output); // not working to be checked
 
-        double computeR2(const std::vector<double>& obs,const std::vector<double>& sim, int nrPoints);
-        int bestFittingMarquardt_nDimension(double (*func)(std::vector<double>&, std::vector<double>&), int nrTrials, int nrMinima,
-                                        std::vector<double>& parametersMin, std::vector<double>& parametersMax,
-                                        std::vector<double>& parameters, std::vector<double> &parametersDelta,
-                                        int maxIterationsNr, double myEpsilon,
-                                        std::vector <std::vector <double>>& x , std::vector<double>& y, int nrData, int xDim, bool isWeighted, std::vector<double>& weights);
+        double computeR2(const std::vector<double>& obs, const std::vector<double>& sim);
+        double computeWeighted_R2(const std::vector<double>& observed, const std::vector<double>& predicted, const std::vector<double>& weights);
+        double computeWeighted_StandardError(const std::vector<double>& observed, const std::vector<double>& predicted, const std::vector<double>& weights, int nrPredictors);
+        double weightedVariance(const std::vector<double>& data, const std::vector<double>& weights);
+        int bestFittingMarquardt_nDimension(double (*func)(std::vector<std::function<double (double, std::vector<double> &)> > &, std::vector<double> &, std::vector<std::vector<double>> &),
+                                        std::vector<std::function<double (double, std::vector<double> &)> >& myFunc,
+                                        int nrTrials, int nrMinima,
+                                        std::vector<std::vector<double> > &parametersMin, std::vector<std::vector<double> > &parametersMax,
+                                        std::vector<std::vector<double> > &parameters, std::vector<std::vector<double> > &parametersDelta,
+                                        int maxIterationsNr, double myEpsilon, double deltaR2,
+                                        std::vector <std::vector <double>>& x , std::vector<double>& y, std::vector<double>& weights);
 
-        bool fittingMarquardt_nDimension(double (*func)(std::vector<double>&, std::vector<double>&),
-                                         std::vector<double>& parametersMin, std::vector<double>& parametersMax,
-                                         std::vector<double>& parameters, std::vector<double>& parametersDelta,
-                                         int maxIterationsNr, double myEpsilon,
-                                         std::vector <std::vector <double>>& x, std::vector<double>& y, int nrData, int xDim,bool isWeighted, std::vector<double>& weights);
+        bool fittingMarquardt_nDimension(double (*func)(std::vector<std::function<double (double, std::vector<double> &)> > &, std::vector<double> &, std::vector <std::vector <double>>&),
+                                         std::vector<std::function<double (double, std::vector<double> &)> > &myFunc,
+                                         std::vector <std::vector <double>>& parametersMin, std::vector <std::vector <double>>& parametersMax,
+                                         std::vector <std::vector <double>>& parameters, std::vector <std::vector <double>>& parametersDelta,
+                                         std::vector <std::vector <int>>& correspondenceParametersTag, int maxIterationsNr, double myEpsilon,
+                                         std::vector <std::vector <double>>& x, std::vector<double>& y, std::vector<double>& weights);
 
-        double normGeneric_nDimension(double (*func)(std::vector<double>&, std::vector<double>&),
-                                      std::vector<double> &parameters, std::vector <std::vector <double>>& x, std::vector<double>& y, int nrData, int xDim);
+        double normGeneric_nDimension(double (*func)(std::vector<std::function<double (double, std::vector<double> &)>> &, std::vector<double> &, std::vector <std::vector <double>>&),
+                                      std::vector<std::function<double (double, std::vector<double> &)> > myFunc,
+                                      std::vector <std::vector <double>> &parameters, std::vector <std::vector <double>>& x, std::vector<double>& y, std::vector<double>& weights);
 
-        void leastSquares_nDimension(double (*func)(std::vector<double>&, std::vector<double>&),
-                                    std::vector<double>& parameters, std::vector<double>& parametersDelta,
-                                    std::vector <std::vector <double>>& x, std::vector<double>& y, int nrData,int xDim, std::vector<double>& lambda,
-                                    std::vector<double>& parametersChange,bool isWeighted, std::vector<double>& weights);
+        void leastSquares_nDimension(double (*func)(std::vector<std::function<double(double, std::vector<double>&)>>&, std::vector<double>& , std::vector <std::vector <double>>&),
+                                    std::vector<std::function<double (double, std::vector<double> &)> > myFunc,
+                                    std::vector <std::vector <double>>& parameters, std::vector <std::vector <double>>& parametersDelta,
+                                    std::vector <std::vector <int>>& correspondenceParametersTag,
+                                    std::vector <std::vector <double>>& x, std::vector<double>& y, std::vector <std::vector <double>>& lambda,
+                                    std::vector <std::vector <double>>& parametersChange, std::vector<double>& weights);
+        void leastSquares_nDimension_withoutNormalization(double (*func)(std::vector<std::function<double (double, std::vector<double> &)> > &, std::vector<double> &, std::vector <std::vector <double>>&),
+                                                          std::vector<std::function<double (double, std::vector<double> &)> > myFunc,
+                                                          std::vector <std::vector <double>>& parameters, std::vector <std::vector <double>>& parametersDelta, std::vector <std::vector <int>>& correspondenceParametersTag,
+                                                          std::vector <std::vector <double>>& x, std::vector<double>& y, std::vector <std::vector <double>>& lambda,
+                                                          std::vector <std::vector <double>>& parametersChange, std::vector<double>& weights);
     }
 
     namespace matricial
@@ -138,7 +156,7 @@ enum estimatedFunction {FUNCTION_CODE_SPHERICAL, FUNCTION_CODE_LINEAR, FUNCTION_
 
     namespace myrandom
     {
-        //float ran1(long *idum);
+        //float ran1(long *idum) ;
         //float gasdev(long *idum);
         double cauchyRandom(double gamma);
         float normalRandom(int *gasDevIset,float *gasDevGset);

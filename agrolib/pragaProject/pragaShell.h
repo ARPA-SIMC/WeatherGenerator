@@ -19,7 +19,9 @@
     int cmdHourlyDerivedVariablesGrid(PragaProject* myProject, QList<QString> argumentList);
     int cmdGridAggregationOnZones(PragaProject* myProject, QList<QString> argumentList);
     int cmdMonthlyIntegrationVariablesGrid(PragaProject* myProject, QList<QString> argumentList);
-    int cmdComputeClimaFromXMLSaveOnDB(PragaProject* myProject, QList<QString> argumentList);
+    int cmdExportDailyGridToRaster(PragaProject* myProject, QList<QString> argumentList);
+    int cmdComputeClimatePointsXML(PragaProject* myProject, QList<QString> argumentList);
+    int cmdCleanClimatePoint(PragaProject* myProject);
     int cmdDroughtIndexPoint(PragaProject* myProject, QList<QString> argumentList);
     int cmdSaveLogDataProceduresGrid(PragaProject* myProject, QList<QString> argumentList);
     //bool cmdLoadForecast(PragaProject* myProject, QList<QString> argumentList);

@@ -52,8 +52,10 @@
         bool isRangeBlocked() { return _isRangeBlocked; }
     };
 
-    bool setDefaultDEMScale(Crit3DColorScale* myScale);
+    bool setDefaultScale(Crit3DColorScale* myScale);
+    bool setDTMScale(Crit3DColorScale* myScale);
     bool setTemperatureScale(Crit3DColorScale* myScale);
+    bool setSlopeStabilityScale(Crit3DColorScale* myScale);
     bool setAnomalyScale(Crit3DColorScale* myScale);
     bool setPrecipitationScale(Crit3DColorScale* myScale);
     bool setRelativeHumidityScale(Crit3DColorScale* myScale);
@@ -66,6 +68,7 @@
     bool setGrayScale(Crit3DColorScale* myScale);
     bool setBlackScale(Crit3DColorScale* myScale);
     bool setSurfaceWaterScale(Crit3DColorScale* myScale);
+    bool setLAIScale(Crit3DColorScale* myScale);
 
 
 #endif // CRIT3DCOLOR_H
