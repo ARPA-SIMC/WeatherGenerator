@@ -177,11 +177,14 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         }
 
         // check xml file
-        testFile = new QFile(xmlFileName);
-        if (!testFile->exists())
+        if (! QDir(xmlFileName).exists())
         {
-            qDebug() << "ERROR: missing seasonal forecast:" << xmlFileName;
-            isOk = false;
+            xmlFileName = wgSettings.seasonalForecastPath + "/" + "GRD_" + fileName.left(fileName.length()-4) + ".xml";
+            if (! QDir(xmlFileName).exists())
+            {
+                qDebug() << "ERROR: missing seasonal forecast:" << xmlFileName;
+                isOk = false;
+            }
         }
 
         if (isOk)
