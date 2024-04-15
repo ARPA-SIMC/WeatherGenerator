@@ -9,7 +9,7 @@
 
     int numMonthsInPeriod(int m1, int m2);
 
-    bool getDoyFromSeason(QString season, int myPredictionYear, int* wgDoy1, int* wgDoy2);
+    bool getDoyFromSeason(QString season, int myPredictionYear, int &wgDoy1, int &wgDoy2);
 
     bool checkLastYearDate(Crit3DDate inputFirstDate, Crit3DDate inputLastDate, int dataLenght, int myPredictionYear, int* wgDoy1, int *nrDaysBefore);
 

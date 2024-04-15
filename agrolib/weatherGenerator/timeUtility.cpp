@@ -82,7 +82,7 @@ bool checkLastYearDate(Crit3DDate inputFirstDate, Crit3DDate inputLastDate, int 
 }
 
 
-bool getDoyFromSeason(QString season, int myPredictionYear, int* wgDoy1, int* wgDoy2)
+bool getDoyFromSeason(QString season, int myPredictionYear, int &wgDoy1, int &wgDoy2)
 {
     QString period[12] = {"JFM","FMA","MAM","AMJ","MJJ","JJA","JAS","ASO","SON","OND","NDJ","DJF"};
     int i = 0;
@@ -112,7 +112,7 @@ bool getDoyFromSeason(QString season, int myPredictionYear, int* wgDoy1, int* wg
     predictionFirstDate.month = month1;
     predictionFirstDate.day = 1;
 
-    *wgDoy1 = getDoyFromDate(predictionFirstDate);
+    wgDoy1 = getDoyFromDate(predictionFirstDate);
 
     // season between 2 years
     if (season.compare(period[10]) == 0 || season.compare(period[11]) == 0)
@@ -125,7 +125,7 @@ bool getDoyFromSeason(QString season, int myPredictionYear, int* wgDoy1, int* wg
     predictionLastDate.month = month2;
     predictionLastDate.day = getDaysInMonth(month2, myPredictionYear);
 
-    *wgDoy2 = getDoyFromDate(predictionLastDate);
+    wgDoy2 = getDoyFromDate(predictionLastDate);
 
     return true;
 }
