@@ -324,9 +324,9 @@ bool WG_Scenario(const WGSettings &wgSettings)
             }
         //}
 
-        //if (isOk)
-        //{
-            //qDebug() << "\nCompute seasonal:" << fileName;
+        if (isOk)
+        {
+            qDebug() << "\nCompute scenario:" << fileName;
 
             // read SEASONAL PREDICTIONS
             //if (! parseXMLSeasonal(xmlFileName, XMLAnomaly))
@@ -393,7 +393,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
 
             //clearInputData(climateDailyObsData);
             //clearInputData(lastYearDailyObsData);
-        //}
+        }
     }
 
 
