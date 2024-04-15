@@ -6,31 +6,27 @@
 #include "timeUtility.h"
 
 
-int getMonthsInPeriod(int month1, int month2)
+int numMonthsInPeriod(int m1, int m2)
 {
-    int monthsInPeriod = 0;
+    int numMonthsInPeriod = 0;
 
-    if (month2 >= month1)
-    {
+    if (m2 >= m1)
         // regular period
-        monthsInPeriod = (month2 - month1 + 1);
-    }
+        numMonthsInPeriod = (m2 - m1 + 1);
     else
-    {
-        // not regular period (between years)
-        monthsInPeriod = (12 - month1 + 1) + month2;
-    }
+        // irregular period (between years)
+        numMonthsInPeriod = (12 - m1 + 1) + m2;
 
-    return monthsInPeriod;
+    return numMonthsInPeriod;
 }
 
 
-// it checks if observed data includes the last 9 months before wgDoy_1
-// it updates wgDoy_1 and nr_DaysBefore if some days are missing (lower than NRDAYSTOLERANCE)
-bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &inputLastDate, int dataLenght,
-                       int myPredictionYear, int &wgDoy1, int &nrDaysBefore)
+// it checks if observed data includes the last 9 months before wgDoy1
+// it updates wgDoy1 and nrDaysBefore if some days are missing (lower than NRDAYSTOLERANCE)
+bool checkLastYearDate(Crit3DDate inputFirstDate, Crit3DDate inputLastDate, int dataLenght,
+                       int myPredictionYear, int* wgDoy1, int* nrDaysBefore)
 {
-    Crit3DDate predictionFirstDate = getDateFromDoy (myPredictionYear, wgDoy1);
+    Crit3DDate predictionFirstDate = getDateFromDoy (myPredictionYear, *wgDoy1);
 
     if (inputLastDate.addDays(NRDAYSTOLERANCE+1) <  predictionFirstDate)
     {
@@ -40,7 +36,7 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
 
     int predictionMonth = predictionFirstDate.month;
     int monthIndex = 0;
-    nrDaysBefore = 0;
+    *nrDaysBefore = 0;
     for (int i = 0; i < 9; i++)
     {
         monthIndex = (predictionMonth -1) -i;
@@ -49,15 +45,15 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
             monthIndex = monthIndex + 12 ;
             myPredictionYear = myPredictionYear - 1;
         }
-        nrDaysBefore += getDaysInMonth(monthIndex, myPredictionYear);
+        *nrDaysBefore += getDaysInMonth(monthIndex, myPredictionYear);
     }
 
     // shift wgDoy1 if there are missing data
     if (inputLastDate < predictionFirstDate)
     {
         int delta = difference(inputLastDate, predictionFirstDate) - 1;
-        wgDoy1 -= delta;
-        nrDaysBefore -= delta;
+        *wgDoy1 -= delta;
+        *nrDaysBefore -= delta;
     }
 
     // use or not the observed data in the forecast period
@@ -69,18 +65,14 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
             return false;
         }
         if (isLeapYear(predictionFirstDate.year))
-        {
-            wgDoy1 = (wgDoy1 + (difference(predictionFirstDate, inputLastDate)) + 1 ) % 366;
-        }
+            *wgDoy1 = (*wgDoy1 + (difference(predictionFirstDate, inputLastDate)) + 1 ) % 366;
         else
-        {
-            wgDoy1 = (wgDoy1 + (difference(predictionFirstDate, inputLastDate)) + 1 ) % 365;
-        }
+            *wgDoy1 = (*wgDoy1 + (difference(predictionFirstDate, inputLastDate)) + 1 ) % 365;
 
-        nrDaysBefore += (difference(predictionFirstDate, inputLastDate)) + 1 ;
+        *nrDaysBefore += (difference(predictionFirstDate, inputLastDate)) + 1 ;
     }
 
-    if ( difference(inputFirstDate, predictionFirstDate) < nrDaysBefore || dataLenght < (nrDaysBefore-NRDAYSTOLERANCE) )
+    if ( difference(inputFirstDate, predictionFirstDate) < *nrDaysBefore || dataLenght < (*nrDaysBefore-NRDAYSTOLERANCE) )
     {
         // observed data does not include 9 months before wgDoy1 or more than NRDAYSTOLERANCE days missing
         return false;
@@ -90,11 +82,12 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
 }
 
 
-bool getDoyFromSeason(const QString &season, int myPredictionYear, int &wgDoy1, int &wgDoy2)
+bool getDoyFromSeason(QString season, int myPredictionYear, int* wgDoy1, int* wgDoy2)
 {
     QString period[12] = {"JFM","FMA","MAM","AMJ","MJJ","JJA","JAS","ASO","SON","OND","NDJ","DJF"};
     int i = 0;
     int found = 0;
+    int month1, month2 = 0;
 
     for (i = 0; i < 12; i++)
     {
@@ -110,8 +103,8 @@ bool getDoyFromSeason(const QString &season, int myPredictionYear, int &wgDoy1, 
         return false;
     }
 
-    int month1 = i + 1;             // first month of my season
-    int month2 = (i + 3) % 12;      // last month of my season
+    month1 = i + 1;        // first month of my season
+    month2 = (i + 3) % 12; // last month of my season
     if (month2 == 0) month2 = 12;
 
     Crit3DDate predictionFirstDate;
@@ -119,7 +112,7 @@ bool getDoyFromSeason(const QString &season, int myPredictionYear, int &wgDoy1, 
     predictionFirstDate.month = month1;
     predictionFirstDate.day = 1;
 
-    wgDoy1 = getDoyFromDate(predictionFirstDate);
+    *wgDoy1 = getDoyFromDate(predictionFirstDate);
 
     // season between 2 years
     if (season.compare(period[10]) == 0 || season.compare(period[11]) == 0)
@@ -132,13 +125,13 @@ bool getDoyFromSeason(const QString &season, int myPredictionYear, int &wgDoy1, 
     predictionLastDate.month = month2;
     predictionLastDate.day = getDaysInMonth(month2, myPredictionYear);
 
-    wgDoy2 = getDoyFromDate(predictionLastDate);
+    *wgDoy2 = getDoyFromDate(predictionLastDate);
 
     return true;
 }
 
 
-void setCorrectWgDoy(int wgDoy1, int wgDoy2, int predictionYear, int myYear, int &fixedWgDoy1, int &fixedWgDoy2)
+void fixWgDoy(int wgDoy1, int wgDoy2, int predictionYear, int myYear, int* fixwgDoy1, int* fixwgDoy2)
 {
     // check if wgDoy1 and wgDoy2 have been computed starting from a leap year and adjust them for standard years
     if (wgDoy1 < wgDoy2)
@@ -147,24 +140,24 @@ void setCorrectWgDoy(int wgDoy1, int wgDoy2, int predictionYear, int myYear, int
         {
             // if wgDoy1 or wgDoy2 > 29th Feb.
             if (wgDoy1 >= 60)
-                fixedWgDoy1 = wgDoy1-1;
+                *fixwgDoy1 = wgDoy1-1;
 
             if (wgDoy1 >= 60)
-                fixedWgDoy2 = wgDoy2-1;
+                *fixwgDoy2 = wgDoy2-1;
         }
         else if ( !isLeapYear(predictionYear) && isLeapYear(myYear))
         {
             // if wgDoy1 or wgDoy2 > 29th Feb.
             if (wgDoy1 >= 60)
-                fixedWgDoy1 = wgDoy1+1;
+                *fixwgDoy1 = wgDoy1+1;
 
             if (wgDoy1 >= 60)
-                fixedWgDoy2 = wgDoy2+1;
+                *fixwgDoy2 = wgDoy2+1;
         }
         else
         {
-            fixedWgDoy1 = wgDoy1;
-            fixedWgDoy2 = wgDoy2;
+            *fixwgDoy1 = wgDoy1;
+            *fixwgDoy2 = wgDoy2;
         }
     }
     else
@@ -173,19 +166,19 @@ void setCorrectWgDoy(int wgDoy1, int wgDoy2, int predictionYear, int myYear, int
         {
             // if wgDoy1 > 29th Feb.
             if (wgDoy1 >= 60)
-                fixedWgDoy1 = wgDoy1-1;
+                *fixwgDoy1 = wgDoy1-1;
         }
 
         else if (isLeapYear(predictionYear+1) && !isLeapYear(myYear))
         {
             // if wgDoy2 > 29th Feb.
             if (wgDoy1 >= 60)
-                fixedWgDoy2 = wgDoy2-1;
+                *fixwgDoy2 = wgDoy2-1;
         }
         else
         {
-            fixedWgDoy1 = wgDoy1;
-            fixedWgDoy2 = wgDoy2;
+            *fixwgDoy1 = wgDoy1;
+            *fixwgDoy2 = wgDoy2;
         }
     }
 }
