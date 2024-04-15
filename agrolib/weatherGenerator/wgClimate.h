@@ -8,8 +8,8 @@
 
     #include <vector>
 
-    bool climateGenerator(int nrDays, TinputObsData climateDailyObsData, Crit3DDate climateDateIni,
-                          Crit3DDate climateDateFin, float precThreshold, float minPrecData, TweatherGenClimate* wGen);
+    bool climateGenerator(int nrDays, const TinputObsData &climateDailyObsData, const Crit3DDate &climateDateIni,
+                          const Crit3DDate &climateDateFin, float precThreshold, float minPrecData, TweatherGenClimate* wGen);
 
     float sampleStdDeviation(float values[], int nElement);
 

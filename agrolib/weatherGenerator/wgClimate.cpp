@@ -558,10 +558,12 @@ bool computeWG2DClimate(int nrDays, Crit3DDate inputFirstDate, float *inputTMin,
     return true;
 }
 
+
 /*!
   * \brief Generates a climate starting from daily weather
   */
-bool climateGenerator(int nrData, TinputObsData climateDailyObsData, Crit3DDate climateDateIni, Crit3DDate climateDateFin, float precThreshold, float minPrecData, TweatherGenClimate* wGen)
+bool climateGenerator(int nrData, const TinputObsData &climateDailyObsData, const Crit3DDate &climateDateIni,
+                      const Crit3DDate &climateDateFin, float precThreshold, float minPrecData, TweatherGenClimate* wGen)
 
 {
     unsigned int nrDays;
