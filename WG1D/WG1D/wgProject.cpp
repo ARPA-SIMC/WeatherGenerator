@@ -328,6 +328,8 @@ bool WG_Scenario(const WGSettings &wgSettings)
         {
             qDebug() << "\nCompute scenario:" << fileName;
 
+
+
             // read SEASONAL PREDICTIONS
             //if (! parseXMLSeasonal(xmlFileName, XMLAnomaly))
                 //return false;
