@@ -28,8 +28,8 @@
 
 // uncomment TEST_WG_CLIMATE or TEST_WG_SEASONAL or TEST_WG_SCENARIO to execute test
 //#define TEST_WG_CLIMATE 1
-#define TEST_WG_SEASONAL 2
-//#define TEST_WG_SCENARIO 3
+//#define TEST_WG_SEASONAL 2
+// #define TEST_WG_SCENARIO 3
 
 void usage()
 {

@@ -266,8 +266,8 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 
 bool WG_Scenario(const WGSettings &wgSettings)
 {
-    // TODO Antonio
-    XMLSeasonalAnomaly XMLAnomaly;
+
+    XMLScenarioAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
     //TinputObsData lastYearDailyObsData;
     TweatherGenClimate wGenClimate;
@@ -330,9 +330,9 @@ bool WG_Scenario(const WGSettings &wgSettings)
 
 
 
-            // read SEASONAL PREDICTIONS
-            //if (! parseXMLSeasonal(xmlFileName, XMLAnomaly))
-                //return false;
+            // read SCENARIO
+            if (! parseXMLScenario(xmlFileName, XMLAnomaly))
+                return false;
 
             // compute first and last day of the year of the season period
             //season = XMLAnomaly.anomalySeason.toUpper();
