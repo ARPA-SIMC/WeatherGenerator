@@ -362,28 +362,28 @@ bool WG_Scenario(const WGSettings &wgSettings)
             climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
 
             int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
-            //int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
-
-            //if ((float(obsClimateDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
-            //{
-                //qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
-                //qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
-                //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
-            //}
-            //else
-            //{
+            int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
+            float ratioData = float(obsClimateDays) / float(requestedClimateDays);
+            if ((float(obsClimateDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
+            {
+                qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
+                qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
+                qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+            }
+            else
+            {
                 // weather generator - computes climate without anomaly
-                //if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
-                //{
-                    //qDebug() << "Error in climateGenerator";
-                    //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
-                //}
-                //else
-                //{
-                    //qDebug() << "Climate OK";
+                if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+                {
+                    qDebug() << "Error in climateGenerator";
+                    qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+                }
+                else
+                {
+                    qDebug() << "Climate OK";
 
                     /* initialize random seed: */
-                    //srand (time(nullptr));
+                    srand (time(nullptr));
 
                     // SEASONAL FORECAST
                     //if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
@@ -392,8 +392,8 @@ bool WG_Scenario(const WGSettings &wgSettings)
                     //{
                         //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
                     //}
-                //}
-            //}
+                }
+            }
 
             clearInputData(climateDailyObsData);
             //clearInputData(lastYearDailyObsData);
