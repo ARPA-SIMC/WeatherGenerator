@@ -219,7 +219,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
             climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
 
-            Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLenght-1);
+            Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
             climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
 
             int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
@@ -234,7 +234,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             else
             {
                 // weather generator - computes climate without anomaly
-                if (! climateGenerator(climateDailyObsData.dataLenght, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+                if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
                 {
                     qDebug() << "Error in climateGenerator";
                     qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -272,9 +272,9 @@ bool WG_Scenario(const WGSettings &wgSettings)
     //TinputObsData lastYearDailyObsData;
     TweatherGenClimate wGenClimate;
 
-    QString season;
-    int wgDoy1 = NODATA;
-    int wgDoy2 = NODATA;
+    QString season[4]={"DJF","MAM","JJA","SON"};
+    int wgDoy1[4] = {NODATA,NODATA,NODATA,NODATA};
+    int wgDoy2[4] = {NODATA,NODATA,NODATA,NODATA};
     Crit3DDate climateDateIni, climateDateFin;
 
     // iterate input files on climate (climateName.csv = observedName.csv = forecastName.xml)
@@ -336,30 +336,32 @@ bool WG_Scenario(const WGSettings &wgSettings)
 
             // compute first and last day of the year of the season period
             //season = XMLAnomaly.anomalySeason.toUpper();
-            //getDoyFromSeason(season, XMLAnomaly.anomalyYear, wgDoy1, wgDoy2);
-
+            for (int iSeason=0;iSeason<4;iSeason++)
+            {
+                getDoyFromSeason(season[iSeason], XMLAnomaly.anomalyYear, wgDoy1[iSeason], wgDoy2[iSeason]);
+            }
             // set climate dates
-            //climateDateIni = Crit3DDate(1,1,XMLAnomaly.climatePeriod.yearFrom);
-            //climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
+            climateDateIni = Crit3DDate(1,1,XMLAnomaly.climatePeriod.yearFrom);
+            climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
 
-            //XMLAnomaly.printInfo();
+            XMLAnomaly.printInfo();
 
             // read CLIMATE data
-            //if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
-                //return false;
+            if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
+                return false;
 
             // read OBSERVED data (at least last 9 months)
             //if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, lastYearDailyObsData) )
                 //return false;
 
             //check climate dates
-            //Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
-            //climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
+            Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
+            climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
 
-            //Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLenght-1);
-            //climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
+            Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+            climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
 
-            //int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
+            int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
             //int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
 
             //if ((float(obsClimateDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
@@ -371,7 +373,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
             //else
             //{
                 // weather generator - computes climate without anomaly
-                //if (! climateGenerator(climateDailyObsData.dataLenght, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+                //if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
                 //{
                     //qDebug() << "Error in climateGenerator";
                     //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -393,7 +395,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 //}
             //}
 
-            //clearInputData(climateDailyObsData);
+            clearInputData(climateDailyObsData);
             //clearInputData(lastYearDailyObsData);
         }
     }
@@ -432,10 +434,10 @@ bool WG_Climate(const WGSettings &wgSettings)
 
         // check climate dates
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
-        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLenght-1);
+        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
 
         // weather generator - computes climate
-        if (! climateGenerator(climateDailyObsData.dataLenght, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
         {
             qDebug() << "Error in climateGenerator";
             qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
