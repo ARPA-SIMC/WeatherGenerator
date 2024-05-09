@@ -266,7 +266,6 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 
 bool WG_Scenario(const WGSettings &wgSettings)
 {
-
     XMLScenarioAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
     //TinputObsData lastYearDailyObsData;
@@ -278,7 +277,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
     Crit3DDate climateDateIni, climateDateFin;
 
     // iterate input files on climate (climateName.csv = observedName.csv = forecastName.xml)
-    QString fileName, climateFileName, observedFileName, xmlFileName, outputFileName;
+    QString fileName, climateFileName, xmlFileName, outputFileName;
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
@@ -328,8 +327,6 @@ bool WG_Scenario(const WGSettings &wgSettings)
         {
             qDebug() << "\nCompute scenario:" << fileName;
 
-
-
             // read SCENARIO
             if (! parseXMLScenario(xmlFileName, XMLAnomaly))
                 return false;
@@ -364,7 +361,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
             int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
             int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
             float ratioData = float(obsClimateDays) / float(requestedClimateDays);
-            if ((float(obsClimateDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
+            if (ratioData < wgSettings.minDataPercentage)
             {
                 qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
                 qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
@@ -399,9 +396,6 @@ bool WG_Scenario(const WGSettings &wgSettings)
             //clearInputData(lastYearDailyObsData);
         }
     }
-
-
-
 
 
     return true;
@@ -464,5 +458,6 @@ bool WG_Climate(const WGSettings &wgSettings)
 
         clearInputData(climateDailyObsData);
     }
+
     return true;
 }

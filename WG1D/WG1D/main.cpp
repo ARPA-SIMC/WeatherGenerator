@@ -1,7 +1,7 @@
 /*!
     \name WG1D
-    \brief it generates daily time series of Tmin, Tmax, Prec (csv files)
-    Modality: CLIMATE or SEASONAL_FORECAST
+    \brief it generates synthetic daily time series of Tmin, Tmax, Prec (csv files)
+    Modality: CLIMATEm SEASONAL_FORECAST, SCENARIO
 
     CLIMATE test: uncomment #define TEST_WG_CLIMATE
     It generates one year of synthetic data for two points
@@ -18,7 +18,11 @@
     -   observed data in data/input/observed
     -   seasonal forecast (xml files) in data/input/seasonalForecast_2016_JJA
     -   wg settings in data/testWG_seasonal.ini
+
+    SCENARIO test: uncomment #define TEST_WG_SCENARIO
+    ...
 */
+
 
 #include "wgProject.h"
 #include "utilities.h"
@@ -29,7 +33,7 @@
 // uncomment TEST_WG_CLIMATE or TEST_WG_SEASONAL or TEST_WG_SCENARIO to execute test
 //#define TEST_WG_CLIMATE 1
 //#define TEST_WG_SEASONAL 2
-#define TEST_WG_SCENARIO 3
+//#define TEST_WG_SCENARIO 3
 
 void usage()
 {
