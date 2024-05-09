@@ -1,25 +1,26 @@
 /*!
     \name WG1D
     \brief it generates synthetic daily time series of Tmin, Tmax, Prec (csv files)
-    Modality: CLIMATEm SEASONAL_FORECAST, SCENARIO
+    Modality: CLIMATE, SEASONAL_FORECAST, SCENARIO
 
     CLIMATE test: uncomment #define TEST_WG_CLIMATE
     It generates one year of synthetic data for two points
-    -   climate data in data/input/climate
-    -   wg settings in data/testWG_climate.ini
+    -   wg settings in DATA\TEST\testWG_climate.ini
+    -   climate data in DATA\TEST\input\climate
 
     SEASONAL_FORECAST test: uncomment #define TEST_WG_SEASONAL
-    It generates seasonal forecast (JJA 2016) for two points
-    output is a time series of synthetic data for the JJA season
-    and observed data of the previous 9 months
-    synthetic data are computed by wg climate + forecast anomalies
-    the number of output data years depending on nr. of model members in xml files
-    -   climate data in data/input/climate
-    -   observed data in data/input/observed
-    -   seasonal forecast (xml files) in data/input/seasonalForecast_2016_JJA
-    -   wg settings in data/testWG_seasonal.ini
+    It generates seasonal forecasts (JJA 2016) for two test points.
+    The output is a time series consisting of synthetic data for the requested season
+    and observed data in the other months (using data from the previous 9 months).
+    The synthetic data are generated from climate (computed by wg) + predicted seasonal anomalies
+    The number of years of data output depends on the number of model members in the xml files.
+    -   wg settings in DATA\TEST\testWG_seasonal.ini
+    -   climate data in DATA\TEST\input\climate
+    -   observed data in DATA\TEST\input\observed
+    -   predicted seasonal anomalies (xml files) in DATA\TEST\input\seasonalForecast_2016_JJA
 
     SCENARIO test: uncomment #define TEST_WG_SCENARIO
+    It generates years of synthetic data referring to a test scenario for two points.
     ...
 */
 
@@ -38,7 +39,7 @@
 void usage()
 {
     std::cout << std::endl << "USAGE:" << std::endl;
-    std::cout << " WG1D.exe [settingsFile.ini]" << std::endl;
+    std::cout << "WG1D.exe [settingsFile.ini]" << std::endl;
     std::cout << std::flush;
 }
 
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "\n*** 1D Weather Generator ***\n";
+    std::cout << "*** 1D Weather Generator ***\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
