@@ -300,13 +300,17 @@ bool WG_Scenario(const WGSettings &wgSettings)
             continue;
         }
 
-        qDebug() << "\nCompute scenario:" << fileName;
+        qDebug() << "\n*** Compute scenario:" << fileName;
 
         // read SCENARIO
         if (! parseXMLScenario(xmlFileName, XMLAnomaly))
         {
             qDebug() << "ERROR:\nWrong scenario:" << xmlFileName;
             continue;
+        }
+        else
+        {
+            qDebug() << "Scenario XML OK";
         }
 
         // compute first and last day of the year of the season period
