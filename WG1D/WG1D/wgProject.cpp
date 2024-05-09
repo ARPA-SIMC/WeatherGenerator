@@ -3,6 +3,7 @@
 #include "fileUtility.h"
 #include "timeUtility.h"
 #include "wgClimate.h"
+#include "weatherGenerator.h"
 
 #include <time.h>
 #include <QFile>
@@ -268,60 +269,37 @@ bool WG_Scenario(const WGSettings &wgSettings)
 {
     XMLScenarioAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
-    //TinputObsData lastYearDailyObsData;
     TweatherGenClimate wGenClimate;
 
-    QString season[4]={"DJF","MAM","JJA","SON"};
-    int wgDoy1[4] = {NODATA,NODATA,NODATA,NODATA};
-    int wgDoy2[4] = {NODATA,NODATA,NODATA,NODATA};
-    Crit3DDate climateDateIni, climateDateFin;
+    QString season[4]={"DJF", "MAM", "JJA", "SON"};
+    int wgDoy1[4] = {NODATA, NODATA, NODATA, NODATA};
+    int wgDoy2[4] = {NODATA, NODATA, NODATA, NODATA};
 
-    // iterate input files on climate (climateName.csv = observedName.csv = forecastName.xml)
-    QString fileName, climateFileName, xmlFileName, outputFileName;
+    // iterate input files on climate (climateName.csv = xmlFileName.xml)
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
-    QFileInfoList fileList = climateDirectory.entryInfoList (filters);
+    QFileInfoList fileList = climateDirectory.entryInfoList(filters);
 
-    // check
+    // check file presence
     if (fileList.size() == 0)
     {
         qDebug() << "Missing climate files in path: " + wgSettings.climatePath;
         return false;
     }
 
-    bool isOk;
-    QFile *testFile;
-    // testato
-
     for (int i = 0; i < fileList.size(); ++i)
     {
-        fileName = fileList.at(i).fileName();
-        climateFileName = wgSettings.climatePath + "/" + fileName;
-        //observedFileName = wgSettings.observedPath + "/" + fileName;
-        xmlFileName = wgSettings.scenarioPath + "/" + fileName.left(fileName.length()-4) + ".xml";
-        outputFileName = wgSettings.outputPath + "/" + fileName;
+        QString fileName = fileList.at(i).fileName();
+        QString climateFileName = wgSettings.climatePath + "/" + fileName;
+        QString xmlFileName = wgSettings.scenarioPath + "/" + fileName.left(fileName.length()-4) + ".xml";
 
-        //check observed data
-        isOk = true;
-        //testFile = new QFile(observedFileName);
-        //if (! testFile->exists())
-        //{
-            //qDebug() << "ERROR: missing observed data:" << fileName;
-            //isOk = false;
-        //}
-
-        // check xml file
-        //testFile = new QFile(xmlFileName);
-        //if (! testFile->exists())
-        //{
-            xmlFileName = wgSettings.scenarioPath + "/" + fileName.left(fileName.length()-4) + ".xml";
-            testFile = new QFile(xmlFileName);
-            if (! testFile->exists())
-            {
-                qDebug() << "ERROR: missing scenario:" << xmlFileName;
-                isOk = false;
-            }
-        //}
+        bool isOk = true;
+        QFile *testFile = new QFile(xmlFileName);
+        if (! testFile->exists())
+        {
+            qDebug() << "ERROR: missing scenario:" << xmlFileName;
+            isOk = false;
+        }
 
         if (isOk)
         {
@@ -332,14 +310,13 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 return false;
 
             // compute first and last day of the year of the season period
-            //season = XMLAnomaly.anomalySeason.toUpper();
-            for (int iSeason=0;iSeason<4;iSeason++)
+            for (int iSeason=0; iSeason<4; iSeason++)
             {
                 getDoyFromSeason(season[iSeason], XMLAnomaly.anomalyYear, wgDoy1[iSeason], wgDoy2[iSeason]);
             }
             // set climate dates
-            climateDateIni = Crit3DDate(1,1,XMLAnomaly.climatePeriod.yearFrom);
-            climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
+            Crit3DDate climateDateIni = Crit3DDate(1, 1, XMLAnomaly.climatePeriod.yearFrom);
+            Crit3DDate climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
 
             XMLAnomaly.printInfo();
 
@@ -347,11 +324,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
             if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
                 return false;
 
-            // read OBSERVED data (at least last 9 months)
-            //if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, lastYearDailyObsData) )
-                //return false;
-
-            //check climate dates
+            // check climate dates
             Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
             climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
 
@@ -361,6 +334,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
             int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
             int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
             float ratioData = float(obsClimateDays) / float(requestedClimateDays);
+
             if (ratioData < wgSettings.minDataPercentage)
             {
                 qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
@@ -379,24 +353,24 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 {
                     qDebug() << "Climate OK";
 
-                    /* initialize random seed: */
+                    // initialize random seed
                     srand (time(nullptr));
 
                     // SEASONAL FORECAST
-                    //if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
+                    /*
+                    QString outputFileName = wgSettings.outputPath + "/" + fileName;
+                    if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
                                               //wGenClimate, &lastYearDailyObsData, XMLAnomaly.repetitions,
                                               //XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
-                    //{
+                    {
                         //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
-                    //}
+                    }*/
                 }
             }
 
             clearInputData(climateDailyObsData);
-            //clearInputData(lastYearDailyObsData);
         }
     }
-
 
     return true;
 }
@@ -423,7 +397,7 @@ bool WG_Climate(const WGSettings &wgSettings)
         qDebug() << "\n...Compute climate:" << fileName;
 
         // read CLIMATE data
-        if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
+        if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
             return false;
 
         // check climate dates
