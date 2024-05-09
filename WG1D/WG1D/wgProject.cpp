@@ -397,7 +397,7 @@ bool WG_Climate(const WGSettings &wgSettings)
         qDebug() << "\n...Compute climate:" << fileName;
 
         // read CLIMATE data
-        if ( !readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
+        if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
             return false;
 
         // check climate dates
