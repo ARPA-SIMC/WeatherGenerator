@@ -1,12 +1,5 @@
 <xml version="1.0" encoding="ISO-8859-1">
 
-	<file>
-		<type>PragaClimate</type>
-		<attribute>singlePoint</attribute>
-		<delimiter>,</delimiter>
-		<decimalSeparator>.</decimalSeparator>
-	</file>
-
 	<point>
 		<name>Istrana</name>
 		<code>3075</code>
@@ -25,7 +18,7 @@
 	<climate>
 		<type></type>
 		<from>1989</from>
-		<to>2000</to>
+		<to>2010</to>
 	</climate>
 	
 	<scenario>

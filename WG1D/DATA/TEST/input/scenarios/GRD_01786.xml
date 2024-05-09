@@ -1,12 +1,5 @@
 <xml version="1.0" encoding="ISO-8859-1">
 
-	<file>
-		<type>PragaClimate</type>
-		<attribute>singlePoint</attribute>
-		<delimiter>,</delimiter>
-		<decimalSeparator>.</decimalSeparator>
-	</file>
-
 	<point>
 		<name>Istrana</name>
 		<code>3075</code>
@@ -21,11 +14,10 @@
 		<value>SD_can_esm2,SD_cmcc,SD_cnrm,SD_inmcm4,SD_mpi,SD_norv,SD_EM</value>
 	</models>
 
-
 	<climate>
 		<type></type>
-		<from>1971</from>
-		<to>2000</to>
+		<from>1991</from>
+		<to>2010</to>
 	</climate>
 	
 	<scenario>
