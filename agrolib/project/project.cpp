@@ -14,6 +14,7 @@
 #include "dialogSelectionMeteoPoint.h"
 #include "dialogPointDeleteData.h"
 #include "formInfo.h"
+#include "importData.h"
 
 
 #include <iostream>
@@ -4547,6 +4548,21 @@ bool Project::findTempMinMax(meteoVariable myVar)
         myProxy = interpolationSettings.getProxy(i);
         if (getProxyPragaName(myProxy->getName()) == proxyHeight)
             myProxy->setMinMaxTemperature(min, max);
+    }
+    return true;
+}
+
+bool Project::waterTableImportLocation(QString csvFileName)
+{
+    errorString = ""; // reset errorString
+    if (!loadCsvRegistry(csvFileName, &wellPoints, &errorString))
+    {
+        logError(errorString);
+        return false;
+    }
+    if (!errorString.isEmpty())
+    {
+        logInfoGUI(errorString);
     }
     return true;
 }
