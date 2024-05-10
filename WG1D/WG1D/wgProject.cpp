@@ -293,83 +293,86 @@ bool WG_Scenario(const WGSettings &wgSettings)
         QString climateFileName = wgSettings.climatePath + "/" + fileName;
         QString xmlFileName = wgSettings.scenarioPath + "/" + fileName.left(fileName.length()-4) + ".xml";
 
-        bool isOk = true;
         QFile *testFile = new QFile(xmlFileName);
         if (! testFile->exists())
         {
-            qDebug() << "ERROR: missing scenario:" << xmlFileName;
-            isOk = false;
+            qDebug() << "ERROR:\nMissing scenario:" << xmlFileName;
+            continue;
         }
 
-        if (isOk)
+        qDebug() << "\n*** Compute scenario:" << fileName;
+
+        // read SCENARIO
+        if (! parseXMLScenario(xmlFileName, XMLAnomaly))
         {
-            qDebug() << "\nCompute scenario:" << fileName;
+            qDebug() << "ERROR:\nWrong scenario:" << xmlFileName;
+            continue;
+        }
+        else
+        {
+            qDebug() << "Scenario XML OK";
+        }
 
-            // read SCENARIO
-            if (! parseXMLScenario(xmlFileName, XMLAnomaly))
-                return false;
+        // compute first and last day of the year of the season period
+        for (int iSeason = 0; iSeason < 4; iSeason++)
+        {
+            getDoyFromSeason(season[iSeason], XMLAnomaly.anomalyYear, wgDoy1[iSeason], wgDoy2[iSeason]);
+        }
+        // set climate dates
+        Crit3DDate climateDateIni = Crit3DDate(1, 1, XMLAnomaly.climatePeriod.yearFrom);
+        Crit3DDate climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
 
-            // compute first and last day of the year of the season period
-            for (int iSeason=0; iSeason<4; iSeason++)
+        XMLAnomaly.printInfo();
+
+        // read CLIMATE data
+        if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
+            return false;
+
+        // check climate dates
+        Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
+        climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
+
+        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+        climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
+
+        int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
+        int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
+        float ratioData = float(obsClimateDays) / float(requestedClimateDays);
+
+        if (ratioData < wgSettings.minDataPercentage)
+        {
+            qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
+            qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
+            qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+        }
+        else
+        {
+            // weather generator - computes climate without anomaly
+            if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
             {
-                getDoyFromSeason(season[iSeason], XMLAnomaly.anomalyYear, wgDoy1[iSeason], wgDoy2[iSeason]);
-            }
-            // set climate dates
-            Crit3DDate climateDateIni = Crit3DDate(1, 1, XMLAnomaly.climatePeriod.yearFrom);
-            Crit3DDate climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
-
-            XMLAnomaly.printInfo();
-
-            // read CLIMATE data
-            if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
-                return false;
-
-            // check climate dates
-            Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
-            climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
-
-            Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
-            climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
-
-            int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
-            int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
-            float ratioData = float(obsClimateDays) / float(requestedClimateDays);
-
-            if (ratioData < wgSettings.minDataPercentage)
-            {
-                qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
-                qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
+                qDebug() << "Error in climateGenerator";
                 qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
             }
             else
             {
-                // weather generator - computes climate without anomaly
-                if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
-                {
-                    qDebug() << "Error in climateGenerator";
-                    qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
-                }
-                else
-                {
-                    qDebug() << "Climate OK";
+                qDebug() << "Climate OK";
 
-                    // initialize random seed
-                    srand (time(nullptr));
+                // initialize random seed
+                srand (time(nullptr));
 
-                    // SEASONAL FORECAST
-                    /*
-                    QString outputFileName = wgSettings.outputPath + "/" + fileName;
-                    if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
-                                              //wGenClimate, &lastYearDailyObsData, XMLAnomaly.repetitions,
-                                              //XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
-                    {
-                        //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
-                    }*/
-                }
+                // SEASONAL FORECAST
+                /*
+                QString outputFileName = wgSettings.outputPath + "/" + fileName;
+                if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
+                                          //wGenClimate, &lastYearDailyObsData, XMLAnomaly.repetitions,
+                                          //XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
+                {
+                    //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+                }*/
             }
-
-            clearInputData(climateDailyObsData);
         }
+
+        clearInputData(climateDailyObsData);
     }
 
     return true;
