@@ -113,7 +113,7 @@
         int nrMeteoPoints;
         Crit3DMeteoPoint* meteoPoints;
         std::vector<gis::Crit3DOutputPoint> outputPoints;
-        QList<Well> wellPoints;
+        std::vector<Well> wellPoints;
 
         Crit3DMeteoPointsDbHandler* meteoPointsDbHandler;
         Crit3DOutputPointsDbHandler* outputPointsDbHandler;
@@ -296,6 +296,7 @@
         bool getComputeOnlyPoints();
 
         bool waterTableImportLocation(QString csvFileName);
+        bool waterTableImportDepths(QString csvDepths);
 
     private slots:
         void deleteMeteoWidgetPoint(int id);

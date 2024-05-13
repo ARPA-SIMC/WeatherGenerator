@@ -19,11 +19,18 @@ public:
     double getUtmY() const;
     void setUtmY(double newUtmY);
 
+    void insertData(QDate myDate, int myValue);
+
+    QDate getFirstDate();
+    QDate getLastDate();
+
 private:
     QString id;
     double utmX;
     double utmY;
     QMap<QDate, int> depths;
+    QDate firstDate;
+    QDate lastDate;
 };
 
 #endif // WELL_H
