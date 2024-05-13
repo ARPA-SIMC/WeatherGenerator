@@ -360,12 +360,13 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 // initialize random seed
                 srand (time(nullptr));
 
-                // SEASONAL FORECAST
-                /*
+                // SCENARIO
+
                 QString outputFileName = wgSettings.outputPath + "/" + fileName;
+/*
                 if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
-                                          //wGenClimate, &lastYearDailyObsData, XMLAnomaly.repetitions,
-                                          //XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
+                                          wGenClimate, &lastYearDailyObsData, wgSettings.nrYears,
+                                          XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
                 {
                     //qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
                 }*/
