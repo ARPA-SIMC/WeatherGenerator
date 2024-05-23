@@ -1007,6 +1007,14 @@ Crit3DDate Crit3DMeteoPoint::getLastDailyData()
     return obsDataD[nrObsDataDaysD-1].date;
 }
 
+Crit3DDate Crit3DMeteoPoint::getFirstDailyData()
+{
+    if (obsDataD.size() == 0)
+        return NO_DATE;
+
+    return obsDataD[0].date;
+}
+
 
 float Crit3DMeteoPoint::getMeteoPointValueD(const Crit3DDate &myDate, meteoVariable myVar, Crit3DMeteoSettings* meteoSettings)
 {
@@ -1353,6 +1361,25 @@ bool Crit3DMeteoPoint::getDailyDataCsv_TPrec(std::string &outStr)
     }
 
     return true;
+}
+
+float Crit3DMeteoPoint::getPercValueVariable(Crit3DDate firstDate, Crit3DDate lastDate, meteoVariable dailyMeteoVar)
+{
+    Crit3DQuality qualityCheck;
+    int nrValidValues = 0;
+    int nrTotValues = 0;
+    for (Crit3DDate myDate = firstDate; myDate<=lastDate; myDate=myDate.addDays(1))
+    {
+        nrTotValues = nrTotValues + 1;
+        float value = getMeteoPointValueD(myDate, dailyMeteoVar);
+        quality::qualityType qualityT = qualityCheck.syntacticQualitySingleValue(dailyMeteoVar, value);
+        if (qualityT == quality::accepted)
+        {
+            nrValidValues = nrValidValues + 1;
+        }
+    }
+    float percValue = float(nrValidValues) / float(nrTotValues);
+    return percValue;
 }
 
 // ---- end class

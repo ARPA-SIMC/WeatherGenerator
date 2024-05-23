@@ -148,6 +148,7 @@
             void initializeObsDataM(unsigned int numberOfMonths, unsigned int month, int year);
 
             bool existDailyData(const Crit3DDate& myDate);
+            Crit3DDate getFirstDailyData();
             Crit3DDate getLastDailyData();
 
             float getMeteoPointValueH(const Crit3DDate& myDate, int myHour, int myMinutes, meteoVariable myVar);
@@ -175,6 +176,7 @@
             TObsDataH *getObsDataH() const;
             void initializeObsDataDFromMp(unsigned int numberOfDays, const Crit3DDate& firstDate, Crit3DMeteoPoint mp);
             void initializeObsDataHFromMp(int myHourlyFraction, int numberOfDays, const Crit3DDate& firstDate, Crit3DMeteoPoint mp);
+            float getPercValueVariable(Crit3DDate firstDate, Crit3DDate lastDate, meteoVariable dailyMeteoVar);
 
             bool getDailyDataCsv_TPrec(std::string &outStr);
 
