@@ -19,14 +19,17 @@ WGSettings::WGSettings()
     this->seasonalForecastPath = "";
     this->scenarioPath = "";
     this->outputPath = "";
+    this->waterTablePath = "";
 
     this->isSeasonalForecast = false;
     this->isScenario = false;
+    this->isWaterTable = false;
 
     this->valuesSeparator = ',';
 
     this->minDataPercentage = 0.8f;
     this->rainfallThreshold = 0.2f;
+    this->waterTableMaximumDepth = NODATA;
 
     this->firstYear = 2001;
     this->nrYears = 1;
@@ -97,6 +100,19 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
         }
     }
 
+    // waterTable
+    wgSettings.isWaterTable = false;
+    myValue = mySettings->value("waterTablePath");
+    if (myValue.isValid())
+    {
+        wgSettings.isWaterTable = true;
+        wgSettings.waterTablePath = myValue.toString();
+        if (wgSettings.waterTablePath.left(1) == ".")
+        {
+            wgSettings.waterTablePath = pathSettingsFile + wgSettings.waterTablePath;
+        }
+    }
+
     wgSettings.outputPath = mySettings->value("output").toString();
     if (wgSettings.outputPath.left(1) == ".")
     {
@@ -125,6 +141,7 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
 
     wgSettings.minDataPercentage = mySettings->value("minDataPercentage").toFloat();
     wgSettings.rainfallThreshold = mySettings->value("rainfallThreshold").toFloat();
+    wgSettings.waterTableMaximumDepth = mySettings->value("waterTableMaximumDepth").toInt();
 
     wgSettings.firstYear = mySettings->value("firstYear").toInt();
     wgSettings.nrYears = mySettings->value("nrYears").toInt();
@@ -384,7 +401,7 @@ bool WG_Climate(const WGSettings &wgSettings)
     TweatherGenClimate wGenClimate;
 
     // iterate input files on climate
-    QString fileName, climateFileName, outputFileName;
+    QString fileName, climateFileName, outputFileName, waterTableFileName;
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
@@ -401,6 +418,7 @@ bool WG_Climate(const WGSettings &wgSettings)
         fileName = fileList.at(i).fileName();
         climateFileName = wgSettings.climatePath + "/" + fileName;
         outputFileName = wgSettings.outputPath + "/" + fileName;
+        waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
 
         qDebug() << "\n...Compute climate:" << fileName;
 

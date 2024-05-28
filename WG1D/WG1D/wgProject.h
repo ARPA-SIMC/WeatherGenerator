@@ -5,6 +5,10 @@
         #include "weatherGenerator.h"
     #endif
 
+    #ifndef WELL_H
+        #include "well.h"
+    #endif
+
     class WGSettings
     {
     public:
@@ -13,16 +17,20 @@
         QString seasonalForecastPath;
         QString scenarioPath;
         QString outputPath;
+        QString waterTablePath;
 
         bool isSeasonalForecast;
         bool isScenario;
+        bool isWaterTable;
         char valuesSeparator;
         float minDataPercentage;
         float rainfallThreshold;
 
         int firstYear;
         int nrYears;
+        int waterTableMaximumDepth;
 
+        std::vector<Well> wellPoints;
         WGSettings();
     };
 
