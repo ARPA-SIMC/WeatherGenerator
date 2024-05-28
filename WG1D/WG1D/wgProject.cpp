@@ -392,6 +392,12 @@ bool WG_Climate(const WGSettings &wgSettings)
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
     std::vector<ToutputDailyMeteo> outputDailyData;
 
+    if (fileList.isEmpty())
+    {
+        qDebug() << "Missing data in climate directory.";
+        return false;
+    }
+
     for (int i = 0; i < fileList.size(); ++i)
     {
         fileName = fileList.at(i).fileName();
