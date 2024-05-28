@@ -35,10 +35,7 @@
 //#define TEST_WG_CLIMATE 1
 //#define TEST_WG_SEASONAL 2
 //#define TEST_WG_SCENARIO 3
-<<<<<<< HEAD
 //#define TEST_WG_WATERTABLE 4
-=======
->>>>>>> 90071d34f79fae0920bae9e9d38d06fb5554cd53
 
 void usage()
 {
