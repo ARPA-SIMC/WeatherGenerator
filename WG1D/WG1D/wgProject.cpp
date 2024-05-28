@@ -363,13 +363,11 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 // SCENARIO
 
                 QString outputFileName = wgSettings.outputPath + "/" + fileName;
-/*
-                if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
-                                          wGenClimate, XMLAnomaly.repetitions,
-                                          XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
+
+                if (! makeScenario(outputFileName,wgSettings.valuesSeparator,&XMLAnomaly,wGenClimate,wgSettings.nrYears,2021,wgDoy1,wgDoy2,wgSettings.rainfallThreshold))
                 {
                     qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
-                }*/
+                }
             }
         }
 
