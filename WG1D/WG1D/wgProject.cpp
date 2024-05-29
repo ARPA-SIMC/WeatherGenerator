@@ -441,12 +441,19 @@ bool WG_Climate(WGSettings &wgSettings)
             if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
             {
                 qDebug() << "\n***** ERROR! *****" << errorString << "Import Csv depths FAILED\n";
-                wgSettings.isWaterTable = false;
+                continue;
             }
 
             if (wrongLines>0)
             {
                 qDebug() << "\n***** WARNING! *****" << fileName << ": " << QString::number(wrongLines) << " lines of data were not loaded\n";
+            }
+
+            int minValuePerMonth = myWell.minValuesPerMonth();
+            if (minValuePerMonth < 1)
+            {
+                qDebug() << "\n***** ERROR! *****" << fileName << "There are less than 1 value per month\n";
+                continue;
             }
         }
 
