@@ -476,8 +476,15 @@ bool WG_Climate(WGSettings &wgSettings)
             }
 
             int maxNrDays = 730;  // attualmente fisso
-            //WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, *meteoSettings, gisSettings);
-            //waterTable.computeWaterTable(myWell, maxNrDays);
+            Crit3DMeteoSettings meteoSettings;
+            meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
+            meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
+            // meteoSettings.setTransSamaniCoefficient(); // TO DO
+            gis::Crit3DGisSettings gisSettings;
+            gisSettings.utmZone = zoneNumber;
+            //gisSettings.startLocation = ; // TO DO
+            WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
+            waterTable.computeWaterTable(myWell, maxNrDays);
         }
 
         // weather generator - computes climate
