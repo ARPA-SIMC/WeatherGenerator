@@ -286,7 +286,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
 {
     XMLScenarioAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
-    TweatherGenClimate wGenClimate;
+    TweatherGenClimate wGenClimate,wGen;
 
     QString season[4]={"DJF", "MAM", "JJA", "SON"};
     int wgDoy1[4] = {NODATA, NODATA, NODATA, NODATA};
@@ -329,7 +329,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
         {
             qDebug() << "Scenario XML OK";
         }
-
+        XMLAnomaly.anomalyYear = XMLAnomaly.scenario.yearFrom;
         // compute first and last day of the year of the season period
         for (int iSeason = 0; iSeason < 4; iSeason++)
         {
@@ -378,13 +378,16 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 srand (time(nullptr));
 
                 // SCENARIO
-
+                int anomalyMonth1 = 12;
+                int anomalyMonth2;
                 QString outputFileName = wgSettings.outputPath + "/" + fileName;
-
-                if (! makeScenario(outputFileName,wgSettings.valuesSeparator,&XMLAnomaly,wGenClimate,wgSettings.nrYears,2021,wgDoy1,wgDoy2,wgSettings.rainfallThreshold))
+                for (int iSeason = 0; iSeason<4; iSeason++)
                 {
-                    qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+                    anomalyMonth2 = anomalyMonth1%12 + 2;
+                    assignXMLAnomalyScenario(&XMLAnomaly,anomalyMonth1,anomalyMonth2,wGenClimate,wGen);
+                    anomalyMonth1 = anomalyMonth1%12 + 3;
                 }
+
             }
         }
 
