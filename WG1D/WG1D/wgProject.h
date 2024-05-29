@@ -25,6 +25,8 @@
             char valuesSeparator;
             float minDataPercentage;
             float rainfallThreshold;
+            double lat;
+            double lon;
 
             int firstYear;
             int nrYears;

@@ -5,6 +5,7 @@
 #include "wgClimate.h"
 #include "weatherGenerator.h"
 #include "importData.h"
+#include "gis.h"
 
 #include <time.h>
 #include <QFile>
@@ -31,6 +32,8 @@ WGSettings::WGSettings()
     this->minDataPercentage = 0.8f;
     this->rainfallThreshold = 0.2f;
     this->waterTableMaximumDepth = NODATA;
+    this->lat = NODATA;
+    this->lon = NODATA;
 
     this->firstYear = 2001;
     this->nrYears = 1;
@@ -145,6 +148,9 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
 
     wgSettings.firstYear = mySettings->value("firstYear").toInt();
     wgSettings.nrYears = mySettings->value("nrYears").toInt();
+
+    wgSettings.lat = mySettings->value("latitude_default").toFloat();
+    wgSettings.lon = mySettings->value("longitude_default").toFloat();
 
     return true;
 }
@@ -433,6 +439,18 @@ bool WG_Climate(WGSettings &wgSettings)
         if (wgSettings.isWaterTable)
         {
             myWell.setId(fileName);
+            if(wgSettings.lat == NODATA || wgSettings.lon == NODATA)
+            {
+                qDebug() << "\n***** ERROR! *****" << fileName << ": " << " missing lat-lon coordination\n";
+                continue;
+            }
+            double utmEasting;
+            double utmNorthing;
+            int zoneNumber;
+            gis::latLonToUtm(wgSettings.lat, wgSettings.lon, &utmEasting, &utmNorthing, &zoneNumber);
+            myWell.setUtmX(utmEasting);
+            myWell.setUtmY(utmNorthing);
+
             QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
             QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
             QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;

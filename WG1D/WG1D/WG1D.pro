@@ -36,12 +36,13 @@ win32:{
     TARGET = WG1D
 }
 
-INCLUDEPATH += ../../agrolib/crit3dDate ../../agrolib/mathFunctions ../../agrolib/weatherGenerator ../../agrolib/utilities ../../agrolib/waterTable
+INCLUDEPATH += ../../agrolib/crit3dDate ../../agrolib/mathFunctions ../../agrolib/gis ../../agrolib/weatherGenerator ../../agrolib/utilities ../../agrolib/waterTable
 
 CONFIG(debug, debug|release) {
     LIBS += -L../../agrolib/waterTable/debug -lwaterTable
     LIBS += -L../../agrolib/utilities/debug -lutilities
     LIBS += -L../../agrolib/weatherGenerator/debug -lweatherGenerator
+    LIBS += -L../../agrolib/gis/debug -lgis
     LIBS += -L../../agrolib/mathFunctions/debug -lmathFunctions
     LIBS += -L../../agrolib/crit3dDate/debug -lcrit3dDate
 
@@ -49,6 +50,7 @@ CONFIG(debug, debug|release) {
     LIBS += -L../../agrolib/waterTable/release -lwaterTable
     LIBS += -L../../agrolib/utilities/release -lutilities
     LIBS += -L../../agrolib/weatherGenerator/release -lweatherGenerator
+    LIBS += -L../../agrolib/gis/release -lgis
     LIBS += -L../../agrolib/mathFunctions/release -lmathFunctions
     LIBS += -L../../agrolib/crit3dDate/release -lcrit3dDate
 }
