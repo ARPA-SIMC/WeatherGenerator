@@ -5,6 +5,7 @@
 #include "wgClimate.h"
 #include "weatherGenerator.h"
 #include "importData.h"
+#include "waterTable.h"
 #include "gis.h"
 
 #include <time.h>
@@ -473,6 +474,10 @@ bool WG_Climate(WGSettings &wgSettings)
                 qDebug() << "\n***** ERROR! *****" << fileName << "There are less than 1 value per month\n";
                 continue;
             }
+
+            int maxNrDays = 730;  // attualmente fisso
+            //WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, *meteoSettings, gisSettings);
+            //waterTable.computeWaterTable(myWell, maxNrDays);
         }
 
         // weather generator - computes climate
