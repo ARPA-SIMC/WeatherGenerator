@@ -4,6 +4,7 @@
 #include "timeUtility.h"
 #include "wgClimate.h"
 #include "weatherGenerator.h"
+#include "importData.h"
 
 #include <time.h>
 #include <QFile>
@@ -34,7 +35,6 @@ WGSettings::WGSettings()
     this->firstYear = 2001;
     this->nrYears = 1;
 }
-
 
 bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
 {
@@ -395,13 +395,13 @@ bool WG_Scenario(const WGSettings &wgSettings)
 }
 
 
-bool WG_Climate(const WGSettings &wgSettings)
+bool WG_Climate(WGSettings &wgSettings)
 {
     TinputObsData climateDailyObsData;
     TweatherGenClimate wGenClimate;
 
     // iterate input files on climate
-    QString fileName, climateFileName, outputFileName, waterTableFileName;
+    QString fileName, climateFileName, outputFileName;
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
@@ -418,7 +418,6 @@ bool WG_Climate(const WGSettings &wgSettings)
         fileName = fileList.at(i).fileName();
         climateFileName = wgSettings.climatePath + "/" + fileName;
         outputFileName = wgSettings.outputPath + "/" + fileName;
-        waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
 
         qDebug() << "\n...Compute climate:" << fileName;
 
@@ -429,6 +428,27 @@ bool WG_Climate(const WGSettings &wgSettings)
         // check climate dates
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+
+        Well myWell;
+        if (wgSettings.isWaterTable)
+        {
+            myWell.setId(fileName);
+            QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
+            QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
+            QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
+            QString errorString;
+            int wrongLines = 0;
+            if (! loadCsvDepthsSingleWell(waterTableFileName, myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
+            {
+                qDebug() << "\n***** ERROR! *****" << errorString << "Import Csv depths FAILED\n";
+                wgSettings.isWaterTable = false;
+            }
+
+            if (wrongLines>0)
+            {
+                qDebug() << "\n***** WARNING! *****" << fileName << ": " << QString::number(wrongLines) << " lines of data were not loaded\n";
+            }
+        }
 
         // weather generator - computes climate
         if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
