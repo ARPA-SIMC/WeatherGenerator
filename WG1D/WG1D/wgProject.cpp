@@ -438,7 +438,7 @@ bool WG_Climate(WGSettings &wgSettings)
             QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
             QString errorString;
             int wrongLines = 0;
-            if (! loadCsvDepthsSingleWell(waterTableFileName, myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
+            if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
             {
                 qDebug() << "\n***** ERROR! *****" << errorString << "Import Csv depths FAILED\n";
                 wgSettings.isWaterTable = false;
