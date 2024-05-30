@@ -4,6 +4,9 @@
 #include "timeUtility.h"
 #include "wgClimate.h"
 #include "weatherGenerator.h"
+#include "importData.h"
+#include "waterTable.h"
+#include "gis.h"
 
 #include <time.h>
 #include <QFile>
@@ -30,11 +33,12 @@ WGSettings::WGSettings()
     this->minDataPercentage = 0.8f;
     this->rainfallThreshold = 0.2f;
     this->waterTableMaximumDepth = NODATA;
+    this->lat = NODATA;
+    this->lon = NODATA;
 
     this->firstYear = 2001;
     this->nrYears = 1;
 }
-
 
 bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
 {
@@ -145,6 +149,9 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
 
     wgSettings.firstYear = mySettings->value("firstYear").toInt();
     wgSettings.nrYears = mySettings->value("nrYears").toInt();
+
+    wgSettings.lat = mySettings->value("latitude_default").toFloat();
+    wgSettings.lon = mySettings->value("longitude_default").toFloat();
 
     return true;
 }
@@ -398,13 +405,13 @@ bool WG_Scenario(const WGSettings &wgSettings)
 }
 
 
-bool WG_Climate(const WGSettings &wgSettings)
+bool WG_Climate(WGSettings &wgSettings)
 {
     TinputObsData climateDailyObsData;
     TweatherGenClimate wGenClimate;
 
     // iterate input files on climate
-    QString fileName, climateFileName, outputFileName, waterTableFileName;
+    QString fileName, climateFileName, outputFileName;
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
@@ -421,7 +428,6 @@ bool WG_Climate(const WGSettings &wgSettings)
         fileName = fileList.at(i).fileName();
         climateFileName = wgSettings.climatePath + "/" + fileName;
         outputFileName = wgSettings.outputPath + "/" + fileName;
-        waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
 
         qDebug() << "\n...Compute climate:" << fileName;
 
@@ -432,6 +438,70 @@ bool WG_Climate(const WGSettings &wgSettings)
         // check climate dates
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+
+        Well myWell;
+        if (wgSettings.isWaterTable)
+        {
+            myWell.setId(fileName);
+            if(wgSettings.lat == NODATA || wgSettings.lon == NODATA)
+            {
+                qDebug() << "\n***** ERROR! *****" << fileName << ": " << " missing lat-lon coordination\n";
+                return false;
+            }
+            double utmEasting;
+            double utmNorthing;
+            int zoneNumber;
+            gis::latLonToUtm(wgSettings.lat, wgSettings.lon, &utmEasting, &utmNorthing, &zoneNumber);
+            myWell.setUtmX(utmEasting);
+            myWell.setUtmY(utmNorthing);
+
+            QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
+            QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
+            QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
+            QString errorString;
+            int wrongLines = 0;
+            if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
+            {
+                qDebug() << "\n***** ERROR! *****" << errorString << "Import Csv depths FAILED\n";
+                continue;
+            }
+
+            if (wrongLines>0)
+            {
+                qDebug() << "\n***** WARNING! *****" << fileName << ": " << QString::number(wrongLines) << " lines of data were not loaded\n";
+            }
+
+            int minValuePerMonth = myWell.minValuesPerMonth();
+            if (minValuePerMonth < 1)
+            {
+                qDebug() << "\n***** ERROR! *****" << fileName << "There are less than 1 value per month\n";
+                continue;
+            }
+
+            int maxNrDays = 730;  // attualmente fisso
+            Crit3DMeteoSettings meteoSettings;
+            meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
+            meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
+            meteoSettings.setTransSamaniCoefficient(SAMANI_COEFF);
+            gis::Crit3DGisSettings gisSettings;
+            gisSettings.utmZone = zoneNumber;
+            gisSettings.startLocation.latitude = wgSettings.lat;
+            gisSettings.startLocation.longitude = wgSettings.lon;
+            WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
+            if (!waterTable.computeWaterTable(myWell, maxNrDays))
+            {
+                qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
+                continue;
+            }
+            qDebug() << "Nr of observed depth: " << waterTable.getNrObsData() << "\n";
+            qDebug() << "alpha [-]: " << waterTable.getAlpha() << "\n";
+            qDebug() << "H0 [cm]: " << (int)waterTable.getH0() << "\n";
+            qDebug() << "Nr days: " << waterTable.getNrDaysPeriod() << "\n";
+            qDebug() << "R2 [-]: " << waterTable.getR2() << "\n";
+            qDebug() << "RMSE [cm]: " << waterTable.getRMSE() << "\n";
+            qDebug() << "Nash-Sutcliffe [-]: " << waterTable.getNASH() << "\n";
+            qDebug() << "Efficiency Index [-]: " << waterTable.getEF() << "\n";
+        }
 
         // weather generator - computes climate
         if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))

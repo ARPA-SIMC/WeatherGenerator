@@ -9,35 +9,39 @@
         #include "well.h"
     #endif
 
+    #define SAMANI_COEFF 0.17
+
     class WGSettings
     {
-    public:
-        QString observedPath;
-        QString climatePath;
-        QString seasonalForecastPath;
-        QString scenarioPath;
-        QString outputPath;
-        QString waterTablePath;
+        public:
+            QString observedPath;
+            QString climatePath;
+            QString seasonalForecastPath;
+            QString scenarioPath;
+            QString outputPath;
+            QString waterTablePath;
 
-        bool isSeasonalForecast;
-        bool isScenario;
-        bool isWaterTable;
-        char valuesSeparator;
-        float minDataPercentage;
-        float rainfallThreshold;
+            bool isSeasonalForecast;
+            bool isScenario;
+            bool isWaterTable;
+            char valuesSeparator;
+            float minDataPercentage;
+            float rainfallThreshold;
+            double lat;
+            double lon;
 
-        int firstYear;
-        int nrYears;
-        int waterTableMaximumDepth;
+            int firstYear;
+            int nrYears;
+            int waterTableMaximumDepth;
 
-        std::vector<Well> wellPoints;
-        WGSettings();
+            std::vector<Well> wellPoints;
+            WGSettings();
     };
 
     bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings);
     bool WG_SeasonalForecast(const WGSettings &wgSettings);
     bool WG_Scenario(const WGSettings &wgSettings);
-    bool WG_Climate(const WGSettings &wgSettings);
+    bool WG_Climate(WGSettings &wgSettings);
 
 
 #endif // WGPROJECT_H
