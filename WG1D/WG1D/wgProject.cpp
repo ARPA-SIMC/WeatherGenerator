@@ -150,8 +150,17 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
     wgSettings.firstYear = mySettings->value("firstYear").toInt();
     wgSettings.nrYears = mySettings->value("nrYears").toInt();
 
-    wgSettings.lat = mySettings->value("latitude_default").toFloat();
-    wgSettings.lon = mySettings->value("longitude_default").toFloat();
+    bool ok;
+    wgSettings.lat = mySettings->value("latitude_default").toFloat(&ok);
+    if (ok == false)
+    {
+        wgSettings.lat = NODATA;
+    }
+    wgSettings.lon = mySettings->value("longitude_default").toFloat(&ok);
+    if (ok == false)
+    {
+        wgSettings.lon = NODATA;
+    }
 
     return true;
 }
@@ -445,7 +454,7 @@ bool WG_Climate(WGSettings &wgSettings)
             myWell.setId(fileName);
             if(wgSettings.lat == NODATA || wgSettings.lon == NODATA)
             {
-                qDebug() << "\n***** ERROR! *****" << fileName << ": " << " missing lat-lon coordination\n";
+                qDebug() << "\n***** ERROR! ***** Missing lat-lon coordination\n";
                 return false;
             }
             double utmEasting;
