@@ -391,7 +391,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 for (int iSeason = 0; iSeason<4; iSeason++)
                 {
                     anomalyMonth2 = anomalyMonth1%12 + 2;
-                    assignXMLAnomalyScenario(&XMLAnomaly,anomalyMonth1,anomalyMonth2,wGenClimate,wGen);
+                    assignXMLAnomalyScenario(&XMLAnomaly,0,anomalyMonth1,anomalyMonth2,wGenClimate,wGen);
                     anomalyMonth1 = anomalyMonth1%12 + 3;
                 }
 
