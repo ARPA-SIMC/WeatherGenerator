@@ -488,7 +488,7 @@ bool WG_Climate(WGSettings &wgSettings)
             gisSettings.startLocation.latitude = wgSettings.lat;
             gisSettings.startLocation.longitude = wgSettings.lon;
             WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
-            if (!waterTable.computeWaterTable(myWell, maxNrDays))
+            if (!waterTable.computeWaterTableParameters(myWell, maxNrDays))
             {
                 qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
                 continue;
