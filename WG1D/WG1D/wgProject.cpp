@@ -443,7 +443,7 @@ bool WG_Climate(WGSettings &wgSettings)
             if(wgSettings.lat == NODATA || wgSettings.lon == NODATA)
             {
                 qDebug() << "\n***** ERROR! *****" << fileName << ": " << " missing lat-lon coordination\n";
-                continue;
+                return false;
             }
             double utmEasting;
             double utmNorthing;
@@ -479,12 +479,25 @@ bool WG_Climate(WGSettings &wgSettings)
             Crit3DMeteoSettings meteoSettings;
             meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
             meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
-            // meteoSettings.setTransSamaniCoefficient(); // TO DO
+            meteoSettings.setTransSamaniCoefficient(SAMANI_COEFF);
             gis::Crit3DGisSettings gisSettings;
             gisSettings.utmZone = zoneNumber;
-            //gisSettings.startLocation = ; // TO DO
+            gisSettings.startLocation.latitude = wgSettings.lat;
+            gisSettings.startLocation.longitude = wgSettings.lon;
             WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
-            waterTable.computeWaterTable(myWell, maxNrDays);
+            if (!waterTable.computeWaterTable(myWell, maxNrDays))
+            {
+                qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
+                continue;
+            }
+            qDebug() << "Nr of observed depth: " << waterTable.getNrObsData() << "\n";
+            qDebug() << "alpha [-]: " << waterTable.getAlpha() << "\n";
+            qDebug() << "H0 [cm]: " << (int)waterTable.getH0() << "\n";
+            qDebug() << "Nr days: " << waterTable.getNrDaysPeriod() << "\n";
+            qDebug() << "R2 [-]: " << waterTable.getR2() << "\n";
+            qDebug() << "RMSE [cm]: " << waterTable.getRMSE() << "\n";
+            qDebug() << "Nash-Sutcliffe [-]: " << waterTable.getNASH() << "\n";
+            qDebug() << "Efficiency Index [-]: " << waterTable.getEF() << "\n";
         }
 
         // weather generator - computes climate

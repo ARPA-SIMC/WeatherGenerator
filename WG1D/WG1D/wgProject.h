@@ -9,6 +9,8 @@
         #include "well.h"
     #endif
 
+    #define SAMANI_COEFF 0.17
+
     class WGSettings
     {
         public:
