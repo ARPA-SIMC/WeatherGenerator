@@ -303,15 +303,16 @@ bool WG_Scenario(const WGSettings &wgSettings)
     XMLScenarioAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
     TweatherGenClimate wGenClimate,wGen;
+    std::vector<ToutputDailyMeteo> outputDailyData;
+    // iterate input files on climate
+    QString fileName, climateFileName, outputFileName;
+    QDir climateDirectory(wgSettings.climatePath);
+    QStringList filters ("*.csv");
+    QFileInfoList fileList = climateDirectory.entryInfoList (filters);
 
     QString season[4]={"DJF", "MAM", "JJA", "SON"};
     int wgDoy1[4] = {NODATA, NODATA, NODATA, NODATA};
     int wgDoy2[4] = {NODATA, NODATA, NODATA, NODATA};
-
-    // iterate input files on climate (climateName.csv = xmlFileName.xml)
-    QDir climateDirectory(wgSettings.climatePath);
-    QStringList filters ("*.csv");
-    QFileInfoList fileList = climateDirectory.entryInfoList(filters);
 
     // check file presence
     if (fileList.size() == 0)
@@ -381,6 +382,8 @@ bool WG_Scenario(const WGSettings &wgSettings)
         else
         {
             // weather generator - computes climate without anomaly
+            initializeWeather(wGenClimate);
+            initializeWeather(wGen);
             if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
             {
                 qDebug() << "Error in climateGenerator";
@@ -394,17 +397,59 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 srand (time(nullptr));
 
                 // SCENARIO
-                int anomalyMonth1 = 12;
-                int anomalyMonth2;
-                QString outputFileName = wgSettings.outputPath + "/" + fileName;
-                for (int iSeason = 0; iSeason<4; iSeason++)
+                // output size
+                int outputSize = 0;
+                for (int iYear=0; iYear<wgSettings.nrYears; iYear++)
                 {
-                    anomalyMonth2 = anomalyMonth1%12 + 2;
-                    assignXMLAnomalyScenario(&XMLAnomaly,0,anomalyMonth1,anomalyMonth2,wGenClimate,wGen);
-                    anomalyMonth1 = anomalyMonth1%12 + 3;
+                    outputSize += 365 + isLeapYear(wgSettings.firstYear+iYear);
+                }
+                outputDailyData.resize(outputSize);
+
+                outputFileName = wgSettings.outputPath + "/" + fileName;
+                QString startingSeason = XMLAnomaly.period[0].type;
+                int anomalyMonth1, anomalyMonth2;
+
+                if(startingSeason == "DJF")
+                {
+                    anomalyMonth1 = 12; anomalyMonth2 = 2;
+                }
+                else if (startingSeason == "MAM")
+                {
+                    anomalyMonth1 = 3; anomalyMonth2 = 5;
+                }
+                else if (startingSeason == "JJA")
+                {
+                    anomalyMonth1 = 6; anomalyMonth2 = 8;
+                }
+                else
+                {
+                    anomalyMonth1 = 9; anomalyMonth2 = 11;
+                }
+                assignXMLAnomalyScenario(&XMLAnomaly,0,anomalyMonth1, anomalyMonth2, wGenClimate,wGen);
+                int myDoy;
+                Crit3DDate firstDate, lastDate,myDate;
+                firstDate.day = 1;
+                firstDate.month = 1;
+                firstDate.year = wgSettings.firstYear;
+                lastDate.day = 31;
+                lastDate.month = 12;
+                lastDate.year = wgSettings.firstYear + wgSettings.nrYears - 1;
+                int currentIndex = 0 ;
+                for (myDate = firstDate; myDate <= lastDate; ++myDate)
+                {
+                    myDoy = getDoyFromDate(myDate);
+                    initializeDailyDataBasic (&outputDailyData[currentIndex], myDate);
+                    outputDailyData[currentIndex].maxTemp = getTMax(myDoy, wgSettings.rainfallThreshold, wGen);
+                    outputDailyData[currentIndex].minTemp = getTMin(myDoy, wgSettings.rainfallThreshold, wGen);
+                    outputDailyData[currentIndex].prec = getPrecip(myDoy, wgSettings.rainfallThreshold, wGen);
+                    currentIndex++;
                 }
 
+
             }
+            qDebug() << "Weather Generator OK";
+            qDebug() << "Output:" << outputFileName;
+            writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData);
         }
 
         clearInputData(climateDailyObsData);
