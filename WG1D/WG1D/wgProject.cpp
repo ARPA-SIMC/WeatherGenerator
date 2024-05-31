@@ -170,7 +170,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 {
     XMLSeasonalAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
-    TinputObsData lastYearDailyObsData;
+    TinputObsData dailyObsData;
     TweatherGenClimate wGenClimate;
 
     QString season;
@@ -246,7 +246,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 return false;
 
             // read OBSERVED data (at least last 9 months)
-            if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, lastYearDailyObsData) )
+            if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, dailyObsData) )
                 return false;
 
             //check climate dates
@@ -257,9 +257,9 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
 
             int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
-            int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
+            int inputClimateNrDays = climateObsFirstDate.daysTo(climateObsLastDate);
 
-            if ((float(obsClimateDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
+            if ((float(inputClimateNrDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
             {
                 qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
                 qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
@@ -282,7 +282,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 
                     // SEASONAL FORECAST
                     if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
-                                wGenClimate, &lastYearDailyObsData, XMLAnomaly.repetitions,
+                                wGenClimate, &dailyObsData, XMLAnomaly.repetitions,
                                 XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
                     {
                         qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -291,7 +291,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             }
 
             clearInputData(climateDailyObsData);
-            clearInputData(lastYearDailyObsData);
+            clearInputData(dailyObsData);
         }
     }
     return true;
@@ -536,7 +536,7 @@ bool WG_Climate(WGSettings &wgSettings)
             Crit3DMeteoSettings meteoSettings;
             meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
             meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
-            meteoSettings.setTransSamaniCoefficient(SAMANI_COEFF);
+            meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
             gis::Crit3DGisSettings gisSettings;
             gisSettings.utmZone = zoneNumber;
             gisSettings.startLocation.latitude = wgSettings.lat;
