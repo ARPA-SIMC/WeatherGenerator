@@ -448,9 +448,9 @@ bool WG_Climate(WGSettings &wgSettings)
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
 
-        Well myWell;
         if (wgSettings.isWaterTable)
         {
+            Well myWell;
             myWell.setId(fileName);
             if(wgSettings.lat == NODATA || wgSettings.lon == NODATA)
             {
