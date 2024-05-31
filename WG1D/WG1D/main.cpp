@@ -1,6 +1,7 @@
 /*!
     \name WG1D
     \brief it generates synthetic daily time series of Tmin, Tmax, Prec (csv files)
+    and eventually water table depth (if observed data are available)
     Modality: CLIMATE, SEASONAL_FORECAST, SCENARIO
 
     CLIMATE test: uncomment #define TEST_WG_CLIMATE
@@ -21,6 +22,10 @@
 
     SCENARIO test: uncomment #define TEST_WG_SCENARIO
     It generates years of synthetic data referring to a test scenario for two points.
+    ...
+
+    WATERTABLE test: uncomment #define TEST_WG_WATERTABLE
+    It generates seasonal forecasts (JJA 2024) for two test points with watertable depth data.
     ...
 */
 
