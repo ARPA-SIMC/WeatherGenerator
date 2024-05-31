@@ -170,7 +170,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 {
     XMLSeasonalAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
-    TinputObsData lastYearDailyObsData;
+    TinputObsData dailyObsData;
     TweatherGenClimate wGenClimate;
 
     QString season;
@@ -246,7 +246,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 return false;
 
             // read OBSERVED data (at least last 9 months)
-            if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, lastYearDailyObsData) )
+            if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, dailyObsData) )
                 return false;
 
             //check climate dates
@@ -282,7 +282,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 
                     // SEASONAL FORECAST
                     if (! makeSeasonalForecast(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
-                                wGenClimate, &lastYearDailyObsData, XMLAnomaly.repetitions,
+                                wGenClimate, &dailyObsData, XMLAnomaly.repetitions,
                                 XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
                     {
                         qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -291,7 +291,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             }
 
             clearInputData(climateDailyObsData);
-            clearInputData(lastYearDailyObsData);
+            clearInputData(dailyObsData);
         }
     }
     return true;
