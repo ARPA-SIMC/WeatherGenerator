@@ -267,15 +267,27 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             }
             else
             {
-                if (XMLAnomaly.point.latitude == NODATA && wgSettings.isWaterTable)
+                if (wgSettings.isWaterTable)
                 {
-                    XMLAnomaly.point.latitude = wgSettings.lat;
-                    qDebug() << "\n***** WARNING! *****" << fileName << " : missing latitude inside xml, using latitude_default \n";
-                }
-                if (XMLAnomaly.point.longitude == NODATA && wgSettings.isWaterTable)
-                {
-                    XMLAnomaly.point.longitude = wgSettings.lon;
-                    qDebug() << "\n***** WARNING! *****" << fileName << " : missing longitude inside xml, using longitude_default \n";
+                    if (XMLAnomaly.point.latitude == NODATA)
+                    {
+                        XMLAnomaly.point.latitude = wgSettings.lat;
+                        qDebug() << "\n***** WARNING! *****" << fileName << " : missing latitude inside xml, using latitude_default \n";
+                    }
+                    if (XMLAnomaly.point.longitude == NODATA)
+                    {
+                        XMLAnomaly.point.longitude = wgSettings.lon;
+                        qDebug() << "\n***** WARNING! *****" << fileName << " : missing longitude inside xml, using longitude_default \n";
+                    }
+                    Well myWell;
+                    myWell.setId(fileName);
+                    double utmEasting;
+                    double utmNorthing;
+                    int zoneNumber;
+                    gis::latLonToUtm(XMLAnomaly.point.latitude, XMLAnomaly.point.longitude, &utmEasting, &utmNorthing, &zoneNumber);
+                    myWell.setUtmX(utmEasting);
+                    myWell.setUtmY(utmNorthing);
+                    // TO DO
                 }
                 // weather generator - computes climate without anomaly
                 if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
