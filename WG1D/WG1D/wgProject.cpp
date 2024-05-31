@@ -267,6 +267,16 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             }
             else
             {
+                if (XMLAnomaly.point.latitude == NODATA && wgSettings.isWaterTable)
+                {
+                    XMLAnomaly.point.latitude = wgSettings.lat;
+                    qDebug() << "\n***** WARNING! *****" << fileName << " : missing latitude inside xml, using latitude_default \n";
+                }
+                if (XMLAnomaly.point.longitude == NODATA && wgSettings.isWaterTable)
+                {
+                    XMLAnomaly.point.longitude = wgSettings.lon;
+                    qDebug() << "\n***** WARNING! *****" << fileName << " : missing longitude inside xml, using longitude_default \n";
+                }
                 // weather generator - computes climate without anomaly
                 if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
                 {
