@@ -491,7 +491,7 @@ bool WG_Climate(WGSettings &wgSettings)
             Crit3DMeteoSettings meteoSettings;
             meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
             meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
-            meteoSettings.setTransSamaniCoefficient(SAMANI_COEFF);
+            meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
             gis::Crit3DGisSettings gisSettings;
             gisSettings.utmZone = zoneNumber;
             gisSettings.startLocation.latitude = wgSettings.lat;
