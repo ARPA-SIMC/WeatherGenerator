@@ -257,9 +257,9 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
 
             int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
-            int obsClimateDays = climateObsFirstDate.daysTo(climateObsLastDate);
+            int inputClimateNrDays = climateObsFirstDate.daysTo(climateObsLastDate);
 
-            if ((float(obsClimateDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
+            if ((float(inputClimateNrDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
             {
                 qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
                 qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
