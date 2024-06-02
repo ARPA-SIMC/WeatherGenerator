@@ -191,7 +191,6 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         return false;
     }
 
-    bool isOk;
     QFile *testFile;
     for (int i = 0; i < fileList.size(); ++i)
     {
@@ -202,12 +201,11 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         outputFileName = wgSettings.outputPath + "/" + fileName;
 
         //check observed data
-        isOk = true;
         testFile = new QFile(observedFileName);
         if (! testFile->exists())
         {
             qDebug() << "ERROR: missing observed data:" << fileName;
-            isOk = false;
+            continue; //pass to next file
         }
 
         // check xml file
@@ -219,77 +217,154 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             if (! testFile->exists())
             {
                 qDebug() << "ERROR: missing seasonal forecast:" << xmlFileName;
-                isOk = false;
+                continue; //pass to next file
             }
         }
 
-        if (isOk)
+        qDebug() << "\nCompute seasonal:" << fileName;
+
+        // read SEASONAL PREDICTIONS
+        if (! parseXMLSeasonal(xmlFileName, XMLAnomaly))
+            return false;
+
+        // compute first and last day of the year of the season period
+        season = XMLAnomaly.anomalySeason.toUpper();
+        getDoyFromSeason(season, XMLAnomaly.anomalyYear, wgDoy1, wgDoy2);
+
+        // set climate dates
+        climateDateIni = Crit3DDate(1,1,XMLAnomaly.climatePeriod.yearFrom);
+        climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
+
+        XMLAnomaly.printInfo();
+
+        // read CLIMATE data
+        if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
+            return false;
+
+        // read OBSERVED data (at least last 9 months)
+        if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, dailyObsData) )
+            return false;
+
+        //check climate dates
+        Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
+        climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
+
+        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+        climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
+
+        int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
+        int inputClimateNrDays = climateObsFirstDate.daysTo(climateObsLastDate);
+
+        if ((float(inputClimateNrDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
         {
-            qDebug() << "\nCompute seasonal:" << fileName;
-
-            // read SEASONAL PREDICTIONS
-            if (! parseXMLSeasonal(xmlFileName, XMLAnomaly))
-                return false;
-
-            // compute first and last day of the year of the season period
-            season = XMLAnomaly.anomalySeason.toUpper();
-            getDoyFromSeason(season, XMLAnomaly.anomalyYear, wgDoy1, wgDoy2);
-
-            // set climate dates
-            climateDateIni = Crit3DDate(1,1,XMLAnomaly.climatePeriod.yearFrom);
-            climateDateFin = Crit3DDate(31, 12, XMLAnomaly.climatePeriod.yearTo);
-
-            XMLAnomaly.printInfo();
-
-            // read CLIMATE data
-            if (! readMeteoDataCsv(climateFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
-                return false;
-
-            // read OBSERVED data (at least last 9 months)
-            if (! readMeteoDataCsv(observedFileName, wgSettings.valuesSeparator, NODATA, dailyObsData) )
-                return false;
-
-            //check climate dates
-            Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
-            climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
-
-            Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
-            climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
-
-            int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
-            int inputClimateNrDays = climateObsFirstDate.daysTo(climateObsLastDate);
-
-            if ((float(inputClimateNrDays) / float(requestedClimateDays)) < wgSettings.minDataPercentage)
+            qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
+            qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
+            qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+        }
+        else
+        {
+            if (wgSettings.isWaterTable)
             {
-                qDebug() << "\nERROR:" << "\nRequested climate period is:" << XMLAnomaly.climatePeriod.yearFrom << "-" << XMLAnomaly.climatePeriod.yearTo;
-                qDebug() << "Percentage of climate data are less than requested (" << (wgSettings.minDataPercentage*100) << "%)";
-                qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+                if (XMLAnomaly.point.latitude == NODATA)
+                {
+                    XMLAnomaly.point.latitude = wgSettings.lat;
+                    qDebug() << "\n***** WARNING! *****" << fileName << " : missing latitude inside xml, using latitude_default \n";
+                }
+                if (XMLAnomaly.point.longitude == NODATA)
+                {
+                    XMLAnomaly.point.longitude = wgSettings.lon;
+                    qDebug() << "\n***** WARNING! *****" << fileName << " : missing longitude inside xml, using longitude_default \n";
+                }
+                if(XMLAnomaly.point.latitude == NODATA || XMLAnomaly.point.longitude == NODATA)
+                {
+                    qDebug() << "\n***** ERROR! ***** Missing lat-lon coordination\n";
+                    return false;
+                }
+                Well myWell;
+                myWell.setId(fileName);
+                double utmEasting;
+                double utmNorthing;
+                int zoneNumber;
+                gis::latLonToUtm(XMLAnomaly.point.latitude, XMLAnomaly.point.longitude, &utmEasting, &utmNorthing, &zoneNumber);
+                myWell.setUtmX(utmEasting);
+                myWell.setUtmY(utmNorthing);
+                QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
+                QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
+                QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
+                QString errorString;
+                int wrongLines = 0;
+                if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
+                {
+                    qDebug() << "\n***** ERROR! *****" << errorString << "Import Csv depths FAILED\n";
+                    continue;
+                }
+
+                if (wrongLines>0)
+                {
+                    qDebug() << "\n***** WARNING! *****" << fileName << ": " << QString::number(wrongLines) << " lines of data were not loaded\n";
+                }
+
+                int minValuePerMonth = myWell.minValuesPerMonth();
+                if (minValuePerMonth < 1)
+                {
+                    qDebug() << "\n***** ERROR! *****" << fileName << "There are less than 1 value per month\n";
+                    continue;
+                }
+
+                int maxNrDays = 730;  // attualmente fisso
+                Crit3DMeteoSettings meteoSettings;
+                meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
+                meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
+                meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
+                gis::Crit3DGisSettings gisSettings;
+                gisSettings.utmZone = zoneNumber;
+                gisSettings.startLocation.latitude = wgSettings.lat;
+                gisSettings.startLocation.longitude = wgSettings.lon;
+                WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
+                if (!waterTable.computeWaterTableParameters(myWell, maxNrDays))
+                {
+                    qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
+                    continue;
+                }
+                /*
+                qDebug() << "Nr of observed depth: " << waterTable.getNrObsData() << "\n";
+                qDebug() << "alpha [-]: " << waterTable.getAlpha() << "\n";
+                qDebug() << "H0 [cm]: " << (int)waterTable.getH0() << "\n";
+                qDebug() << "Nr days: " << waterTable.getNrDaysPeriod() << "\n";
+                qDebug() << "R2 [-]: " << waterTable.getR2() << "\n";
+                qDebug() << "RMSE [cm]: " << waterTable.getRMSE() << "\n";
+                qDebug() << "Nash-Sutcliffe [-]: " << waterTable.getNASH() << "\n";
+                qDebug() << "Efficiency Index [-]: " << waterTable.getEF() << "\n";
+                */
+                qDebug() << "Water Table OK";
+                // clean vector
+                waterTable.cleanAllMeteoVector();
+
+                // weather generator - computes climate without anomaly, water table case
+                if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+                {
+                    qDebug() << "Error in climateGenerator";
+                    qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+                }
+                else
+                {
+                    qDebug() << "Climate OK";
+
+                    /* initialize random seed: */
+                    srand (time(nullptr));
+
+                    // SEASONAL FORECAST
+                    if (! makeSeasonalForecastWaterTable(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
+                                              wGenClimate, &dailyObsData, XMLAnomaly.repetitions,
+                                              XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold, waterTable))
+                    {
+                        qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+                    }
+                }
             }
             else
             {
-                if (wgSettings.isWaterTable)
-                {
-                    if (XMLAnomaly.point.latitude == NODATA)
-                    {
-                        XMLAnomaly.point.latitude = wgSettings.lat;
-                        qDebug() << "\n***** WARNING! *****" << fileName << " : missing latitude inside xml, using latitude_default \n";
-                    }
-                    if (XMLAnomaly.point.longitude == NODATA)
-                    {
-                        XMLAnomaly.point.longitude = wgSettings.lon;
-                        qDebug() << "\n***** WARNING! *****" << fileName << " : missing longitude inside xml, using longitude_default \n";
-                    }
-                    Well myWell;
-                    myWell.setId(fileName);
-                    double utmEasting;
-                    double utmNorthing;
-                    int zoneNumber;
-                    gis::latLonToUtm(XMLAnomaly.point.latitude, XMLAnomaly.point.longitude, &utmEasting, &utmNorthing, &zoneNumber);
-                    myWell.setUtmX(utmEasting);
-                    myWell.setUtmY(utmNorthing);
-                    // TO DO
-                }
-                // weather generator - computes climate without anomaly
+                // weather generator - computes climate without anomaly NO water table case
                 if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
                 {
                     qDebug() << "Error in climateGenerator";
@@ -311,10 +386,10 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                     }
                 }
             }
-
-            clearInputData(climateDailyObsData);
-            clearInputData(dailyObsData);
         }
+
+        clearInputData(climateDailyObsData);
+        clearInputData(dailyObsData);
     }
     return true;
 }
@@ -471,7 +546,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
             }
             qDebug() << "Weather Generator OK";
             qDebug() << "Output:" << outputFileName;
-            writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData);
+            writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData, false);
         }
 
         clearInputData(climateDailyObsData);
@@ -602,7 +677,7 @@ bool WG_Climate(WGSettings &wgSettings)
 
             qDebug() << "Weather Generator OK";
             qDebug() << "Output:" << outputFileName;
-            writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData);
+            writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData, false);
         }
 
         clearInputData(climateDailyObsData);
