@@ -4611,7 +4611,7 @@ bool Project::findTemperatureRange(meteoVariable myVar)
 }
 
 
-bool Project::waterTableImportLocation(QString csvFileName)
+bool Project::waterTableImportLocation(const QString &csvFileName)
 {
     if (logFileName == "")
     {
@@ -4637,10 +4637,10 @@ bool Project::waterTableImportLocation(QString csvFileName)
 }
 
 
-bool Project::waterTableImportDepths(QString csvDepths)
+bool Project::waterTableImportDepths(const QString &csvDepthsFileName)
 {
     int wrongLines = 0;
-    if (! loadWaterTableDepthCsv(csvDepths, wellPoints, quality->getWaterTableMaximumDepth(), errorString, wrongLines))
+    if (! loadWaterTableDepthCsv(csvDepthsFileName, wellPoints, quality->getWaterTableMaximumDepth(), errorString, wrongLines))
     {
         logError(errorString);
         return false;
@@ -4723,11 +4723,13 @@ bool Project::computeSingleWell(int indexWell)
 }
 
 
-void Project::showSingleWell(WaterTable waterTable, QString idWell)
+void Project::showSingleWell(WaterTable &waterTable, const QString &idWell)
 {
     DialogSummary* dialogResult = new DialogSummary(waterTable);   // show results
     dialogResult->show();
-    WaterTableWidget* chartResult = new WaterTableWidget(idWell, waterTable.getMyDates(), waterTable.getMyHindcastSeries(), waterTable.getMyInterpolateSeries(), waterTable.getObsDepths());
+    WaterTableWidget* chartResult = new WaterTableWidget(idWell, waterTable.getMyDates(), waterTable.getMyHindcastSeries(),
+                                                         waterTable.getMyInterpolateSeries(), waterTable.getObsDepths(),
+                                                         quality->getWaterTableMaximumDepth());
     chartResult->show();
     return;
 }

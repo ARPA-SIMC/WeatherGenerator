@@ -49,10 +49,10 @@ class WaterTable
         int getNrDaysPeriod() const { return nrDaysPeriod; }
         int getNrObsData() const { return nrObsData; }
 
-        std::vector<QDate> getMyDates() const;
-        std::vector<float> getMyHindcastSeries() const;
-        std::vector<float> getMyInterpolateSeries() const;
-        QMap<QDate, int> getObsDepths();
+        std::vector<QDate> getMyDates();
+        std::vector<float> getMyHindcastSeries();
+        std::vector<float> getMyInterpolateSeries();
+        QMap<QDate, float> getObsDepths();
 
         void cleanAllMeteoVector();
         void setInputTMin(const std::vector<float> &newInputTMin);
