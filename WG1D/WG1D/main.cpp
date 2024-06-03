@@ -1,32 +1,37 @@
 /*!
     \name WG1D
     \brief it generates synthetic daily time series of Tmin, Tmax, Prec (csv files)
-    and eventually water table depth (if observed data are available)
-    Modality: CLIMATE, SEASONAL_FORECAST, SCENARIO
+    and possibly Water table depth (if observed data are available)
+    Mode: CLIMATE, SEASONAL FORECAST, SCENARIO
 
     CLIMATE test: uncomment #define TEST_WG_CLIMATE
-    It generates one year of synthetic data for two points
-    -   wg settings in DATA\TEST\testWG_climate.ini
-    -   climate data in DATA\TEST\input\climate
+    It generates ten year of synthetic data for two points
+    The first year and the number of years generated are governed by the settings
+    -   the settings are in the file: DATA\TEST\testWG_climate.ini
+    -   climate data are in the directory: DATA\TEST\input\climate
 
-    SEASONAL_FORECAST test: uncomment #define TEST_WG_SEASONAL
+    SEASONAL FORECAST test: uncomment #define TEST_WG_SEASONAL
     It generates seasonal forecasts (JJA 2016) for two test points.
-    The output is a time series consisting of synthetic data for the requested season
-    and observed data in the other months (using data from the previous 9 months).
-    The synthetic data are generated from climate (computed by wg) + predicted seasonal anomalies
+    The output is a time series composed of synthetic data for the requested season
+    and observed data in other months (using data from the previous 9 months).
+    Synthetic data are generated from climate (calculated from wg) + forecasted seasonal anomalies.
     The number of years of data output depends on the number of model members in the xml files.
-    -   wg settings in DATA\TEST\testWG_seasonal.ini
-    -   climate data in DATA\TEST\input\climate
-    -   observed data in DATA\TEST\input\observed
-    -   predicted seasonal anomalies (xml files) in DATA\TEST\input\seasonalForecast_2016_JJA
+    -   the settings are in the file: DATA\TEST\testWG_seasonal.ini
+    -   climate data are in the directory: DATA\TEST\input\climate
+    -   observed data are in the directory: DATA\TEST\input\observed
+    -   predicted seasonal anomalies (xml files): DATA\TEST\input\seasonalForecast_2016_JJA
 
     SCENARIO test: uncomment #define TEST_WG_SCENARIO
     It generates years of synthetic data referring to a test scenario for two points.
     ...
 
     WATERTABLE test: uncomment #define TEST_WG_WATERTABLE
-    It generates seasonal forecasts (JJA 2024) for two test points with watertable depth data.
-    ...
+    It generates seasonal forecasts (JJA 2024) for two test points, with water table depth data.
+    -   the settings are in the file: DATA\TEST_waterTable\testWG_waterTable.ini
+    -   climate data are in the directory: DATA\TEST_waterTable\input\climate
+    -   observed data are in the directory: DATA\TEST_waterTable\input\observed
+    -   observed water table detph are in the directory: DATA\TEST_waterTable\input\waterTable
+    -   predicted seasonal anomalies (xml files): DATA\TEST_waterTable\input\seasonalForecast
 */
 
 
@@ -58,6 +63,7 @@ int main(int argc, char *argv[])
     if (! searchDataPath(&dataPath)) return -1;
 
     std::cout << "*** 1D Weather Generator ***\n";
+    std::cout << "Mode: CLIMATE | SEASONAL FORECAST | SCENARIO\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
