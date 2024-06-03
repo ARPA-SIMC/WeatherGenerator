@@ -1,11 +1,15 @@
-#-------------------------------------------------------------------
+#-----------------------------------------------------------------------
 #
 #   WG1D
-#
 #   Weather Generator 1D
+#
+#   generates synthetic daily time series of Tmin, Tmax, Prec (csv files)
+#   and possibly Water table depth (if observed data are available)
+#   Mode: CLIMATE, SEASONAL FORECAST, SCENARIO
+#
 #   This project is part of ARPA-SIMC/WeatherGenerator distribution
 #
-#-------------------------------------------------------------------
+#------------------------------------------------------------------------
 
 
 QT += core sql xml
