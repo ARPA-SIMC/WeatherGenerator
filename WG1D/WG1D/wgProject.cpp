@@ -504,25 +504,40 @@ bool WG_Scenario(const WGSettings &wgSettings)
 
                 outputFileName = wgSettings.outputPath + "/" + fileName;
                 QString startingSeason = XMLAnomaly.period[0].type;
-                int anomalyMonth1, anomalyMonth2;
-
+                int anomalyMonth1[4], anomalyMonth2[4];
+                wGen = wGenClimate;
                 if(startingSeason == "DJF")
                 {
-                    anomalyMonth1 = 12; anomalyMonth2 = 2;
+                    anomalyMonth1[0] = 12; anomalyMonth2[0] = 2;
+                    anomalyMonth1[1] = 3; anomalyMonth2[1] = 5;
+                    anomalyMonth1[2] = 6; anomalyMonth2[2] = 8;
+                    anomalyMonth1[3] = 9; anomalyMonth2[3] = 11;
                 }
                 else if (startingSeason == "MAM")
                 {
-                    anomalyMonth1 = 3; anomalyMonth2 = 5;
+                    anomalyMonth1[3] = 12; anomalyMonth2[3] = 2;
+                    anomalyMonth1[0] = 3; anomalyMonth2[0] = 5;
+                    anomalyMonth1[1] = 6; anomalyMonth2[1] = 8;
+                    anomalyMonth1[2] = 9; anomalyMonth2[2] = 11;
                 }
                 else if (startingSeason == "JJA")
                 {
-                    anomalyMonth1 = 6; anomalyMonth2 = 8;
+                    anomalyMonth1[2] = 12; anomalyMonth2[2] = 2;
+                    anomalyMonth1[3] = 3; anomalyMonth2[3] = 5;
+                    anomalyMonth1[0] = 6; anomalyMonth2[0] = 8;
+                    anomalyMonth1[1] = 9; anomalyMonth2[1] = 11;
+
                 }
                 else
                 {
-                    anomalyMonth1 = 9; anomalyMonth2 = 11;
+                    anomalyMonth1[1] = 12; anomalyMonth2[1] = 2;
+                    anomalyMonth1[2] = 3; anomalyMonth2[2] = 5;
+                    anomalyMonth1[3] = 6; anomalyMonth2[3] = 8;
+                    anomalyMonth1[0] = 9; anomalyMonth2[0] = 11;
                 }
                 assignXMLAnomalyScenario(&XMLAnomaly,0,anomalyMonth1, anomalyMonth2, wGenClimate,wGen);
+                initializeWeather(wGenClimate);
+                initializeWeather(wGen);
                 int myDoy;
                 Crit3DDate firstDate, lastDate,myDate;
                 firstDate.day = 1;
@@ -541,17 +556,13 @@ bool WG_Scenario(const WGSettings &wgSettings)
                     outputDailyData[currentIndex].prec = getPrecip(myDoy, wgSettings.rainfallThreshold, wGen);
                     currentIndex++;
                 }
-
-
             }
             qDebug() << "Weather Generator OK";
             qDebug() << "Output:" << outputFileName;
             writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData, false);
         }
-
         clearInputData(climateDailyObsData);
     }
-
     return true;
 }
 
