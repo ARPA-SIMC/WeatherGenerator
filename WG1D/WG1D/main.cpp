@@ -32,6 +32,26 @@
     -   observed data are in the directory: DATA\TEST_waterTable\input\observed
     -   observed water table detph are in the directory: DATA\TEST_waterTable\input\waterTable
     -   predicted seasonal anomalies (xml files): DATA\TEST_waterTable\input\seasonalForecast
+
+    \copyright 2024 Fausto Tomei, Antonio Volta, Laura Costantini
+
+    WG1D has been developed under contract issued by ARPAE Emilia-Romagna
+
+    WG1D is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    WG1D is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with WG1D.  If not, see <http://www.gnu.org/licenses/>.
+
+    contacts:
+    ftomei@arpae.it
 */
 
 
