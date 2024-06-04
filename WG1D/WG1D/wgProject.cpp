@@ -480,7 +480,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
         {
             // weather generator - computes climate without anomaly
             initializeWeather(wGenClimate);
-            initializeWeather(wGen);
+            //initializeWeather(wGen);
             if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
             {
                 qDebug() << "Error in climateGenerator";
@@ -536,7 +536,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
                     anomalyMonth1[0] = 9; anomalyMonth2[0] = 11;
                 }
                 assignXMLAnomalyScenario(&XMLAnomaly,0,anomalyMonth1, anomalyMonth2, wGenClimate,wGen);
-                initializeWeather(wGenClimate);
+                //initializeWeather(wGenClimate);
                 initializeWeather(wGen);
                 int myDoy;
                 Crit3DDate firstDate, lastDate,myDate;
