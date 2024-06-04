@@ -11,6 +11,7 @@
 
 	<models>
 		<type>SD_GCMs</type>
+		<name>SD_GCMs</name>
 		<value>SD_EM</value>
 	</models>
 
