@@ -7,6 +7,7 @@
 #include "importData.h"
 #include "waterTable.h"
 #include "gis.h"
+#include "crit3dDate.h"
 
 #include <time.h>
 #include <QFile>
@@ -401,8 +402,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
     TinputObsData climateDailyObsData;
     TweatherGenClimate wGenClimate,wGen;
     std::vector<ToutputDailyMeteo> outputDailyData;
-    // iterate input files on climate
-    QString fileName, climateFileName, outputFileName;
+    QString outputFileName;
     QDir climateDirectory(wgSettings.climatePath);
     QStringList filters ("*.csv");
     QFileInfoList fileList = climateDirectory.entryInfoList (filters);
@@ -443,7 +443,10 @@ bool WG_Scenario(const WGSettings &wgSettings)
         {
             qDebug() << "Scenario XML OK";
         }
+
+        XMLAnomaly.repetitions = wgSettings.nrYears;
         XMLAnomaly.anomalyYear = XMLAnomaly.scenario.yearFrom;
+
         // compute first and last day of the year of the season period
         for (int iSeason = 0; iSeason < 4; iSeason++)
         {
@@ -479,8 +482,6 @@ bool WG_Scenario(const WGSettings &wgSettings)
         else
         {
             // weather generator - computes climate without anomaly
-            initializeWeather(wGenClimate);
-            initializeWeather(wGen);
             if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
             {
                 qDebug() << "Error in climateGenerator";
@@ -493,12 +494,15 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 // initialize random seed
                 srand (time(nullptr));
 
-                // SCENARIO
                 // output size
                 int outputSize = 0;
-                for (int iYear=0; iYear<wgSettings.nrYears; iYear++)
+                for (int iYear=0; iYear < wgSettings.nrYears; iYear++)
                 {
-                    outputSize += 365 + isLeapYear(wgSettings.firstYear+iYear);
+                    outputSize += 365;
+                    if (isLeapYear(wgSettings.firstYear+iYear))
+                    {
+                        outputSize++;
+                    }
                 }
                 outputDailyData.resize(outputSize);
 
@@ -535,9 +539,12 @@ bool WG_Scenario(const WGSettings &wgSettings)
                     anomalyMonth1[3] = 6; anomalyMonth2[3] = 8;
                     anomalyMonth1[0] = 9; anomalyMonth2[0] = 11;
                 }
-                assignXMLAnomalyScenario(&XMLAnomaly,0,anomalyMonth1, anomalyMonth2, wGenClimate,wGen);
-                initializeWeather(wGenClimate);
+
+                assignXMLAnomalyScenario(&XMLAnomaly, 0, anomalyMonth1, anomalyMonth2, wGenClimate, wGen);
+
+                //initializeWeather(wGenClimate);
                 initializeWeather(wGen);
+
                 int myDoy;
                 Crit3DDate firstDate, lastDate,myDate;
                 firstDate.day = 1;
@@ -557,6 +564,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
                     currentIndex++;
                 }
             }
+
             qDebug() << "Weather Generator OK";
             qDebug() << "Output:" << outputFileName;
             writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData, false);
