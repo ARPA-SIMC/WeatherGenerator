@@ -281,14 +281,17 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                     qDebug() << "\n***** ERROR! ***** Missing lat-lon coordination\n";
                     return false;
                 }
+
                 Well myWell;
                 myWell.setId(fileName);
-                double utmEasting;
-                double utmNorthing;
+                myWell.setLatitude(XMLAnomaly.point.latitude);
+                myWell.setLongitude(XMLAnomaly.point.longitude);
+                double utmEasting, utmNorthing;
                 int zoneNumber;
                 gis::latLonToUtm(XMLAnomaly.point.latitude, XMLAnomaly.point.longitude, &utmEasting, &utmNorthing, &zoneNumber);
                 myWell.setUtmX(utmEasting);
                 myWell.setUtmY(utmNorthing);
+
                 QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
                 QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
                 QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
@@ -317,11 +320,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
                 meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
                 meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
-                gis::Crit3DGisSettings gisSettings;
-                gisSettings.utmZone = zoneNumber;
-                gisSettings.startLocation.latitude = wgSettings.lat;
-                gisSettings.startLocation.longitude = wgSettings.lon;
-                WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
+                WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings);
 
                 if (! waterTable.computeWaterTableParameters(myWell, maxNrDays))
                 {
@@ -583,17 +582,19 @@ bool WG_Climate(WGSettings &wgSettings)
         {
             Well myWell;
             myWell.setId(fileName);
-            if(wgSettings.lat == NODATA || wgSettings.lon == NODATA)
+            if(wgSettings.lat == NODATA)
             {
-                qDebug() << "\n***** ERROR! ***** Missing lat-lon coordination\n";
+                qDebug() << "\n***** ERROR! ***** Missing 'latitude_default' in settings file \n";
                 return false;
             }
-            double utmEasting;
-            double utmNorthing;
+
+            double utmEasting, utmNorthing;
             int zoneNumber;
             gis::latLonToUtm(wgSettings.lat, wgSettings.lon, &utmEasting, &utmNorthing, &zoneNumber);
             myWell.setUtmX(utmEasting);
             myWell.setUtmY(utmNorthing);
+            myWell.setLatitude(wgSettings.lat);
+            myWell.setLongitude(wgSettings.lon);
 
             QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
             QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
@@ -623,24 +624,19 @@ bool WG_Climate(WGSettings &wgSettings)
             meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
             meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
             meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
-            gis::Crit3DGisSettings gisSettings;
-            gisSettings.utmZone = zoneNumber;
-            gisSettings.startLocation.latitude = wgSettings.lat;
-            gisSettings.startLocation.longitude = wgSettings.lon;
-            WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
-            if (!waterTable.computeWaterTableParameters(myWell, maxNrDays))
+            WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings);
+            if (! waterTable.computeWaterTableParameters(myWell, maxNrDays))
             {
                 qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
                 continue;
             }
-            qDebug() << "Nr of observed depth: " << waterTable.getNrObsData() << "\n";
-            qDebug() << "alpha [-]: " << waterTable.getAlpha() << "\n";
-            qDebug() << "H0 [cm]: " << (int)waterTable.getH0() << "\n";
-            qDebug() << "Nr days: " << waterTable.getNrDaysPeriod() << "\n";
-            qDebug() << "R2 [-]: " << waterTable.getR2() << "\n";
+            qDebug() << "WATERTABLE OK";
+            qDebug() << "Nr of observed depth: " << waterTable.getNrObsData();
+            qDebug() << "alpha [-]: " << waterTable.getAlpha();
+            qDebug() << "H0 [cm]: " << (int)waterTable.getH0();
+            qDebug() << "Nr days: " << waterTable.getNrDaysPeriod();
+            qDebug() << "R2 [-]: " << waterTable.getR2();
             qDebug() << "RMSE [cm]: " << waterTable.getRMSE() << "\n";
-            qDebug() << "Nash-Sutcliffe [-]: " << waterTable.getNASH() << "\n";
-            qDebug() << "Efficiency Index [-]: " << waterTable.getEF() << "\n";
         }
 
         // weather generator - computes climate
@@ -651,7 +647,7 @@ bool WG_Climate(WGSettings &wgSettings)
         }
         else
         {
-            qDebug() << "Climate OK";
+            qDebug() << "CLIMATE OK";
 
             /* initialize random seed: */
             srand(unsigned(time(nullptr)));
