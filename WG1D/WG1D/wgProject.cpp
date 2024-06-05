@@ -276,9 +276,9 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                     XMLAnomaly.point.longitude = wgSettings.lon;
                     qDebug() << "\n***** WARNING! *****" << fileName << " : missing longitude inside xml, using longitude_default \n";
                 }
-                if(XMLAnomaly.point.latitude == NODATA || XMLAnomaly.point.longitude == NODATA)
+                if(XMLAnomaly.point.latitude == NODATA)
                 {
-                    qDebug() << "\n***** ERROR! ***** Missing lat-lon coordination\n";
+                    qDebug() << "\n***** ERROR! ***** Missing latitude\n";
                     return false;
                 }
 
@@ -286,11 +286,6 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 myWell.setId(fileName);
                 myWell.setLatitude(XMLAnomaly.point.latitude);
                 myWell.setLongitude(XMLAnomaly.point.longitude);
-                double utmEasting, utmNorthing;
-                int zoneNumber;
-                gis::latLonToUtm(XMLAnomaly.point.latitude, XMLAnomaly.point.longitude, &utmEasting, &utmNorthing, &zoneNumber);
-                myWell.setUtmX(utmEasting);
-                myWell.setUtmY(utmNorthing);
 
                 QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
                 QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
@@ -303,7 +298,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                     continue;
                 }
 
-                if (wrongLines>0)
+                if (wrongLines > 0)
                 {
                     qDebug() << "\n***** WARNING! *****" << fileName << ": " << QString::number(wrongLines) << " lines of data were not loaded\n";
                 }
@@ -588,11 +583,6 @@ bool WG_Climate(WGSettings &wgSettings)
                 return false;
             }
 
-            double utmEasting, utmNorthing;
-            int zoneNumber;
-            gis::latLonToUtm(wgSettings.lat, wgSettings.lon, &utmEasting, &utmNorthing, &zoneNumber);
-            myWell.setUtmX(utmEasting);
-            myWell.setUtmY(utmNorthing);
             myWell.setLatitude(wgSettings.lat);
             myWell.setLongitude(wgSettings.lon);
 
