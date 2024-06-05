@@ -56,9 +56,9 @@
 
 
 #include "wgProject.h"
-#include "utilities.h"
 #include <iostream>
 #include <QCoreApplication>
+#include <QDir>
 
 
 // uncomment TEST_WG_CLIMATE or TEST_WG_SEASONAL or TEST_WG_SCENARIO to execute test
@@ -72,6 +72,36 @@ void usage()
     std::cout << std::endl << "USAGE:" << std::endl;
     std::cout << "WG1D.exe [settingsFile.ini]" << std::endl;
     std::cout << std::flush;
+}
+
+
+bool searchDataPath(QString* dataPath)
+{
+    *dataPath = "";
+
+    QString myPath = QDir::currentPath();
+    QString myRoot = QDir::rootPath();
+    // only for win: application can run on a different drive (i.e. D:\)
+    QString winRoot = myPath.left(3);
+
+    bool isFound = false;
+    while (! isFound)
+    {
+        if (QDir(myPath + "/DATA").exists())
+        {
+            isFound = true;
+            break;
+        }
+
+        if (QDir::cleanPath(myPath) == myRoot || QDir::cleanPath(myPath) == winRoot)
+            break;
+
+        myPath = QFileInfo(myPath).dir().absolutePath();
+    }
+    if (! isFound) return false;
+
+    *dataPath = QDir::cleanPath(myPath) + "/DATA/";
+    return true;
 }
 
 

@@ -322,7 +322,8 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 gisSettings.startLocation.latitude = wgSettings.lat;
                 gisSettings.startLocation.longitude = wgSettings.lon;
                 WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings, gisSettings);
-                if (!waterTable.computeWaterTableParameters(myWell, maxNrDays))
+
+                if (! waterTable.computeWaterTableParameters(myWell, maxNrDays))
                 {
                     qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
                     continue;
@@ -337,6 +338,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 qDebug() << "Nash-Sutcliffe [-]: " << waterTable.getNASH() << "\n";
                 qDebug() << "Efficiency Index [-]: " << waterTable.getEF() << "\n";
                 */
+
                 qDebug() << "Water Table OK";
                 // clean vector
                 waterTable.cleanAllMeteoVector();
@@ -356,8 +358,8 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 
                     // SEASONAL FORECAST
                     if (! makeSeasonalForecastWaterTable(outputFileName, wgSettings.valuesSeparator, &XMLAnomaly,
-                                              wGenClimate, &dailyObsData, XMLAnomaly.repetitions,
-                                              XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold, waterTable))
+                                              wGenClimate, &dailyObsData, &waterTable, XMLAnomaly.repetitions,
+                                              XMLAnomaly.anomalyYear, wgDoy1, wgDoy2, wgSettings.rainfallThreshold))
                     {
                         qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
                     }

@@ -40,7 +40,8 @@ win32:{
     TARGET = WG1D
 }
 
-INCLUDEPATH += ../../agrolib/crit3dDate ../../agrolib/mathFunctions ../../agrolib/gis ../../agrolib/meteo ../../agrolib/weatherGenerator ../../agrolib/utilities ../../agrolib/waterTable
+INCLUDEPATH +=  ../../agrolib/crit3dDate ../../agrolib/mathFunctions ../../agrolib/gis  \
+                ../../agrolib/meteo ../../agrolib/weatherGenerator ../../agrolib/waterTable
 
 CONFIG(debug, debug|release) {
     LIBS += -L../../agrolib/waterTable/debug -lwaterTable
