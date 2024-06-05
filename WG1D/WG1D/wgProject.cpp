@@ -328,18 +328,14 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                     qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
                     continue;
                 }
-                /*
-                qDebug() << "Nr of observed depth: " << waterTable.getNrObsData() << "\n";
-                qDebug() << "alpha [-]: " << waterTable.getAlpha() << "\n";
-                qDebug() << "H0 [cm]: " << (int)waterTable.getH0() << "\n";
-                qDebug() << "Nr days: " << waterTable.getNrDaysPeriod() << "\n";
-                qDebug() << "R2 [-]: " << waterTable.getR2() << "\n";
-                qDebug() << "RMSE [cm]: " << waterTable.getRMSE() << "\n";
-                qDebug() << "Nash-Sutcliffe [-]: " << waterTable.getNASH() << "\n";
-                qDebug() << "Efficiency Index [-]: " << waterTable.getEF() << "\n";
-                */
 
                 qDebug() << "Water Table OK";
+                qDebug() << "Nr of observed depth: " << waterTable.getNrObsData();
+                qDebug() << "alpha [-]: " << waterTable.getAlpha();
+                qDebug() << "H0 [cm]: " << (int)waterTable.getH0();
+                qDebug() << "Nr days: " << waterTable.getNrDaysPeriod();
+                qDebug() << "R2 [-]: " << waterTable.getR2() << "\n";
+
                 // clean vector
                 waterTable.cleanAllMeteoVector();
 
