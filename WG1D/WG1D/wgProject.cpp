@@ -287,12 +287,10 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 myWell.setLatitude(XMLAnomaly.point.latitude);
                 myWell.setLongitude(XMLAnomaly.point.longitude);
 
-                QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
-                QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
                 QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
                 QString errorString;
                 int wrongLines = 0;
-                if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
+                if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, errorString, wrongLines))
                 {
                     qDebug() << "\n***** ERROR! *****" << errorString << "Import Csv depths FAILED\n";
                     continue;
@@ -315,7 +313,11 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
                 meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
                 meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
-                WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings);
+
+                QDate firstDate(climateObsFirstDate.year, climateObsFirstDate.month, climateObsFirstDate.day);
+                QDate lastDate(climateObsLastDate.year, climateObsLastDate.month, climateObsLastDate.day);
+
+                WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, firstDate, lastDate, meteoSettings);
 
                 if (! waterTable.computeWaterTableParameters(myWell, maxNrDays))
                 {
@@ -586,12 +588,10 @@ bool WG_Climate(WGSettings &wgSettings)
             myWell.setLatitude(wgSettings.lat);
             myWell.setLongitude(wgSettings.lon);
 
-            QDate first(climateObsFirstDate.year,climateObsFirstDate.month, climateObsFirstDate.day);
-            QDate last(climateObsLastDate.year,climateObsLastDate.month, climateObsLastDate.day);
             QString waterTableFileName = wgSettings.waterTablePath + "/" + fileName;
             QString errorString;
             int wrongLines = 0;
-            if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, first, last, errorString, wrongLines))
+            if (! loadCsvDepthsSingleWell(waterTableFileName, &myWell, wgSettings.waterTableMaximumDepth, errorString, wrongLines))
             {
                 qDebug() << "\n***** ERROR! *****" << errorString << "Import Csv depths FAILED\n";
                 continue;
@@ -614,7 +614,13 @@ bool WG_Climate(WGSettings &wgSettings)
             meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
             meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
             meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
-            WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, first, last, meteoSettings);
+
+            QDate firstDate(climateObsFirstDate.year, climateObsFirstDate.month, climateObsFirstDate.day);
+            QDate lastDate(climateObsLastDate.year, climateObsLastDate.month, climateObsLastDate.day);
+
+            WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip,
+                                  firstDate, lastDate, meteoSettings);
+
             if (! waterTable.computeWaterTableParameters(myWell, maxNrDays))
             {
                 qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
