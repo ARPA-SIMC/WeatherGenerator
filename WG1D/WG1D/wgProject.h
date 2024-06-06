@@ -9,8 +9,6 @@
         #include "well.h"
     #endif
 
-    #define SAMANI_COEFF 0.17
-
     class WGSettings
     {
         public:
@@ -41,7 +39,7 @@
     bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings);
     bool WG_SeasonalForecast(const WGSettings &wgSettings);
     bool WG_Scenario(const WGSettings &wgSettings);
-    bool WG_Climate(WGSettings &wgSettings);
+    bool WG_Climate(const WGSettings &wgSettings);
 
 
 #endif // WGPROJECT_H

@@ -312,10 +312,9 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 Crit3DMeteoSettings meteoSettings;
                 meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
                 meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
-                meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
 
-                QDate firstDate(climateObsFirstDate.year, climateObsFirstDate.month, climateObsFirstDate.day);
-                QDate lastDate(climateObsLastDate.year, climateObsLastDate.month, climateObsLastDate.day);
+                QDate firstDate(climateDailyObsData.inputFirstDate.year, climateDailyObsData.inputFirstDate.month, climateDailyObsData.inputFirstDate.day);
+                QDate lastDate(climateDailyObsData.inputLastDate.year, climateDailyObsData.inputLastDate.month, climateDailyObsData.inputLastDate.day);
 
                 WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, firstDate, lastDate, meteoSettings);
 
@@ -541,7 +540,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
 }
 
 
-bool WG_Climate(WGSettings &wgSettings)
+bool WG_Climate(const WGSettings &wgSettings)
 {
     TinputObsData climateDailyObsData;
     TweatherGenClimate wGenClimate;
@@ -613,7 +612,6 @@ bool WG_Climate(WGSettings &wgSettings)
             Crit3DMeteoSettings meteoSettings;
             meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
             meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
-            meteoSettings.setTransSamaniCoefficient(float(SAMANI_COEFF));
 
             QDate firstDate(climateObsFirstDate.year, climateObsFirstDate.month, climateObsFirstDate.day);
             QDate lastDate(climateObsLastDate.year, climateObsLastDate.month, climateObsLastDate.day);
