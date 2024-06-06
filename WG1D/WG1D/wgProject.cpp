@@ -512,7 +512,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
                 for (int counterMember=0; counterMember<XMLAnomaly.models.number;counterMember++)
                 {
                     outputFileName[counterMember] = wgSettings.outputPath + "/" + XMLAnomaly.models.value[counterMember] + "_" + fileName;
-                    assignXMLAnomalyScenario(&XMLAnomaly, 0, anomalyMonth1, anomalyMonth2, wGenClimate, wGen);
+                    assignXMLAnomalyScenario(&XMLAnomaly, counterMember, anomalyMonth1, anomalyMonth2, wGenClimate, wGen);
 
                     initializeWeather(wGen);
 
