@@ -4,9 +4,9 @@
 #include <math.h>
 
 
-WaterTable::WaterTable(std::vector<float> &inputTMin, std::vector<float> &inputTMax, std::vector<float> &inputPrec, QDate firstMeteoDate, QDate lastMeteoDate,
-                       Crit3DMeteoSettings meteoSettings, gis::Crit3DGisSettings gisSettings)
-    : inputTMin(inputTMin), inputTMax(inputTMax), inputPrec(inputPrec), firstMeteoDate(firstMeteoDate), lastMeteoDate(lastMeteoDate), meteoSettings(meteoSettings), gisSettings(gisSettings)
+WaterTable::WaterTable(std::vector<float> &inputTMin, std::vector<float> &inputTMax, std::vector<float> &inputPrec,
+                       QDate firstMeteoDate, QDate lastMeteoDate, Crit3DMeteoSettings meteoSettings)
+    : inputTMin(inputTMin), inputTMax(inputTMax), inputPrec(inputPrec), firstMeteoDate(firstMeteoDate), lastMeteoDate(lastMeteoDate), meteoSettings(meteoSettings)
 {
 }
 
@@ -51,9 +51,12 @@ void WaterTable::cleanAllMeteoVector()
 {
     inputTMin.clear();
     inputTMax.clear();
-    inputPrec.clear();;
-    etpValues.clear();;
-    precValues.clear();;
+    inputPrec.clear();
+    etpValues.clear();
+    precValues.clear();
+
+    firstMeteoDate = QDate();
+    lastMeteoDate = QDate();
 }
 
 
@@ -74,9 +77,11 @@ std::vector<float> WaterTable::getMyInterpolateSeries()
 
 void WaterTable::initializeWaterTable(Well myWell)
 {
-    this->well = myWell;
+    well = myWell;
+
     getFirstDateWell();
     getLastDateWell();
+
     for (int myMonthIndex = 0; myMonthIndex < 12; myMonthIndex++)
     {
         WTClimateMonthly[myMonthIndex] = NODATA;
@@ -108,13 +113,13 @@ bool WaterTable::computeWaterTableParameters(Well myWell, int maxNrDays)
     initializeWaterTable(myWell);
     isClimateReady = computeWTClimate();
 
-    if (! computeETP_allSeries())
+    if (! computeETP_allSeries(true))
     {
         return false;
     }
 
     isCWBEquationReady = computeCWBCorrelation(maxNrDays);
-    if (!isCWBEquationReady)
+    if (! isCWBEquationReady)
     {
         return false;
     }
@@ -167,12 +172,28 @@ bool WaterTable::computeWTClimate()
 }
 
 
-bool WaterTable::computeETP_allSeries()
+bool WaterTable::setMeteoData(QDate myDate, float tmin, float tmax, float prec)
+{
+    int index = firstMeteoDate.daysTo(myDate);
+
+    if (index < etpValues.size() && index < precValues.size())
+    {
+        Crit3DDate date = Crit3DDate(myDate.day(), myDate.month(), myDate.year());
+        etpValues[index] = dailyEtpHargreaves(tmin, tmax, date, well.getLatitude(), &meteoSettings);
+        precValues[index] = prec;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool WaterTable::computeETP_allSeries(bool isUpdateAvgCWB)
 {
     etpValues.clear();
     precValues.clear();
-    double myLat, myLon;
-    gis::getLatLonFromUtm(gisSettings, well.getUtmX(), well.getUtmY(), &myLat, &myLon);
 
     float sumCWB = 0;
     int nrValidDays = 0;
@@ -181,7 +202,8 @@ bool WaterTable::computeETP_allSeries()
     float Tmax = NODATA;
     float prec = NODATA;
     float etp = NODATA;
-    for (QDate myDate = firstMeteoDate; myDate<=lastMeteoDate; myDate=myDate.addDays(1))
+
+    for (QDate myDate = firstMeteoDate; myDate <= lastMeteoDate; myDate = myDate.addDays(1))
     {
         Crit3DDate date(myDate.day(), myDate.month(), myDate.year());
         if (index > inputTMin.size() || index > inputTMax.size() || index > inputPrec.size())
@@ -197,26 +219,29 @@ bool WaterTable::computeETP_allSeries()
             Tmin = inputTMin[index];
             Tmax = inputTMax[index];
             prec = inputPrec[index];
-            etp = dailyEtpHargreaves(Tmin, Tmax, date, myLat,&meteoSettings);
+            etp = dailyEtpHargreaves(Tmin, Tmax, date, well.getLatitude(), &meteoSettings);
         }
         etpValues.push_back(etp);
         precValues.push_back(prec);
         if (etp != NODATA && prec != NODATA)
         {
-            sumCWB = sumCWB + (prec - etp);
+            sumCWB += prec - etp;
             nrValidDays = nrValidDays + 1;
         }
         index = index + 1;
     }
 
-    if (nrValidDays > 0)
+    if (isUpdateAvgCWB)
     {
-        avgDailyCWB = sumCWB / nrValidDays;
-    }
-    else
-    {
-        error = "Missing data";
-        return false;
+        if (nrValidDays > 0)
+        {
+            avgDailyCWB = sumCWB / nrValidDays;
+        }
+        else
+        {
+            error = "Missing data";
+            return false;
+        }
     }
 
     return true;
@@ -233,16 +258,16 @@ bool WaterTable::computeCWBCorrelation(int maxNrDays)
     QMap<QDate, float> myDepths = well.getObsDepths();
     std::vector<float> myCWBSum;
     std::vector<float> myObsWT;
-    float a;
-    float b;
-    float myR2;
+    float a, b;
+    float currentR2;
 
     maxNrDays = std::max(90, maxNrDays);
-    for (int nrDays = 90; nrDays <= maxNrDays; nrDays = nrDays+5)
+    for (int nrDays = 90; nrDays <= maxNrDays; nrDays += 5)
     {
         myCWBSum.clear();
         myObsWT.clear();
         QMapIterator<QDate, float> it(myDepths);
+
         while (it.hasNext())
         {
             it.next();
@@ -256,10 +281,10 @@ bool WaterTable::computeCWBCorrelation(int maxNrDays)
             }
         }
 
-        statistics::linearRegression(myCWBSum, myObsWT, int(myCWBSum.size()), false, &a, &b, &myR2);
-        if (myR2 > bestR2)
+        statistics::linearRegression(myCWBSum, myObsWT, int(myCWBSum.size()), false, &a, &b, &currentR2);
+        if (currentR2 > bestR2)
         {
-            bestR2 = myR2;
+            bestR2 = currentR2;
             bestNrDays = nrDays;
             bestH0 = a;
             bestAlfaCoeff = b;
@@ -288,7 +313,7 @@ double WaterTable::computeCWB(QDate myDate, int nrDays)
     double sumCWB = 0;
     int nrValidDays = 0;
     QDate actualDate;
-    for (int shift = 1; shift<=nrDays; shift++)
+    for (int shift = 1; shift <= nrDays; shift++)
     {
         actualDate = myDate.addDays(-shift);
         int index = firstMeteoDate.daysTo(actualDate);
@@ -299,9 +324,9 @@ double WaterTable::computeCWB(QDate myDate, int nrDays)
             if ( etp != NODATA &&  prec != NODATA)
             {
                 double currentCWB = double(prec - etp);
-                double weight = 1 - (double)shift/nrDays;
+                double weight = 1 - double(shift-1) / double(nrDays);
                 sumCWB += currentCWB * weight;
-                nrValidDays = nrValidDays + 1;
+                nrValidDays++;
             }
         }
     }
@@ -414,9 +439,9 @@ float WaterTable::getWaterTableDaily(QDate myDate)
     return getWaterTableDaily;
 }
 
+
 float WaterTable::getWaterTableClimate(QDate myDate)
 {
-
     float getWaterTableClimate = NODATA;
 
     if (!isClimateReady)
