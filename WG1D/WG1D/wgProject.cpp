@@ -308,7 +308,6 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                     continue;
                 }
 
-                int maxNrDays = 730;  // attualmente fisso
                 Crit3DMeteoSettings meteoSettings;
                 meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
                 meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
@@ -318,7 +317,8 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
 
                 WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip, firstDate, lastDate, meteoSettings);
 
-                if (! waterTable.computeWaterTableParameters(myWell, maxNrDays))
+                int stepDays = 10;
+                if (! waterTable.computeWaterTableParameters(myWell, stepDays))
                 {
                     qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
                     continue;
@@ -608,7 +608,6 @@ bool WG_Climate(const WGSettings &wgSettings)
                 continue;
             }
 
-            int maxNrDays = 730;  // attualmente fisso
             Crit3DMeteoSettings meteoSettings;
             meteoSettings.setMinimumPercentage(wgSettings.minDataPercentage);
             meteoSettings.setRainfallThreshold(wgSettings.rainfallThreshold);
@@ -619,7 +618,8 @@ bool WG_Climate(const WGSettings &wgSettings)
             WaterTable waterTable(climateDailyObsData.inputTMin, climateDailyObsData.inputTMax, climateDailyObsData.inputPrecip,
                                   firstDate, lastDate, meteoSettings);
 
-            if (! waterTable.computeWaterTableParameters(myWell, maxNrDays))
+            int stepDays = 10;
+            if (! waterTable.computeWaterTableParameters(myWell, stepDays))
             {
                 qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
                 continue;
