@@ -11,7 +11,7 @@
         #include "root.h"
     #endif
 
-    enum speciesType {HERBACEOUS_ANNUAL, HERBACEOUS_PERENNIAL, HORTICULTURAL, GRASS, TREE, FALLOW, FALLOW_ANNUAL};
+    enum speciesType {HERBACEOUS_ANNUAL, HERBACEOUS_PERENNIAL, HORTICULTURAL, GRASS, TREE, FALLOW, FALLOW_ANNUAL, BARESOIL};
     #define NR_CROP_SPECIES 7
 
     /*!
@@ -43,8 +43,8 @@
         /*!
          * water need
          */
-        double kcMax;                               /*!< [-] */
-        int psiLeaf;                                /*!< [cm] */
+        double kcMax;                               /*!< [-] maximum crop coefficient */
+        int psiLeaf;                                /*!< [cm] maximum water suction potential */
         double stressTolerance;                     /*!< [-] */
         double fRAW;                                /*!< [-] fraction of Readily Available Water */
 
@@ -80,6 +80,9 @@
         bool isWaterSurplusResistant() const;
         bool isSowingCrop() const;
         bool isRootStatic() const;
+
+        bool isBareSoil() const
+        { return (type == BARESOIL); }
 
         double getDailyDegreeIncrease(double tmin, double tmax, int doy);
 

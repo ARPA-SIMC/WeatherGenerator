@@ -1,6 +1,7 @@
 #include "soil.h"
 #include "soilDbTools.h"
 #include "commonConstants.h"
+#include "basicMath.h"
 #include "utilities.h"
 
 #include <math.h>
@@ -275,6 +276,13 @@ bool loadSoilData(const QSqlDatabase &dbSoil, const QString &soilCode, soil::Cri
         getValue(query.value("sand"), &sand);
         getValue(query.value("silt"), &silt);
         getValue(query.value("clay"), &clay);
+        // check
+        if (! isEqual(sand, NODATA) && ! isEqual(silt, NODATA) && ! isEqual(clay, NODATA) && (sand + silt + clay) <= 1.01)
+        {
+            sand *= 100;
+            silt *= 100;
+            clay *= 100;
+        }
         mySoil.horizon[i].dbData.sand = sand;
         mySoil.horizon[i].dbData.silt = silt;
         mySoil.horizon[i].dbData.clay = clay;
@@ -297,7 +305,7 @@ bool loadSoilData(const QSqlDatabase &dbSoil, const QString &soilCode, soil::Cri
         getValue(query.value("k_sat"), &ksat);
         mySoil.horizon[i].dbData.kSat = ksat;
 
-        // NEW fields for soil stability, not present in old databases
+        // NEW fields for slope stability, not present in old databases
         QList<QString> fieldList = getFields(query);
 
         double value = NODATA;

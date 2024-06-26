@@ -1095,7 +1095,11 @@ int Crit1DProject::computeAllUnits()
         }
     }
 
-    int infoStep = std::max(1, int(compUnitList.size() / 20));
+    int infoStep = int(compUnitList.size());
+    if (compUnitList.size() >= 20)
+    {
+        infoStep = int(compUnitList.size() / 20);
+    }
     logger.writeInfo("COMPUTE...");
 
     try
@@ -1108,25 +1112,20 @@ int Crit1DProject::computeAllUnits()
                 logger.writeInfo(compUnitList[i].idCase + " - numerical computation...");
             }
 
-            // CROP
+            // check if it is crop class
             compUnitList[i].idCrop = getIdCropFromClass(dbCrop, "crop_class", "id_class",
                                                          compUnitList[i].idCropClass, projectError);
             if (compUnitList[i].idCrop == "")
             {
-                logger.writeInfo("Unit " + compUnitList[i].idCase + " " + compUnitList[i].idCropClass + " ***** missing CROP *****");
-                isErrorCrop = true;
-                continue;
+                compUnitList[i].idCrop = compUnitList[i].idCropClass;
             }
 
             // IRRI_RATIO
             float irriRatio = getIrriRatioFromCropClass(dbCrop, "crop_class", "id_class",
                                                     compUnitList[i].idCropClass, projectError);
-
-            if ((isYearlyStatistics || isMonthlyStatistics || isSeasonalForecast || isEnsembleForecast || isShortTermForecast)
-                && (int(irriRatio) == int(NODATA)))
+            if (isEqual(irriRatio, NODATA))
             {
-                logger.writeInfo("Unit " + compUnitList[i].idCase + " " + compUnitList[i].idCropClass + " ***** missing IRRIGATION RATIO *****");
-                continue;
+                irriRatio = 1;
             }
 
             // SOIL
@@ -1171,7 +1170,7 @@ int Crit1DProject::computeAllUnits()
                 }
             }
 
-            if ((i+1) % infoStep == 0 && nrUnitsComputed > 0)
+            if ((i+1) % infoStep == 0 && nrUnitsComputed > 20)
             {
                 double percentage = (i+1) * 100.0 / compUnitList.size();
                 logger.writeInfo("..." + QString::number(round(percentage)) + "%");
