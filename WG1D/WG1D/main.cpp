@@ -124,6 +124,7 @@ int main(int argc, char *argv[])
         #else
             #ifdef TEST_WG_SCENARIO
                 settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
+                //settingsFileName = dataPath + "TEST_scenario/testWG_Scenario.ini";
             #else
                 #ifdef TEST_WG_WATERTABLE
                     settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable.ini";
