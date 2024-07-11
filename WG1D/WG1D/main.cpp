@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
             //settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt2024_MJJ/wg/WG_2024_MJJ_C1.ini";
         #else
             #ifdef TEST_WG_SCENARIO
-                settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
+                //settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
                 //settingsFileName = dataPath + "TEST_scenario/testWG_Scenario.ini"; //
             #else
                 #ifdef TEST_WG_WATERTABLE
