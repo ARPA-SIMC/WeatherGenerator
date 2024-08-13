@@ -54,12 +54,11 @@ CONFIG(release, debug|release) {
 
 
 INCLUDEPATH += ../../agrolib/weatherGenerator ../../agrolib/weatherGenerator2D ../../agrolib/mathFunctions ../../agrolib/eispack \
-                ../../agrolib/crit3dDate ../../agrolib/meteo ../../agrolib/gis
+                ../../agrolib/crit3dDate ../../agrolib/meteo ../../agrolib/gis ../../agrolib/utilities ../../agrolib/dbMeteoGrid
 
-#added for simulating C4 and C7
-INCLUDEPATH += ../../agrolib/dbMeteoGrid ../../agrolib/utilities
 
-SOURCES += main.cpp \
+SOURCES += \
+    main.cpp \
     readPragaFormatData.cpp \
 
 

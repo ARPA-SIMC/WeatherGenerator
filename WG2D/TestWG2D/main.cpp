@@ -28,12 +28,12 @@
 #include <chrono>
 
 #include "commonConstants.h"
-#include "wg2D.h"
 #include "readPragaFormatData.h"
 #include "crit3dDate.h"
 
 #include "dbMeteoGrid.h"
 #include "meteoPoint.h"
+#include "wg2D.h"
 
 
 static Crit3DMeteoGridDbHandler* meteoGridDbHandlerWG2D;
