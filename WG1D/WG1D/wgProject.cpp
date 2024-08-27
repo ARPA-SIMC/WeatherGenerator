@@ -524,14 +524,14 @@ bool WG_Scenario(const WGSettings &wgSettings)
                         initializeDailyDataBasic (&outputDailyData[currentIndex], myDate);
                         outputDailyData[currentIndex].maxTemp = getTMax(myDoy, wgSettings.rainfallThreshold, wGen);
                         outputDailyData[currentIndex].minTemp = getTMin(myDoy, wgSettings.rainfallThreshold, wGen);
-                        /*if (outputDailyData[currentIndex].maxTemp < outputDailyData[currentIndex].minTemp)
+                        if (outputDailyData[currentIndex].maxTemp < outputDailyData[currentIndex].minTemp)
                         {
                             float average, difference;
                             average = 0.5*(outputDailyData[currentIndex].maxTemp + outputDailyData[currentIndex].minTemp);
                             difference = (outputDailyData[currentIndex].minTemp - outputDailyData[currentIndex].maxTemp);
                             outputDailyData[currentIndex].maxTemp = average + 0.5*difference;
                             outputDailyData[currentIndex].minTemp = average - 0.5*difference;
-                        }*/
+                        }
                         outputDailyData[currentIndex].prec = getPrecip(myDoy, wgSettings.rainfallThreshold, wGen);
                         currentIndex++;
                     }
