@@ -72,10 +72,10 @@
     bool multipleDetrendingMain(std::vector <Crit3DInterpolationDataPoint> &myPoints,
                                 Crit3DInterpolationSettings* mySettings, meteoVariable myVar, std::string &errorStr);
 
-    bool multipleDetrending(Crit3DProxyCombination othersCombination, std::vector<std::vector<double> > parameters, std::vector <Crit3DInterpolationDataPoint> &myPoints, Crit3DInterpolationSettings* mySettings,
+    bool multipleDetrending(Crit3DProxyCombination othersCombination, std::vector <Crit3DInterpolationDataPoint> &myPoints, Crit3DInterpolationSettings* mySettings,
                             meteoVariable myVar, std::string &errorStr);
 
-    bool multipleDetrendingElevation(Crit3DProxyCombination myCombination, std::vector<double> elevationParameters, std::vector <Crit3DInterpolationDataPoint> &myPoints,
+    bool multipleDetrendingElevation(Crit3DProxyCombination myCombination, std::vector <Crit3DInterpolationDataPoint> &myPoints,
                                      Crit3DInterpolationSettings* mySettings, meteoVariable myVar, std::string &errorStr);
 
     bool getUseDetrendingVar(meteoVariable myVar);
@@ -107,7 +107,7 @@
                        float stdDevThreshold, double &avg, double &stdDev);
 
     bool proxyValidityWeighted(std::vector <Crit3DInterpolationDataPoint> &myPoints, int proxyPos,
-                       float stdDevThreshold, double &avg, double &stdDev);
+                               float stdDevThreshold);
 
     bool setHeightTemperatureRange(Crit3DProxyCombination myCombination, Crit3DInterpolationSettings* mySettings);
 
@@ -115,6 +115,7 @@
                                          std::vector<std::function<double(double, std::vector<double>&)>>& myFunc,
                                          std::vector <std::vector<double>> &paramMin, std::vector <std::vector<double>> &paramMax,
                                          std::vector <std::vector<double>> &paramDelta, std::vector <std::vector<double>> &paramFirstGuess,
+                                         std::vector<double> &stepSize, int numSteps,
                                          std::string &errorStr);
 
     bool setAllFittingParameters(Crit3DProxyCombination myCombination, Crit3DInterpolationSettings* mySettings,

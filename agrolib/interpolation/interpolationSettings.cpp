@@ -330,6 +330,11 @@ void Crit3DInterpolationSettings::setSingleFittingFunction(const std::function<d
 
 }
 
+void Crit3DInterpolationSettings::addFittingFunction(const std::function<double (double, std::vector<double> &)> &newFittingFunction)
+{
+    fittingFunction.push_back(newFittingFunction);
+}
+
 TFittingFunction Crit3DInterpolationSettings::getChosenElevationFunction()
 {
     int elPos = NODATA;
@@ -364,17 +369,17 @@ void Crit3DInterpolationSettings::setChosenElevationFunction(TFittingFunction ch
     double MIN_T = -20;
     double MAX_T = 40;
 
-    if (!getMinMaxTemperature().empty())
+    if (!getPointsRange().empty())
     {
-        MIN_T = getMinMaxTemperature()[0];
-        MAX_T = getMinMaxTemperature()[1];
+        MIN_T = getPointsRange()[0];
+        MAX_T = getPointsRange()[1];
     }
 
     if (elPos != NODATA)
     {
         if (chosenFunction == getProxy(elPos)->getFittingFunctionName() && !getProxy(elPos)->getFittingParametersRange().empty())
         {
-            std::vector tempParam = getProxy(elPos)->getFittingParametersRange();
+            std::vector <double> tempParam = getProxy(elPos)->getFittingParametersRange();
 
             if (chosenFunction == piecewiseTwo)
             {
@@ -418,7 +423,7 @@ void Crit3DInterpolationSettings::setPointsRange(double min, double max)
     pointsRange.push_back(max);
 }
 
-std::vector<double> Crit3DInterpolationSettings::getMinMaxTemperature()
+std::vector<double> Crit3DInterpolationSettings::getPointsRange()
 {
     return pointsRange;
 }

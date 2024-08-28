@@ -2248,7 +2248,6 @@ bool Project::computeStatisticsCrossValidation(crossValidationStatistics* myStat
     return true;
 }
 
-
 bool Project::interpolationCv(meteoVariable myVar, const Crit3DTime& myTime, crossValidationStatistics *myStats)
 {
     // TODO local detrending
@@ -2263,7 +2262,7 @@ bool Project::interpolationCv(meteoVariable myVar, const Crit3DTime& myTime, cro
         myVar == airRelHumidity))
     {
         logError("Cross validation is not available for " + QString::fromStdString(getVariableString(myVar))
-                 + "\n Deactive 'Interpolate relative humidity using dew point' option.");
+                 + "\n Deactivate option 'Interpolate relative humidity using dew point'");
         return false;
     }
 
@@ -2294,21 +2293,31 @@ bool Project::interpolationCv(meteoVariable myVar, const Crit3DTime& myTime, cro
     if (interpolationSettings.getUseMultipleDetrending())
         interpolationSettings.clearFitting();
 
-    if (! preInterpolation(interpolationPoints, &interpolationSettings, meteoSettings, &climateParameters,
+    if (! interpolationSettings.getUseLocalDetrending() && ! preInterpolation(interpolationPoints, &interpolationSettings, meteoSettings, &climateParameters,
                           meteoPoints, nrMeteoPoints, myVar, myTime, errorStdStr))
     {
         logError("Error in function preInterpolation:\n" + QString::fromStdString(errorStdStr));
         return false;
     }
 
-    if (! computeResiduals(myVar, meteoPoints, nrMeteoPoints, interpolationPoints, &interpolationSettings, meteoSettings, true, true))
-        return false;
+    if (! interpolationSettings.getUseLocalDetrending())
+    {
+        if (! computeResiduals(myVar, meteoPoints, nrMeteoPoints, interpolationPoints, &interpolationSettings, meteoSettings, true, true))
+            return false;
+    }
+    else
+    {
+        if (! computeResidualsLocalDetrending(myVar, myTime, meteoPoints, nrMeteoPoints, interpolationPoints,
+                                             &interpolationSettings, meteoSettings, &climateParameters, true, true))
+            return false;
+    }
 
     if (! computeStatisticsCrossValidation(myStats))
         return false;
 
     return true;
 }
+
 
 
 bool Project::interpolationDem(meteoVariable myVar, const Crit3DTime& myTime, gis::Crit3DRasterGrid *myRaster)
@@ -2418,7 +2427,6 @@ bool Project::interpolationDemLocalDetrending(meteoVariable myVar, const Crit3DT
     {
         gis::Crit3DRasterHeader myHeader = *(DEM.header);
         myRaster->initializeGrid(myHeader);
-        myRaster->initializeParameters(myHeader);
 
         if(!setHeightTemperatureRange(myCombination, &interpolationSettings))
         {
@@ -2441,8 +2449,6 @@ bool Project::interpolationDemLocalDetrending(meteoVariable myVar, const Crit3DT
 
                     std::vector <Crit3DInterpolationDataPoint> subsetInterpolationPoints;
                     localSelection(interpolationPoints, subsetInterpolationPoints, x, y, z, interpolationSettings);
-                     if (interpolationSettings.getUseLocalDetrending())
-                        interpolationSettings.setFittingParameters(myRaster->prepareParameters(row, col, myCombination.getActiveList()));
                     if (! preInterpolation(subsetInterpolationPoints, &interpolationSettings, meteoSettings, &climateParameters,
                                           meteoPoints, nrMeteoPoints, myVar, myTime, errorStdStr))
                     {
@@ -2452,7 +2458,6 @@ bool Project::interpolationDemLocalDetrending(meteoVariable myVar, const Crit3DT
 
                     myRaster->value[row][col] = interpolate(subsetInterpolationPoints, &interpolationSettings, meteoSettings,
                                                             myVar, x, y, z, proxyValues, true);
-                    myRaster->setParametersForRowCol(row, col, interpolationSettings.getFittingParameters());
                     interpolationSettings.clearFitting();
                     interpolationSettings.setCurrentCombination(interpolationSettings.getSelectedCombination());
                 }
@@ -2687,7 +2692,6 @@ bool Project::interpolationGrid(meteoVariable myVar, const Crit3DTime& myTime)
     }
     else
     {
-        meteoGridDbHandler->meteoGrid()->dataMeteoGrid.initializeParametersLatLonHeader(meteoGridDbHandler->meteoGrid()->gridStructure().header());
         myCombination = interpolationSettings.getSelectedCombination();
         interpolationSettings.setCurrentCombination(myCombination);
     }
@@ -2750,7 +2754,6 @@ bool Project::interpolationGrid(meteoVariable myVar, const Crit3DTime& myTime)
                     {
                         std::vector <Crit3DInterpolationDataPoint> subsetInterpolationPoints;
                         localSelection(interpolationPoints, subsetInterpolationPoints, myX, myY, myZ, interpolationSettings);
-                        interpolationSettings.setFittingParameters(meteoGridDbHandler->meteoGrid()->dataMeteoGrid.prepareParameters(row, col, myCombination.getActiveList()));
                         if (! preInterpolation(subsetInterpolationPoints, &interpolationSettings, meteoSettings,
                                               &climateParameters, meteoPoints, nrMeteoPoints, myVar, myTime, errorStdStr))
                         {
@@ -2759,7 +2762,6 @@ bool Project::interpolationGrid(meteoVariable myVar, const Crit3DTime& myTime)
                         }
 
                         interpolatedValue = interpolate(subsetInterpolationPoints, &interpolationSettings, meteoSettings, myVar, myX, myY, myZ, proxyValues, true);
-                        meteoGridDbHandler->meteoGrid()->dataMeteoGrid.setParametersForRowCol(row, col, interpolationSettings.getFittingParameters());
                     }
                     else
                     {
@@ -3696,25 +3698,12 @@ void Project::showProxyGraph()
     return;
 }
 
-void Project::showLocalProxyGraph(gis::Crit3DGeoPoint myPoint, gis::Crit3DRasterGrid *myDataRaster)
+void Project::showLocalProxyGraph(gis::Crit3DGeoPoint myPoint)
 {
     gis::Crit3DUtmPoint myUtm;
     gis::getUtmFromLatLon(this->gisSettings.utmZone, myPoint, &myUtm);
 
-    int row, col;
-    std::vector<std::vector<double>> parametersSettings;
-    if (myDataRaster->isLoaded && !myDataRaster->singleCell.empty())
-    {
-        gis::getRowColFromXY(*(myDataRaster->header), myUtm, &row, &col);
-        parametersSettings = myDataRaster->getParametersFromRowCol(row, col);
-    }
-    if (this->meteoGridLoaded && !this->meteoGridDbHandler->meteoGrid()->dataMeteoGrid.singleCell.empty())
-    {
-        gis::getRowColFromLonLat(meteoGridDbHandler->meteoGrid()->gridStructure().header(), myPoint.longitude, myPoint.latitude, &row, &col);
-        parametersSettings = meteoGridDbHandler->meteoGrid()->dataMeteoGrid.getParametersFromRowCol(row, col);
-    }
-
-    localProxyWidget = new Crit3DLocalProxyWidget(myUtm.x, myUtm.y, parametersSettings, this->gisSettings, &interpolationSettings, meteoPoints, nrMeteoPoints, currentVariable, currentFrequency, currentDate, currentHour, quality, &qualityInterpolationSettings, meteoSettings, &climateParameters, checkSpatialQuality);
+    localProxyWidget = new Crit3DLocalProxyWidget(myUtm.x, myUtm.y, this->gisSettings, &interpolationSettings, meteoPoints, nrMeteoPoints, currentVariable, currentFrequency, currentDate, currentHour, quality, &qualityInterpolationSettings, meteoSettings, &climateParameters, checkSpatialQuality);
     return;
 }
 

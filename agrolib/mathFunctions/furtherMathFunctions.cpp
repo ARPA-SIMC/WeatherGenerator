@@ -32,9 +32,6 @@
 #include "commonConstants.h"
 #include "furtherMathFunctions.h"
 
-#include <fstream>
-#include <iostream>
-
 
 double lapseRateRotatedSigmoid(double x, std::vector <double> par)
 {
@@ -1973,6 +1970,7 @@ namespace interpolation
                                                        int nrTrials, int nrMinima,
                                                        std::vector <double>& parametersMin, std::vector <double>& parametersMax,
                                                        std::vector <double>& parameters, std::vector <double>& parametersDelta,
+                                                       std::vector <double>& stepSize, int numSteps,
                                                        int maxIterationsNr, double myEpsilon, double deltaR2,
                                                        std::vector <double>& x ,std::vector<double>& y,
                                                        std::vector<double>& weights)
@@ -1990,13 +1988,6 @@ namespace interpolation
         int counter = 0;
 
         //grigliato
-        std::vector<double> stepSize;
-        stepSize.resize(parameters.size());
-
-        const int numSteps = 30;
-        for (int i = 0; i < parameters.size(); i++)
-            stepSize[i] = (parametersMax[i]-parametersMin[i])/numSteps;
-
 
         int directions[] = {1, -1};
         size_t numParamsToVary = parameters.size();
@@ -2042,6 +2033,8 @@ namespace interpolation
                         }
                     }
                     counter++;
+
+                    parameters = firstGuessParam;
 
                     if (dir == 0)
                         parameters[paramIndex] = MINVALUE(firstGuessParam[paramIndex] + directions[dir] * step * stepSize[paramIndex], parametersMax[paramIndex]);

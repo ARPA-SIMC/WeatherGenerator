@@ -270,13 +270,14 @@
         std::vector<std::function<double (double, std::vector<double> &)> > getFittingFunction() const;
         void setFittingFunction(const std::vector<std::function<double (double, std::vector<double> &)> > &newFittingFunction);
         void setSingleFittingFunction(const std::function<double (double, std::vector<double> &)> &newFittingFunction, unsigned int index);
+        void addFittingFunction(const std::function<double (double, std::vector<double> &)> &newFittingFunction);
         bool getProxiesComplete() const;
         void setProxiesComplete(bool newProxiesComplete);
         void clearFitting();
         TFittingFunction getChosenElevationFunction();
         void setChosenElevationFunction(TFittingFunction chosenFunction);
         void setPointsRange(double min, double max);
-        std::vector<double> getMinMaxTemperature();
+        std::vector<double> getPointsRange();
     };
 
 #endif // INTERPOLATIONSETTINGS_H
