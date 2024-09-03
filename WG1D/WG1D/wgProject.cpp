@@ -524,6 +524,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
                         initializeDailyDataBasic (&outputDailyData[currentIndex], myDate);
                         outputDailyData[currentIndex].maxTemp = getTMax(myDoy, wgSettings.rainfallThreshold, wGen);
                         outputDailyData[currentIndex].minTemp = getTMin(myDoy, wgSettings.rainfallThreshold, wGen);
+                        outputDailyData[currentIndex].prec = getPrecip(myDoy, wgSettings.rainfallThreshold, wGen);
                         if (outputDailyData[currentIndex].maxTemp < outputDailyData[currentIndex].minTemp)
                         {
                             float average, difference;
@@ -532,7 +533,35 @@ bool WG_Scenario(const WGSettings &wgSettings)
                             outputDailyData[currentIndex].maxTemp = average + 0.5*difference;
                             outputDailyData[currentIndex].minTemp = average - 0.5*difference;
                         }
-                        outputDailyData[currentIndex].prec = getPrecip(myDoy, wgSettings.rainfallThreshold, wGen);
+                        float anomalyTmax[12],anomalyTmin[12];
+                        int count =11;
+                        for (int iSeason=0;iSeason<4;iSeason++)
+                        {
+                            anomalyTmax[count%12] = XMLAnomaly.period[iSeason].seasonalScenarios[1].value[counterMember].toFloat();
+                            anomalyTmin[count%12] = XMLAnomaly.period[iSeason].seasonalScenarios[0].value[counterMember].toFloat();
+                            ++count;
+                            anomalyTmax[count%12] = XMLAnomaly.period[iSeason].seasonalScenarios[1].value[counterMember].toFloat();
+                            anomalyTmin[count%12] = XMLAnomaly.period[iSeason].seasonalScenarios[0].value[counterMember].toFloat();
+                            ++count;
+                            anomalyTmax[count%12] = XMLAnomaly.period[iSeason].seasonalScenarios[1].value[counterMember].toFloat();
+                            anomalyTmin[count%12] = XMLAnomaly.period[iSeason].seasonalScenarios[0].value[counterMember].toFloat();
+                            ++count;
+                        }
+
+                        if (outputDailyData[currentIndex].prec >0)
+                        {
+                            outputDailyData[currentIndex].maxTemp = MINVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.maxTmaxWet[myDate.month-1] + 2 + anomalyTmax[myDate.month-1]);
+                            outputDailyData[currentIndex].maxTemp = MAXVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.minTmaxWet[myDate.month-1] - 2 + anomalyTmax[myDate.month-1]);
+                            outputDailyData[currentIndex].minTemp = MINVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.maxTminWet[myDate.month-1] + 2 + anomalyTmin[myDate.month-1]);
+                            outputDailyData[currentIndex].minTemp = MAXVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.minTminWet[myDate.month-1] - 2 + anomalyTmin[myDate.month-1]);
+                        }
+                        else
+                        {
+                            outputDailyData[currentIndex].maxTemp = MINVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.maxTmaxDry[myDate.month-1] + 2 + anomalyTmax[myDate.month-1]);
+                            outputDailyData[currentIndex].maxTemp = MAXVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.minTmaxDry[myDate.month-1] - 2 + anomalyTmax[myDate.month-1]);
+                            outputDailyData[currentIndex].minTemp = MINVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.maxTminDry[myDate.month-1] + 2 + anomalyTmin[myDate.month-1]);
+                            outputDailyData[currentIndex].minTemp = MAXVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.minTminDry[myDate.month-1] - 2 + anomalyTmin[myDate.month-1]);
+                        }
                         currentIndex++;
                     }
                     writeMeteoDataCsv(outputFileName[counterMember], wgSettings.valuesSeparator, outputDailyData, false);
