@@ -119,16 +119,6 @@ void Crit3DInterpolationSettings::setTopoDist_Kh(int value)
     topoDist_Kh = value;
 }
 
-Crit3DProxyCombination Crit3DInterpolationSettings::getOptimalCombination() const
-{
-    return optimalCombination;
-}
-
-void Crit3DInterpolationSettings::setOptimalCombination(const Crit3DProxyCombination &value)
-{
-    optimalCombination = value;
-}
-
 Crit3DProxyCombination Crit3DInterpolationSettings::getSelectedCombination() const
 {
     return selectedCombination;
@@ -165,6 +155,10 @@ Crit3DProxyCombination Crit3DInterpolationSettings::getCurrentCombination() cons
     return currentCombination;
 }
 
+void Crit3DInterpolationSettings::setSignificantCurrentCombination(unsigned int index, bool isSignificant)
+{
+    currentCombination.setProxySignificant(index, isSignificant);
+}
 
 std::vector<Crit3DProxy> Crit3DInterpolationSettings::getCurrentProxy() const
 {
@@ -298,13 +292,6 @@ void Crit3DInterpolationSettings::setFittingParameters(const std::vector<std::ve
     fittingParameters = newFittingParameters;
 }
 
-void Crit3DInterpolationSettings::setSingleFittingParameters(std::vector<double> &newFittingParameters, int paramIndex)
-{
-    if (fittingParameters.size() <= paramIndex)
-        fittingParameters.resize(paramIndex+1);
-    fittingParameters[paramIndex] = newFittingParameters;
-}
-
 void Crit3DInterpolationSettings::addFittingParameters(const std::vector<std::vector<double> > &newFittingParameters)
 {
     for (size_t i = 0; i < newFittingParameters.size(); ++i) {
@@ -320,14 +307,6 @@ std::vector<std::function<double (double, std::vector<double> &)>> Crit3DInterpo
 void Crit3DInterpolationSettings::setFittingFunction(const std::vector<std::function<double (double, std::vector<double> &)> > &newFittingFunction)
 {
     fittingFunction = newFittingFunction;
-}
-
-void Crit3DInterpolationSettings::setSingleFittingFunction(const std::function<double (double, std::vector<double> &)> &newFittingFunction, unsigned int index)
-{
-    if (fittingFunction.size() <= index)
-        fittingFunction.resize(index + 1);
-    fittingFunction[index] = newFittingFunction;
-
 }
 
 void Crit3DInterpolationSettings::addFittingFunction(const std::function<double (double, std::vector<double> &)> &newFittingFunction)
@@ -455,7 +434,6 @@ void Crit3DInterpolationSettings::initializeProxy()
 
     currentProxy.clear();
     selectedCombination.clear();
-    optimalCombination.clear();
 
     indexHeight = unsigned(NODATA);
 }
@@ -617,16 +595,6 @@ void Crit3DProxy::setGridName(const std::string &value)
     gridName = value;
 }
 
-bool Crit3DProxy::getIsSignificant() const
-{
-    return isSignificant;
-}
-
-void Crit3DProxy::setIsSignificant(bool value)
-{
-    isSignificant = value;
-}
-
 bool Crit3DProxy::getForQualityControl() const
 {
     return forQualityControl;
@@ -745,7 +713,6 @@ Crit3DProxy::Crit3DProxy()
     name = "";
     gridName = "";
     grid = new gis::Crit3DRasterGrid();
-    isSignificant = false;
     forQualityControl = false;
 
     regressionR2 = NODATA;
@@ -850,8 +817,6 @@ void Crit3DInterpolationSettings::addProxy(Crit3DProxy myProxy, bool isActive_)
 
     selectedCombination.addProxyActive(isActive_);
     selectedCombination.addProxySignificant(false);
-    optimalCombination.addProxyActive(isActive_);
-    optimalCombination.addProxySignificant(false);
 }
 
 std::string Crit3DInterpolationSettings::getProxyName(unsigned pos)
