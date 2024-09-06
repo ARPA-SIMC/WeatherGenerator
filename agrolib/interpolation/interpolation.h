@@ -100,7 +100,7 @@
 
     void localSelection(std::vector <Crit3DInterpolationDataPoint> &inputPoints,
                           std::vector <Crit3DInterpolationDataPoint> &selectedPoints,
-                          float x, float y, float z, Crit3DInterpolationSettings &mySettings);
+                          float x, float y, Crit3DInterpolationSettings &mySettings);
 
     void localSelection_new(std::vector <Crit3DInterpolationDataPoint> &inputPoints, std::vector <Crit3DInterpolationDataPoint> &selectedPoints,
                          float x, float y, float z, Crit3DInterpolationSettings& mySettings);
@@ -112,6 +112,8 @@
                                float stdDevThreshold);
 
     bool setHeightTemperatureRange(Crit3DProxyCombination myCombination, Crit3DInterpolationSettings* mySettings);
+
+    void calculateFirstGuessCombinations(Crit3DProxy* myProxy);
 
     bool setFittingParameters_elevation(int elevationPos, Crit3DInterpolationSettings* mySettings,
                                          std::vector<std::function<double(double, std::vector<double>&)>>& myFunc,
