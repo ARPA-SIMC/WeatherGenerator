@@ -1094,7 +1094,7 @@ void localSelection(vector <Crit3DInterpolationDataPoint> &inputPoints, vector <
         inputPoints[i].distance = gis::computeDistance(x, y, float((inputPoints[i]).point->utm.x), float((inputPoints[i]).point->utm.y));
 
     unsigned int nrValid = 0;
-    float stepRadius = 2500;           // [m]
+    float stepRadius = 1000;           // [m]
     float r0 = 0;                       // [m]
     float r1 = stepRadius;              // [m]
     unsigned int i;
@@ -1103,7 +1103,6 @@ void localSelection(vector <Crit3DInterpolationDataPoint> &inputPoints, vector <
     int maxDistance = 0;
     while (nrValid < minPoints || (mySettings.getUseLapseRateCode() && nrPrimaries < minPoints))
     {
-        maxDistance = 0;
         for (i=0; i < inputPoints.size(); i++)
         {
             if (inputPoints[i].distance != NODATA && inputPoints[i].distance > r0 && inputPoints[i].distance <= r1)
@@ -1125,7 +1124,7 @@ void localSelection(vector <Crit3DInterpolationDataPoint> &inputPoints, vector <
         for (i=0; i< selectedPoints.size(); i++)
         {
             selectedPoints[i].regressionWeight = MAXVALUE(1 - selectedPoints[i].distance / maxDistance, EPSILON);
-            //selectedPoints[i].regressionWeight = MAXVALUE(std::exp(-std::pow(selectedPoints[i].distance/((4/5*maxDistance)),7.0)),EPSILON);
+            //selectedPoints[i].regressionWeight = MAXVALUE(std::exp(-selectedPoints[i].distance*selectedPoints[i].distance/((0.5*maxDistance)*(0.5*maxDistance))),EPSILON);
             //selectedPoints[i].regressionWeight = float(MAXVALUE((-(1/std::pow(maxDistance,4)*(std::pow(selectedPoints[i].distance,4)))+1),EPSILON));
             //selectedPoints[i].regressionWeight = 1;
         }
@@ -1508,7 +1507,7 @@ void calculateFirstGuessCombinations(Crit3DProxy* myProxy)
     std::vector<double> tempParam = myProxy->getFittingParametersRange();
     std::vector <int> firstGuessPosition = myProxy->getFittingFirstGuess();
     std::vector <double> tempFirstGuess;
-    int numSteps = 10;
+    int numSteps = 13;
     std::vector <double> stepSize;
     int nrParam = int(tempParam.size()/2);
 
@@ -1579,7 +1578,7 @@ bool setFittingParameters_elevation(int elevationPos, Crit3DInterpolationSetting
                              std::vector<double> &stepSize, int numSteps,
                              std::string &errorStr)
 {
-    const double RATIO_DELTA = 1000;
+    const double RATIO_DELTA = 800;
 
     if (mySettings->getChosenElevationFunction() == piecewiseTwo)
     {
@@ -1790,10 +1789,9 @@ bool multipleDetrendingElevationFitting(int elevationPos, std::vector <Crit3DInt
     {
         errorStr = "couldn't prepare the fitting parameters for proxy: elevation.";
         return false;
-    }
+    }   
 
     std::vector<std::vector<double>> firstGuessCombinations = mySettings->getProxy(elevationPos)->getFirstGuessCombinations();
-
     // multiple non linear fitting
     interpolation::bestFittingMarquardt_nDimension_singleFunction(*(myFunc.target<double(*)(double, std::vector<double>&)>()), 400, 4, parametersMin, parametersMax, parameters, parametersDelta,
                                                                   stepSize, numSteps, 100, 0.005, 0.002, predictors, predictands, weights,firstGuessCombinations);
