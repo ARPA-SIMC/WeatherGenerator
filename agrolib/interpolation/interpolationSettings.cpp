@@ -363,17 +363,17 @@ void Crit3DInterpolationSettings::setChosenElevationFunction(TFittingFunction ch
             if (chosenFunction == piecewiseTwo)
             {
                 tempParam[1] = MIN_T-2;
-                tempParam[5] = MAX_T+2;
+                tempParam[5] = MAX_T+6;
             }
             else if (chosenFunction == piecewiseThree)
             {
                 tempParam[1] = MIN_T-2;
-                tempParam[6] = MAX_T+2;
+                tempParam[6] = MAX_T+6;
             }
             else if (chosenFunction == piecewiseThreeFree)
             {
                 tempParam[1] = MIN_T-2;
-                tempParam[7] = MAX_T+2;
+                tempParam[7] = MAX_T+6;
             }
 
             getProxy(elPos)->setFittingParametersRange(tempParam);
@@ -383,19 +383,19 @@ void Crit3DInterpolationSettings::setChosenElevationFunction(TFittingFunction ch
             if (chosenFunction == piecewiseTwo)
             {
                 getProxy(elPos)->setFittingParametersRange({0, MIN_T-2, SLOPE_MIN, INVSLOPE_MIN,
-                                                            H0_MAX, MAX_T+2, SLOPE_MAX, INVSLOPE_MAX});
+                                                            H0_MAX, MAX_T+6, SLOPE_MAX, INVSLOPE_MAX});
                 getProxy(elPos)->setFittingFirstGuess({0,1,1,1});
             }
             else if (chosenFunction == piecewiseThree)
             {
                 getProxy(elPos)->setFittingParametersRange({H0_MIN, MIN_T-2, DELTA_MIN, SLOPE_MIN, INVSLOPE_MIN,
-                                                            H0_MAX, MAX_T+2, DELTA_MAX, SLOPE_MAX, INVSLOPE_MAX});
+                                                            H0_MAX, MAX_T+6, DELTA_MAX, SLOPE_MAX, INVSLOPE_MAX});
                 getProxy(elPos)->setFittingFirstGuess({0,1,1,1,1});
             }
             else if (chosenFunction == piecewiseThreeFree)
             {
                 getProxy(elPos)->setFittingParametersRange({H0_MIN, MIN_T-2, DELTA_MIN, SLOPE_MIN, INVSLOPE_MIN, INVSLOPE_MIN,
-                                                            H0_MAX, MAX_T+2, DELTA_MAX, SLOPE_MAX, INVSLOPE_MAX, INVSLOPE_MAX});
+                                                            H0_MAX, MAX_T+6, DELTA_MAX, SLOPE_MAX, INVSLOPE_MAX, INVSLOPE_MAX});
                 getProxy(elPos)->setFittingFirstGuess({0,1,1,1,1,1});
             }
             getProxy(elPos)->setFittingFunctionName(chosenFunction);          
@@ -510,6 +510,9 @@ bool Crit3DInterpolationSettings::getUseTD()
 bool Crit3DInterpolationSettings::getUseLocalDetrending()
 { return useLocalDetrending;}
 
+bool Crit3DInterpolationSettings::getUseDoNotRetrend()
+{ return useDoNotRetrend;}
+
 float Crit3DInterpolationSettings::getMaxHeightInversion()
 { return maxHeightInversion;}
 
@@ -527,6 +530,9 @@ void Crit3DInterpolationSettings::setUseTD(bool myValue)
 
 void Crit3DInterpolationSettings::setUseLocalDetrending(bool myValue)
 { useLocalDetrending = myValue;}
+
+void Crit3DInterpolationSettings::setUseDoNotRetrend(bool myValue)
+{ useDoNotRetrend = myValue;}
 
 void Crit3DInterpolationSettings::setUseDewPoint(bool myValue)
 { useDewPoint = myValue;}
