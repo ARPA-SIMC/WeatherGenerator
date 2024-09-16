@@ -550,10 +550,23 @@ bool WG_Scenario(const WGSettings &wgSettings)
 
                         if (outputDailyData[currentIndex].prec >0)
                         {
-                            outputDailyData[currentIndex].maxTemp = MINVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.maxTmaxWet[myDate.month-1] + 0 + anomalyTmax[myDate.month-1]);
-                            outputDailyData[currentIndex].maxTemp = MAXVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.minTmaxWet[myDate.month-1] - 0 + anomalyTmax[myDate.month-1]);
-                            outputDailyData[currentIndex].minTemp = MINVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.maxTminWet[myDate.month-1] + 0 + anomalyTmin[myDate.month-1]);
-                            outputDailyData[currentIndex].minTemp = MAXVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.minTminWet[myDate.month-1] - 0 + anomalyTmin[myDate.month-1]);
+                            outputDailyData[currentIndex].maxTemp = MINVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.maxTmaxWet[myDate.month-1] + 1 + anomalyTmax[myDate.month-1]);
+                            outputDailyData[currentIndex].maxTemp = MAXVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.minTmaxWet[myDate.month-1] - 1 + anomalyTmax[myDate.month-1]);
+                            outputDailyData[currentIndex].minTemp = MINVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.maxTminWet[myDate.month-1] + 1 + anomalyTmin[myDate.month-1]);
+                            outputDailyData[currentIndex].minTemp = MAXVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.minTminWet[myDate.month-1] - 1 + anomalyTmin[myDate.month-1]);
+                            /*
+                            if (outputDailyData[currentIndex].maxTemp > wGenClimate.monthly.monthlyTmaxWet[myDate.month-1])
+                            {
+                                float delta;
+                                delta = outputDailyData[currentIndex].maxTemp - wGenClimate.monthly.monthlyTmaxWet[myDate.month-1];
+                                outputDailyData[currentIndex].maxTemp -= 0.1* delta;
+                            }
+                            if (outputDailyData[currentIndex].minTemp > wGenClimate.monthly.monthlyTminWet[myDate.month-1])
+                            {
+                                float delta;
+                                delta = outputDailyData[currentIndex].minTemp - wGenClimate.monthly.monthlyTminWet[myDate.month-1];
+                                outputDailyData[currentIndex].minTemp -= 0.1* delta;
+                            }*/
                         }
                         else
                         {
@@ -561,7 +574,23 @@ bool WG_Scenario(const WGSettings &wgSettings)
                             outputDailyData[currentIndex].maxTemp = MAXVALUE(outputDailyData[currentIndex].maxTemp,wGenClimate.monthly.minTmaxDry[myDate.month-1] - 0 + anomalyTmax[myDate.month-1]);
                             outputDailyData[currentIndex].minTemp = MINVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.maxTminDry[myDate.month-1] + 0 + anomalyTmin[myDate.month-1]);
                             outputDailyData[currentIndex].minTemp = MAXVALUE(outputDailyData[currentIndex].minTemp,wGenClimate.monthly.minTminDry[myDate.month-1] - 0 + anomalyTmin[myDate.month-1]);
+                            /*
+                            if (outputDailyData[currentIndex].maxTemp > wGenClimate.monthly.monthlyTmaxDry[myDate.month-1])
+                            {
+                                float delta;
+                                delta = outputDailyData[currentIndex].maxTemp - wGenClimate.monthly.monthlyTmaxDry[myDate.month-1];
+                                outputDailyData[currentIndex].maxTemp -= 0.1* delta;
+                            }
+                            if (outputDailyData[currentIndex].minTemp > wGenClimate.monthly.monthlyTminDry[myDate.month-1])
+                            {
+                                float delta;
+                                delta = outputDailyData[currentIndex].minTemp - wGenClimate.monthly.monthlyTminDry[myDate.month-1];
+                                outputDailyData[currentIndex].minTemp -= 0.1* delta;
+                            }
+                            */
                         }
+
+
                         currentIndex++;
                     }
                     writeMeteoDataCsv(outputFileName[counterMember], wgSettings.valuesSeparator, outputDailyData, false);

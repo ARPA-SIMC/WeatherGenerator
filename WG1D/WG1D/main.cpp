@@ -64,7 +64,7 @@
 // uncomment TEST_WG_CLIMATE or TEST_WG_SEASONAL or TEST_WG_SCENARIO to execute test
 //#define TEST_WG_CLIMATE 1
 //#define TEST_WG_SEASONAL 2
-#define TEST_WG_SCENARIO 3
+//#define TEST_WG_SCENARIO 3
 //#define TEST_WG_WATERTABLE 4
 
 void usage()
@@ -123,8 +123,8 @@ int main(int argc, char *argv[])
             //settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt2024_MJJ/wg/WG_2024_MJJ_C1.ini";
         #else
             #ifdef TEST_WG_SCENARIO
-                //settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
-                settingsFileName = dataPath + "TEST_scenario/testWG_Scenario.ini"; //
+                settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
+                //settingsFileName = dataPath + "TEST_scenario/testWG_Scenario.ini"; //
             #else
                 #ifdef TEST_WG_WATERTABLE
                     settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable.ini";
