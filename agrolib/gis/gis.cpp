@@ -593,6 +593,40 @@ namespace gis
             return sqrtf((dx * dx) + (dy * dy));
     }
 
+
+    std::vector<float> computeEuclideanDistanceStation2Area(std::vector<std::vector<int>>& cells,std::vector<std::vector<int>>& stations)
+    {
+        // è possibile sapere in quale cella (row,col) si trova la stazione?
+        std::vector<float> distance(stations.size());
+        for (int i=0;i<stations.size();i++)
+        {
+            distance[i] = (float)(stations[i][0] - cells[0][0])*(stations[i][0] - cells[0][0])+(stations[i][1] - cells[0][1])*(stations[i][1] - cells[0][1]);
+            for (int j=1;j<cells[i].size();j++)
+            {
+                distance[i] = MINVALUE(distance[i],(stations[i][0] - cells[j][0])*(stations[i][0] - cells[j][0])+(stations[i][1] - cells[j][1])*(stations[i][1] - cells[j][1]));
+            }
+            distance[i] = float(sqrt(1.*distance[i]));
+        }
+        return distance;
+    }
+
+
+    std::vector<int> computeMetropolisDistanceStation2Area(std::vector<std::vector<int>>& cells,std::vector<std::vector<int>>& stations)
+    {
+        // è possibile sapere in quale cella (row,col) si trova la stazione?
+        std::vector<int> distance(stations.size());
+        for (int i=0; i<stations.size(); i++)
+        {
+            distance[i] = abs(stations[i][0] - cells[0][0])+abs(stations[i][1] - cells[0][1]);
+            for (int j=1;j<cells[i].size();j++)
+            {
+                distance[i] = MINVALUE(distance[i],abs(stations[i][0] - cells[j][0])+abs(stations[i][1] - cells[j][1]));
+            }
+        }
+        return distance;
+    }
+
+
     void getRowColFromXY(const Crit3DRasterHeader& myHeader, double myX, double myY, int *row, int *col)
     {
         *row = (myHeader.nrRows - 1) - int(floor((myY - myHeader.llCorner.y) / myHeader.cellSize));
@@ -1486,7 +1520,7 @@ namespace gis
 
         double resampleFactor = newGrid->header->cellSize / oldGrid.header->cellSize;
 
-        int row, col, tmpRow, tmpCol, nrValues, maxValues;
+        int row, col, tmpRow, tmpCol, nrValues;
         gis::Crit3DPoint myLL, myUR;
         std::vector<float> values;
 
@@ -1495,62 +1529,69 @@ namespace gis
         for (row = 0; row < newGrid->header->nrRows; row++)
             for (col = 0; col < newGrid->header->nrCols; col++)
             {
+                // initialize
                 newGrid->value[row][col] = newGrid->header->flag;
-
                 float value = NODATA;
-                if (resampleFactor < 1. || elab == aggrCenter)
+
+                if (resampleFactor <= 1. || elab == aggrCenter)
                 {
                     double x, y;
                     newGrid->getXY(row, col, x, y);
                     oldGrid.getRowCol(x, y, tmpRow, tmpCol);
                     if (! gis::isOutOfGridRowCol(tmpRow, tmpCol, oldGrid))
                     {
-                        value = oldGrid.value[tmpRow][tmpCol];
+                        float tmpValue = oldGrid.value[tmpRow][tmpCol];
+                        if (! isEqual(tmpValue, oldGrid.header->flag))
+                            value = tmpValue;
                     }
                 }
                 else
                 {
+                    int nrStep = floor(resampleFactor) + 1;
+                    double step = newGrid->header->cellSize / nrStep;
+                    double halfStep = step * 0.5;
+
                     double x0, y0;
                     newGrid->getXY(row, col, x0, y0);
-                    myLL.utm.x = x0 - (newGrid->header->cellSize / 2);
-                    myLL.utm.y = y0 - (newGrid->header->cellSize / 2);
-                    myUR.utm.x = x0 + (newGrid->header->cellSize / 2);
-                    myUR.utm.y = y0 + (newGrid->header->cellSize / 2);
-
-                    double step = oldGrid.header->cellSize * 0.5;
+                    myLL.utm.x = x0 - (newGrid->header->cellSize / 2) + halfStep;
+                    myLL.utm.y = y0 - (newGrid->header->cellSize / 2) + halfStep;
+                    myUR.utm.x = x0 + (newGrid->header->cellSize / 2) - halfStep;
+                    myUR.utm.y = y0 + (newGrid->header->cellSize / 2) - halfStep;
 
                     values.clear();
-                    maxValues = 0;
-
-                    double x = myLL.utm.x;
-                    while(x <= myUR.utm.x)
+                    int maxNrValues = 0;
+                    for (int i = 0; i < nrStep; i++)
                     {
-                        double y = myLL.utm.y;
-                        while(y <= myUR.utm.y)
+                        double x = myLL.utm.x + step * i;
+                        for (int j = 0; j < nrStep; j++)
                         {
-                            maxValues++;
+                            double y = myLL.utm.y + step * j;
                             float tmpValue = gis::getValueFromXY(oldGrid, x, y);
                             if (! isEqual(tmpValue, oldGrid.header->flag))
                             {
                                 values.push_back(tmpValue);
                             }
-
-                            y += step;
+                            maxNrValues++;
                         }
-                        x += step;
                     }
                     nrValues = int(values.size());
 
-                    if (maxValues > 0)
+                    if (maxNrValues > 0)
                     {
-                        if ((float(nrValues) / float(maxValues)) > nodataRatioThreshold)
+                        if ((float(nrValues) / float(maxNrValues)) > nodataRatioThreshold)
                         {
                             if (elab == aggrAverage)
                                 value = statistics::mean(values);
                             else if (elab == aggrMedian)
                                 value = sorting::percentile(values, nrValues, 50, true);
                             else if (elab == aggrPrevailing)
-                                value = prevailingValue(values);
+                            {
+                                int nrMissing = maxNrValues - nrValues;
+                                if (nrMissing < nrValues)
+                                {
+                                    value = prevailingValue(values);
+                                }
+                            }
                         }
                     }
                 }
@@ -1677,5 +1718,42 @@ namespace gis
         return true;
     }
 
-}
 
+    // return nr of valid cells and avg value
+    bool rasterSummary(Crit3DRasterGrid *myGrid, int &nrValids, float &avgValue, std::string &error)
+    {
+        // initialize
+        nrValids = NODATA;
+        avgValue = NODATA;
+
+        if ((myGrid == nullptr) || (!myGrid->isLoaded))
+        {
+            error = "The raster is null or hasn't been loaded correctly.";
+            return false;
+        }
+
+        // list of valid values
+        float myValue;
+        std::vector <float> validValues;
+        for (int row = 0; row < myGrid->header->nrRows; row++)
+        {
+            for (int col = 0; col < myGrid->header->nrCols; col++)
+            {
+                myValue = myGrid->value[row][col];
+
+                if (! isEqual(myValue, myGrid->header->flag)  && ! isEqual(myValue, NODATA))
+                {
+                    validValues.push_back(myValue);
+                }
+            }
+        }
+
+        nrValids = int(validValues.size());
+        avgValue = statistics::mean(validValues);
+
+        validValues.clear();
+
+        return true;
+    }
+
+}

@@ -23,6 +23,7 @@
     ftomei@arpae.it
 */
 
+#include <iostream>
 #include <math.h>
 #include <algorithm>
 
@@ -631,6 +632,9 @@ double ET0_Penman_hourly_net_rad(double heigth, double netIrradiance, double air
     double gamma;                                /*!<  psychrometric constant (kPa C-1) */
     double firstTerm, secondTerm, denominator;
 
+    if (heigth == NODATA || netIrradiance == NODATA || airTemp == NODATA || airHum == NODATA || windSpeed10 == NODATA)
+        return NODATA;
+
     netRadiation = 3600 * netIrradiance;
 
     es = saturationVaporPressure(airTemp) / 1000.;
@@ -939,9 +943,9 @@ std::string getVariableString(meteoVariable myVar)
         return "No variable";
 }
 
+
 std::string getKeyStringMeteoMap(std::map<std::string, meteoVariable> map, meteoVariable value)
 {
-
     std::map<std::string, meteoVariable>::const_iterator it;
     std::string key = "";
 
@@ -953,6 +957,7 @@ std::string getKeyStringMeteoMap(std::map<std::string, meteoVariable> map, meteo
             break;
         }
     }
+
     return key;
 }
 
@@ -991,8 +996,10 @@ meteoVariable getKeyMeteoVarMeteoMap(std::map<meteoVariable,std::string> map, co
             break;
         }
     }
+
     return key;
 }
+
 
 meteoVariable getKeyMeteoVarMeteoMapWithoutUnderscore(std::map<meteoVariable,std::string> map, const std::string& value)
 {

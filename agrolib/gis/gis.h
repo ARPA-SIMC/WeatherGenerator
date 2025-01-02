@@ -1,13 +1,13 @@
 #ifndef GIS_H
 #define GIS_H
 
-    #ifndef VECTOR_H
+    #ifndef _VECTOR_
         #include <vector>
     #endif
     #ifndef _STRING_
         #include <string>
     #endif
-    #ifndef COLOR_H
+    #ifndef CRIT3DCOLOR_H
         #include "color.h"
     #endif
     #ifndef CRIT3DDATE_H
@@ -193,8 +193,11 @@
             Crit3DEllipsoid();
         };
 
+
         float computeDistance(float x1, float y1, float x2, float y2);
         double computeDistancePoint(Crit3DUtmPoint *p0, Crit3DUtmPoint *p1);
+        std::vector<float> computeEuclideanDistanceStation2Area(std::vector<std::vector<int>>& cells,std::vector<std::vector<int>>& stations);
+        std::vector<int> computeMetropolisDistanceStation2Area(std::vector<std::vector<int>>& cells,std::vector<std::vector<int>>& stations);
         bool updateMinMaxRasterGrid(Crit3DRasterGrid *rasterGrid);
         void convertFlagToNodata(Crit3DRasterGrid& myGrid);
         bool updateColorScale(Crit3DRasterGrid* rasterGrid, int row0, int col0, int row1, int col1);
@@ -276,6 +279,8 @@
                           Crit3DRasterHeader* newHeader, aggregationMethod elab, float nodataRatioThreshold);
         bool temporalYearlyInterpolation(const gis::Crit3DRasterGrid& firstGrid, const gis::Crit3DRasterGrid& secondGrid,
                                          int myYear, float minValue, float maxValue, gis::Crit3DRasterGrid* outGrid);
+
+        bool rasterSummary(Crit3DRasterGrid *myGrid, int &nrValids, float &avgValue, std::string &error);
     }
 
 

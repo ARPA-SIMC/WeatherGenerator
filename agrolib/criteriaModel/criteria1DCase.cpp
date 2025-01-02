@@ -161,16 +161,17 @@ bool Crit1DCase::initializeNumericalFluxes(std::string &error)
     for (unsigned int horizonIndex = 0; horizonIndex < mySoil.nrHorizons; horizonIndex++)
     {
         soil::Crit3DHorizon horizon = mySoil.horizon[horizonIndex];
-        double soilFraction = (1.0 - horizon.coarseFragments);
+
         result = soilFluxes3D::setSoilProperties(soilIndex, int(horizonIndex),
                             horizon.vanGenuchten.alpha * GRAVITY,
                             horizon.vanGenuchten.n, horizon.vanGenuchten.m,
                             horizon.vanGenuchten.he / GRAVITY,
-                            horizon.vanGenuchten.thetaR * soilFraction,
-                            horizon.vanGenuchten.thetaS * soilFraction,
+                            horizon.vanGenuchten.thetaR * horizon.getSoilFraction(),
+                            horizon.vanGenuchten.thetaS * horizon.getSoilFraction(),
                             (horizon.waterConductivity.kSat * 0.01) / DAY_SECONDS,
                             horizon.waterConductivity.l,
                             horizon.organicMatter, horizon.texture.clay * 0.01);
+
         if (result != CRIT3D_OK)
         {
             error = "Error in setSoilProperties, horizon nr: " + std::to_string(horizonIndex + 1);
@@ -682,7 +683,7 @@ double Crit1DCase::getTotalWaterContent()
  */
 double Crit1DCase::getVolumetricWaterContent(double computationDepth)
 {
-    computationDepth /= 100;        // [cm] --> [m]
+    computationDepth /= 100.;        // [cm] --> [m]
 
     if (computationDepth <= 0 || computationDepth > mySoil.totalDepth)
         return NODATA;

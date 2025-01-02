@@ -140,8 +140,11 @@
 
             double fieldCapacity;               /*!<  [kPa]     */
             double wiltingPoint;                /*!<  [kPa]     */
+
+            double waterContentSAT;             /*!<  [m3 m-3]*/
             double waterContentFC;              /*!<  [m3 m-3]*/
             double waterContentWP;              /*!<  [m3 m-3]*/
+
             double PH;                          /*!<  [-]       */
             double CEC;                         /*!<  [meq/100g]*/
 
@@ -154,8 +157,7 @@
 
             Crit3DHorizon();
 
-            double getSoilFraction()
-                { return (1.0 - coarseFragments); }
+            double getSoilFraction() const { return (1.0 - coarseFragments); }
         };
 
 

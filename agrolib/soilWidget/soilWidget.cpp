@@ -616,15 +616,17 @@ void Crit3DSoilWidget::on_actionParameterRestriction()
 
 void Crit3DSoilWidget::on_actionSave()
 {
-    QString errorStr;
-    QString soilCodeChanged = QString::fromStdString(mySoil.code);
+    if (mySoil.code.empty())
+        return;
 
+    QString soilCodeChanged = QString::fromStdString(mySoil.code);
     QString msg = "Are you sure you want to save " + soilCodeChanged + " ?";
     QMessageBox::StandardButton confirm = QMessageBox::question(nullptr, "Warning", msg, QMessageBox::Yes|QMessageBox::No, QMessageBox::No);
     if (confirm == QMessageBox::No)
         return;
 
-    if (!updateSoilData(dbSoil, soilCodeChanged, mySoil, errorStr))
+    QString errorStr;
+    if (! updateSoilData(dbSoil, soilCodeChanged, mySoil, errorStr))
     {
         QMessageBox::critical(nullptr, "Error in update horizon table!", errorStr);
         return;
@@ -752,13 +754,13 @@ void Crit3DSoilWidget::setInfoTextural(int nHorizon)
     }
     else
     {
-        if (mySoil.horizon[unsigned(nHorizon)].vanGenuchten.thetaS == NODATA)
+        if (mySoil.horizon[unsigned(nHorizon)].waterContentSAT == NODATA)
         {
             satValue->setText(QString::number(NODATA));
         }
         else
         {
-            satValue->setText(QString::number(mySoil.horizon[unsigned(nHorizon)].vanGenuchten.thetaS, 'f', 3));
+            satValue->setText(QString::number(mySoil.horizon[unsigned(nHorizon)].waterContentSAT, 'f', 3));
         }
 
         if (mySoil.horizon[unsigned(nHorizon)].waterContentFC == NODATA)

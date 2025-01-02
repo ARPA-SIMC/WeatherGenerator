@@ -640,7 +640,8 @@ int DLL_EXPORT __STDCALL setHydraulicProperties(int waterRetentionCurve,
 /*!
  * \brief getWaterContent
  * \param nodeIndex
- * \return water content at the surface: [m] surface water level; and sub-surface: [m3 m-3] volumetric water content
+ * \return at the surface: [m] surface water level
+ * \return at sub-surface: [m3 m-3] volumetric water content
  */
  double DLL_EXPORT __STDCALL getWaterContent(long nodeIndex)
  {
@@ -651,12 +652,12 @@ int DLL_EXPORT __STDCALL setHydraulicProperties(int waterRetentionCurve,
 
         if  (nodeListPtr[nodeIndex].isSurface)
         {
-            /*! surface */
+            // surface
             return (nodeListPtr[nodeIndex].H - nodeListPtr[nodeIndex].z);
         }
         else
         {
-            /*! sub-surface */
+            // sub-surface
             return theta_from_Se(nodeIndex);
         }
  }
@@ -790,7 +791,7 @@ int DLL_EXPORT __STDCALL setHydraulicProperties(int waterRetentionCurve,
  /*!
   * \brief getMatricPotential
   * \param nodeIndex [-]
-  * \return matric potential [m]
+  * \return matric potential (with sign) [m]
   */
  double DLL_EXPORT __STDCALL getMatricPotential(long nodeIndex)
  {
