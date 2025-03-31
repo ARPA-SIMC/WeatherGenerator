@@ -1,0 +1,46 @@
+﻿***********************************
+add alias to remote repository
+***********************************
+
+git remote add agrolib https://github.com/ARPA-SIMC/agrolib
+
+es di clean:
+- cancellare agrolib
+- commit 
+git subtree add --prefix agrolib agrolib master
+
+
+***********************************
+push subtree
+sequenza corretta 
+***********************************
+git subtree push --prefix agrolib agrolib master
+git subtree split --rejoin --prefix agrolib
+git push
+
+
+************************
+clean repository
+************************
+- partire da un clone pulito (così da non avere file di compilazione)
+
+rm -rf .git/
+
+- rimuovere tutta la cartella agrolib
+
+git init
+git add .
+git commit -m 'first commit'
+git remote add wg https://github.com/ARPA-SIMC/WeatherGenerator
+git push --force wg master
+
+- cancellare questa cartella e fare un nuovo clone (così da avere la cartella pulita senza agrolib)
+
+- aggiungere agrolib:
+git remote add agrolib https://github.com/ARPA-SIMC/agrolib
+git subtree add --prefix agrolib agrolib master
+git push
+
+ 
+ 
+
