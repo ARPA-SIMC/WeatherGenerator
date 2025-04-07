@@ -28,7 +28,8 @@ win32:{
 }
 
 
-INCLUDEPATH += ../crit3dDate ../mathFunctions ../meteo ../gis ../waterTable
+INCLUDEPATH +=  ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions  \
+                ../../../agrolib/meteo ../../../agrolib/gis ../../../agrolib/waterTable
 
 SOURCES += \
     timeUtility.cpp \

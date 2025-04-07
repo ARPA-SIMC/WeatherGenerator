@@ -1,7 +1,8 @@
 TEMPLATE = subdirs
 
-SUBDIRS =   ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions ../../../agrolib/gis  \
-            ../../../agrolib/meteo ../../../agrolib/weatherGenerator ../../../agrolib/waterTable \
+SUBDIRS =   ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions  \
+            ../../../agrolib/gis ../../../agrolib/meteo ../../../agrolib/waterTable \
+            ../../src/weatherGenerator  \
             ../WG1D
 
 CONFIG += ordered

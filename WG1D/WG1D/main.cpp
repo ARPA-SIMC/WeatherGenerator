@@ -61,11 +61,11 @@
 #include <QDir>
 
 
-// uncomment TEST_WG_CLIMATE or TEST_WG_SEASONAL or TEST_WG_SCENARIO to execute test
-//#define TEST_WG_CLIMATE 1
-//#define TEST_WG_SEASONAL 2
-//#define TEST_WG_SCENARIO 3
-//#define TEST_WG_WATERTABLE 4
+// uncomment to execute test:
+//#define TEST_WG_CLIMATE
+//#define TEST_WG_SEASONAL
+//#define TEST_WG_SCENARIO
+//#define TEST_WG_WATERTABLE
 
 void usage()
 {
@@ -178,4 +178,3 @@ int main(int argc, char *argv[])
     std::cout << "\nEND\n";
     std::cout << std::flush;
 }
-
