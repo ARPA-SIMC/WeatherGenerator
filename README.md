@@ -1,7 +1,7 @@
 # WeatherGenerator
 A suite of programs aimed at producing temporal series based on the observational dataset. Daily data of precipitation, maximum temperature and minimum temperature are produced. Two different algorithms have been developed: 1) generation of single point weather data series. 2) generation of a spatially coherent two-dimensional data series.
-Each algorithm has a specific directory including all needed dependencies. Both algorithms depend on the agrolib library.
-
+Each algorithm has a specific directory including all needed dependencies.  
+Both algorithms depend on the [agrolib library](https://github.com/ARPA-SIMC/agrolib).
 # WG1D
 One dimensional Weather Generator (Richardson scheme), based on *Jovanovic, NZ, Annandale, JG, Benade, N. & Campbell, GS, CLIMGEN-UP: A user-friendly weather data generator, South African Journal of Plant and Soil 20.4 (2003): 203-208.*
 
