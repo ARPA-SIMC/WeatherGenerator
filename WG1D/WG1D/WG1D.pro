@@ -12,7 +12,7 @@
 #------------------------------------------------------------------------
 
 
-QT += core sql xml
+QT += sql xml
 QT -= gui
 
 CONFIG += c++11
@@ -40,26 +40,24 @@ win32:{
     TARGET = WG1D
 }
 
-INCLUDEPATH +=  ../../agrolib/crit3dDate ../../agrolib/mathFunctions ../../agrolib/gis  \
-                ../../agrolib/meteo ../../agrolib/weatherGenerator ../../agrolib/waterTable
+INCLUDEPATH +=  ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions ../../../agrolib/gis  \
+                ../../../agrolib/meteo ../../../agrolib/weatherGenerator ../../../agrolib/waterTable
 
 CONFIG(debug, debug|release) {
-    LIBS += -L../../agrolib/waterTable/debug -lwaterTable
-    LIBS += -L../../agrolib/utilities/debug -lutilities
-    LIBS += -L../../agrolib/weatherGenerator/debug -lweatherGenerator
-    LIBS += -L../../agrolib/meteo/debug -lmeteo
-    LIBS += -L../../agrolib/gis/debug -lgis
-    LIBS += -L../../agrolib/mathFunctions/debug -lmathFunctions
-    LIBS += -L../../agrolib/crit3dDate/debug -lcrit3dDate
+    LIBS += -L../../../agrolib/waterTable/debug -lwaterTable
+    LIBS += -L../../../agrolib/weatherGenerator/debug -lweatherGenerator
+    LIBS += -L../../../agrolib/meteo/debug -lmeteo
+    LIBS += -L../../../agrolib/gis/debug -lgis
+    LIBS += -L../../../agrolib/mathFunctions/debug -lmathFunctions
+    LIBS += -L../../../agrolib/crit3dDate/debug -lcrit3dDate
 
 } else {
-    LIBS += -L../../agrolib/waterTable/release -lwaterTable
-    LIBS += -L../../agrolib/utilities/release -lutilities
-    LIBS += -L../../agrolib/weatherGenerator/release -lweatherGenerator
-    LIBS += -L../../agrolib/meteo/release -lmeteo
-    LIBS += -L../../agrolib/gis/release -lgis
-    LIBS += -L../../agrolib/mathFunctions/release -lmathFunctions
-    LIBS += -L../../agrolib/crit3dDate/release -lcrit3dDate
+    LIBS += -L../../../agrolib/waterTable/release -lwaterTable
+    LIBS += -L../../../agrolib/weatherGenerator/release -lweatherGenerator
+    LIBS += -L../../../agrolib/meteo/release -lmeteo
+    LIBS += -L../../../agrolib/gis/release -lgis
+    LIBS += -L../../../agrolib/mathFunctions/release -lmathFunctions
+    LIBS += -L../../../agrolib/crit3dDate/release -lcrit3dDate
 }
 
 

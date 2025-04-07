@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "*** 1D Weather Generator ***\n";
-    std::cout << "Mode: CLIMATE | SEASONAL FORECAST | SCENARIO\n";
+    std::cout << "WG1D - daily Weather Generator\n";
+    std::cout << "execution mode: CLIMATE | SEASONAL FORECAST | SCENARIO\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
