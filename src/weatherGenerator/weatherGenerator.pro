@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------
 #
 #   weatherGenerator (1D) library
-#   This project is part of CRITERIA3D distribution
+#   This project is part of ARPAE WG distribution
 #
 #   Based on Richardson, C. W. and D. A. Wright,
 #   WGEN: A model for generating daily weather variables, USDA, 1984
