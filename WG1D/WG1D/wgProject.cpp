@@ -320,7 +320,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 int stepDays = 10;
                 if (! waterTable.computeWaterTableParameters(myWell, stepDays))
                 {
-                    qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
+                    qDebug() << "\n***** ERROR! *****" << waterTable.getErrorString() << "computeWaterTable FAILED\n";
                     continue;
                 }
 
@@ -332,7 +332,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 qDebug() << "R2 [-]: " << waterTable.getR2() << "\n";
 
                 // clean vector
-                waterTable.cleanAllMeteoVector();
+                waterTable.cleanAllVectors();
 
                 // weather generator - computes climate without anomaly, water table case
                 if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
@@ -594,12 +594,12 @@ bool WG_Scenario(const WGSettings &wgSettings)
                         currentIndex++;
                     }
                     writeMeteoDataCsv(outputFileName[counterMember], wgSettings.valuesSeparator, outputDailyData, false);
+                    qDebug() << "Output:" << outputFileName[counterMember];
                 }
             }
-                qDebug() << "Weather Generator OK";
-                qDebug() << "Output:" << outputFileName;
-
+            qDebug() << "Weather Generator OK";
         }
+
         clearInputData(climateDailyObsData);
     }
     return true;
@@ -687,7 +687,7 @@ bool WG_Climate(const WGSettings &wgSettings)
             int stepDays = 10;
             if (! waterTable.computeWaterTableParameters(myWell, stepDays))
             {
-                qDebug() << "\n***** ERROR! *****" << waterTable.getError() << "computeWaterTable FAILED\n";
+                qDebug() << "\n***** ERROR! *****" << waterTable.getErrorString() << "computeWaterTable FAILED\n";
                 continue;
             }
             qDebug() << "WATERTABLE OK";

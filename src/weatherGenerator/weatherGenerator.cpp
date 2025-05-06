@@ -78,6 +78,7 @@
 #include "timeUtility.h"
 #include "fileUtility.h"
 #include "furtherMathFunctions.h"
+#include "basicMath.h"
 
 
 float getTMax(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
@@ -831,17 +832,17 @@ bool initializeWaterTableData(TinputObsData* dailyObsData, WaterTable *waterTabl
         }
     }
 
-    waterTable->setInputTMin(inputTMin);
-    waterTable->setInputTMax(inputTMax);
-    waterTable->setInputPrec(inputPrec);
-
     QDate firstDate = QDate(dailyObsData->inputFirstDate.year, dailyObsData->inputFirstDate.month, dailyObsData->inputFirstDate.day);
     QDate lastDate = firstDate.addDays(totDays-1);
 
-    waterTable->setFirstMeteoDate(firstDate);
-    waterTable->setLastMeteoDate(lastDate);
+    waterTable->initializeMeteoData(firstDate, lastDate);
 
-    waterTable->computeETP_allSeries(false);
+    // TODO pass data
+    //waterTable->setInputTMin(inputTMin);
+    //waterTable->setInputTMax(inputTMax);
+    //waterTable->setInputPrec(inputPrec);
+
+    waterTable->computeWholeSeriesETP(false);
 
     return true;
 }
@@ -933,10 +934,6 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
     float lastTmax = NODATA;
     float lastTmin = NODATA;
 
-    float wtDepth;
-    float myDelta;
-    int myDeltaDays;
-
     Crit3DDate myDate = firstDatePrediction;
     for (int tmp = 0; tmp < nrDaysBeforeWgDoy1; tmp++)
     {
@@ -945,14 +942,14 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
         dailyPredictions[tmp].minTemp = dailyObsData->inputTMin[obsIndex];
         dailyPredictions[tmp].maxTemp = dailyObsData->inputTMax[obsIndex];
         dailyPredictions[tmp].prec = dailyObsData->inputPrecip[obsIndex];
-        if (waterTable->getWaterTableInterpolation(QDate(myDate.year, myDate.month, myDate.day), &wtDepth, &myDelta, &myDeltaDays))
-        {
-            dailyPredictions[tmp].waterTableDepth = wtDepth;
-        }
 
-        if ((int(dailyPredictions[tmp].maxTemp) == int(NODATA))
-            || (int(dailyPredictions[tmp].minTemp) == int(NODATA))
-            || (int(dailyPredictions[tmp].prec) == int(NODATA)))
+        QDate curentDate = QDate(myDate.year, myDate.month, myDate.day);
+        float waterTableDepth = waterTable->getWaterTableDaily(curentDate);
+        dailyPredictions[tmp].waterTableDepth = waterTableDepth;
+
+        if ( isEqual(dailyPredictions[tmp].maxTemp, NODATA)
+            || isEqual(dailyPredictions[tmp].minTemp, NODATA)
+            || isEqual(dailyPredictions[tmp].prec, NODATA) )
         {
             if (tmp == 0)
             {
@@ -963,13 +960,13 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
             {
                 qDebug() << "WARNING: Missing data:" << QString::fromStdString(dailyPredictions[tmp].date.toISOString());
 
-                if (int(dailyPredictions[tmp].maxTemp) == int(NODATA))
+                if ( isEqual(dailyPredictions[tmp].maxTemp, NODATA) )
                     dailyPredictions[tmp].maxTemp = lastTmax;
 
-                if (int(dailyPredictions[tmp].minTemp) == int(NODATA))
+                if ( isEqual(dailyPredictions[tmp].minTemp, NODATA) )
                     dailyPredictions[tmp].minTemp = lastTmin;
 
-                if (int(dailyPredictions[tmp].prec) == int(NODATA))
+                if ( isEqual(dailyPredictions[tmp].prec, NODATA) )
                     dailyPredictions[tmp].prec = 0;
             }
         }
@@ -980,6 +977,7 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
         }
         ++myDate;
     }
+
     qDebug() << "Observed OK";
     int outputDataLength = nrDaysBeforeWgDoy1;
 
@@ -1016,25 +1014,22 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
         }
         if (indexWg.size() != 0)
         {
-            QDate myDate(seasonFirstDate.year, seasonFirstDate.month, seasonFirstDate.day);
+            QDate currentDate(seasonFirstDate.year, seasonFirstDate.month, seasonFirstDate.day);
             QDate lastDate(seasonLastDate.year, seasonLastDate.month, seasonLastDate.day);
             for (int currentIndex = indexWg[0]; currentIndex <= indexWg[indexWg.size()-1]; currentIndex++)
             {
                 float tmin = dailyPredictions[currentIndex].minTemp;
                 float tmax = dailyPredictions[currentIndex].maxTemp;
                 float prec = dailyPredictions[currentIndex].prec;
-                if (isLastMember && myDate>lastDate)
+                if (isLastMember && currentDate > lastDate)
                 {
-                    myDate.setDate(myDate.year()-1, myDate.month(), myDate.day());   // l'ultimo membro può prendere 2 periodi di wg
+                    currentDate = currentDate.addYears(-1);  // l'ultimo membro può prendere 2 periodi di wg
                 }
-                if (waterTable->setMeteoData(myDate, tmin, tmax, prec))
+                if (waterTable->setMeteoData(currentDate, tmin, tmax, prec))
                 {
-                    if (waterTable->getWaterTableInterpolation(myDate, &wtDepth, &myDelta, &myDeltaDays))
-                    {
-                        dailyPredictions[currentIndex].waterTableDepth = wtDepth;
-                    }
+                    dailyPredictions[currentIndex].waterTableDepth = waterTable->getWaterTableDaily(currentDate);
                 }
-                myDate = myDate.addDays(1);
+                currentDate = currentDate.addDays(1);
             }
         }
         // next model
