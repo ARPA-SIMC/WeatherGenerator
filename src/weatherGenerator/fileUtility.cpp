@@ -187,7 +187,7 @@ bool writeMeteoDataCsv(const QString &fileName, char separator, std::vector<Tout
 
     if (isWaterTable)
     {
-        stream << "date" << separator << "tmin" << separator << "tmax" << separator << "prec" << separator << "depth \n";
+        stream << "date" << separator << "tmin" << separator << "tmax" << separator << "prec" << separator << "watertable \n";
 
         for (unsigned int i=0; i < dailyData.size(); i++)
         {
@@ -202,9 +202,9 @@ bool writeMeteoDataCsv(const QString &fileName, char separator, std::vector<Tout
             QString tMin = QString::number(double(dailyData[i].minTemp), 'f', 1);
             QString tMax = QString::number(double(dailyData[i].maxTemp), 'f', 1);
             QString prec = QString::number(double(dailyData[i].prec), 'f', 1);
-            QString depth = QString::number(double(dailyData[i].waterTableDepth), 'f', 1);
+            QString waterTableDepth = QString::number(double(dailyData[i].waterTableDepth), 'f', 2);
 
-            stream << myDate << separator << tMin << separator << tMax << separator << prec << separator << depth << "\n";
+            stream << myDate << separator << tMin << separator << tMax << separator << prec << separator << waterTableDepth << "\n";
         }
     }
     else

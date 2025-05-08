@@ -56,6 +56,8 @@
 
 
 #include "wgProject.h"
+#include "utilities.h"
+
 #include <iostream>
 #include <QCoreApplication>
 #include <QDir>
@@ -65,43 +67,13 @@
 //#define TEST_WG_CLIMATE
 //#define TEST_WG_SEASONAL
 //#define TEST_WG_SCENARIO
-//#define TEST_WG_WATERTABLE
+#define TEST_WG_WATERTABLE
 
 void usage()
 {
     std::cout << std::endl << "USAGE:" << std::endl;
     std::cout << "WG1D.exe [settingsFile.ini]" << std::endl;
     std::cout << std::flush;
-}
-
-
-bool searchDataPath(QString* dataPath)
-{
-    *dataPath = "";
-
-    QString myPath = QDir::currentPath();
-    QString myRoot = QDir::rootPath();
-    // only for win: application can run on a different drive (i.e. D:\)
-    QString winRoot = myPath.left(3);
-
-    bool isFound = false;
-    while (! isFound)
-    {
-        if (QDir(myPath + "/DATA").exists())
-        {
-            isFound = true;
-            break;
-        }
-
-        if (QDir::cleanPath(myPath) == myRoot || QDir::cleanPath(myPath) == winRoot)
-            break;
-
-        myPath = QFileInfo(myPath).dir().absolutePath();
-    }
-    if (! isFound) return false;
-
-    *dataPath = QDir::cleanPath(myPath) + "/DATA/";
-    return true;
 }
 
 
@@ -127,7 +99,7 @@ int main(int argc, char *argv[])
                 //settingsFileName = dataPath + "TEST_scenario/testWG_Scenario.ini"; //
             #else
                 #ifdef TEST_WG_WATERTABLE
-                    settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable.ini";
+                    settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable_Data.ini";
                 #else
                     if (argc > 1)
                         settingsFileName = argv[1];

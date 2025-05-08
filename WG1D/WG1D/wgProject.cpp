@@ -24,10 +24,15 @@ WGSettings::WGSettings()
     this->scenarioPath = "";
     this->outputPath = "";
     this->waterTablePath = "";
+    this->waterTableDbFileName = "";
+
+    this->waterTableId = "";
 
     this->isSeasonalForecast = false;
     this->isScenario = false;
-    this->isWaterTable = false;
+
+    this->isWaterTableData = false;
+    this->isWaterTableDB = false;
 
     this->valuesSeparator = ',';
 
@@ -37,8 +42,8 @@ WGSettings::WGSettings()
     this->lat = NODATA;
     this->lon = NODATA;
 
-    this->firstYear = 2001;
-    this->nrYears = 1;
+    this->firstYear = NODATA;
+    this->nrYears = NODATA;
 }
 
 bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
@@ -106,16 +111,43 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
     }
 
     // waterTable
-    wgSettings.isWaterTable = false;
-    myValue = mySettings->value("waterTablePath");
+    wgSettings.isWaterTableData = false;
+    myValue = mySettings->value("waterTable");
     if (myValue.isValid())
     {
-        wgSettings.isWaterTable = true;
+        wgSettings.isWaterTableData = true;
         wgSettings.waterTablePath = myValue.toString();
         if (wgSettings.waterTablePath.left(1) == ".")
         {
             wgSettings.waterTablePath = pathSettingsFile + wgSettings.waterTablePath;
         }
+    }
+    wgSettings.isWaterTableDB = false;
+    myValue = mySettings->value("waterTableDB");
+    if (myValue.isValid())
+    {
+        QVariant id =  mySettings->value("waterTableId");
+        if (id.isValid())
+        {
+            wgSettings.isWaterTableDB = true;
+            wgSettings.waterTableDbFileName = myValue.toString();
+            if (wgSettings.waterTableDbFileName.left(1) == ".")
+            {
+                wgSettings.waterTableDbFileName = pathSettingsFile + wgSettings.waterTableDbFileName;
+            }
+            wgSettings.waterTableId = id.toString();
+        }
+        else
+        {
+            qDebug() << "Error: missing waterTableId in settings.ini";
+            return false;
+        }
+    }
+
+    if (wgSettings.isWaterTableData && wgSettings.isWaterTableDB)
+    {
+        qDebug() << "Error: both watertable data and parameters db are present in settings.ini";
+        return false;
     }
 
     wgSettings.outputPath = mySettings->value("output").toString();
@@ -148,8 +180,10 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
     wgSettings.rainfallThreshold = mySettings->value("rainfallThreshold").toFloat();
     wgSettings.waterTableMaximumDepth = mySettings->value("waterTableMaximumDepth").toInt();
 
-    wgSettings.firstYear = mySettings->value("firstYear").toInt();
-    wgSettings.nrYears = mySettings->value("nrYears").toInt();
+    // first year for climate and scenario
+    wgSettings.firstYear = mySettings->value("firstYear", NODATA).toInt();
+    // nr of repetitions (deafult: 1)
+    wgSettings.nrYears = mySettings->value("nrYears", 1).toInt();
 
     bool ok;
     wgSettings.lat = mySettings->value("latitude_default").toFloat(&ok);
@@ -264,7 +298,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         }
         else
         {
-            if (wgSettings.isWaterTable)
+            if (wgSettings.isWaterTableData)
             {
                 if (XMLAnomaly.point.latitude == NODATA)
                 {
@@ -320,7 +354,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 int stepDays = 10;
                 if (! waterTable.computeWaterTableParameters(myWell, stepDays))
                 {
-                    qDebug() << "\n***** ERROR! *****" << waterTable.getErrorString() << "computeWaterTable FAILED\n";
+                    qDebug() << "\n***** ERROR! *****" << waterTable.getErrorString() << "computeWaterTableParameters FAILED\n";
                     continue;
                 }
 
@@ -358,7 +392,8 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
             }
             else
             {
-                // weather generator - computes climate without anomaly NO water table case
+                // NO WATER TABLE
+                // weather generator - computes climate without anomaly
                 if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
                 {
                     qDebug() << "Error in climateGenerator";
@@ -408,6 +443,12 @@ bool WG_Scenario(const WGSettings &wgSettings)
     if (fileList.size() == 0)
     {
         qDebug() << "Missing climate files in path: " + wgSettings.climatePath;
+        return false;
+    }
+
+    if (wgSettings.firstYear == NODATA)
+    {
+        qDebug() << "\n***** ERROR! *****\nMissing firstYear in settings.ini\n";
         return false;
     }
 
@@ -624,6 +665,12 @@ bool WG_Climate(const WGSettings &wgSettings)
         return false;
     }
 
+    if (wgSettings.firstYear == NODATA)
+    {
+        qDebug() << "\n***** ERROR! *****" << fileName << "Missing firstYear in settings.ini\n";
+        return false;
+    }
+
     for (int i = 0; i < fileList.size(); ++i)
     {
         fileName = fileList.at(i).fileName();
@@ -640,7 +687,7 @@ bool WG_Climate(const WGSettings &wgSettings)
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
 
-        if (wgSettings.isWaterTable)
+        if (wgSettings.isWaterTableData)
         {
             Well myWell;
             myWell.setId(fileName);
@@ -718,6 +765,7 @@ bool WG_Climate(const WGSettings &wgSettings)
                                 wgSettings.rainfallThreshold, outputDailyData))
             {
                 qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
+                continue;
             }
 
             qDebug() << "Weather Generator OK";
