@@ -10,10 +10,10 @@
 
     int getMonthsInPeriod(int month1, int month2);
 
-    bool getDoyFromSeason(const QString &season, int myPredictionYear, int &wgDoy1, int &wgDoy2);
+    bool getDoyFromSeason(const QString &season, int predictionYear, int &wgDoy1, int &wgDoy2);
 
     bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &inputLastDate, int dataLength,
-                           int myPredictionYear, int &wgDoy1, int &nrDaysBefore);
+                           int predictionYear, int &wgDoy1, int &nrDaysBeforeWGDay1);
 
     void setCorrectWgDoy(int wgDoy1, int wgDoy2, int predictionYear, int myYear, int &fixedWgDoy1, int &fixedWgDoy2);
 

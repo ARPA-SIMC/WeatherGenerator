@@ -872,28 +872,29 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
         return false;
     }
 
+    Crit3DDate seasonFirstDate = getDateFromDoy(predictionYear, wgDoy1);
+
     Crit3DDate seasonLastDate;
-    int daysWg;
-    Crit3DDate seasonFirstDate = getDateFromDoy (predictionYear, wgDoy1);
+    int nrDaysWg;
     if (wgDoy1 < wgDoy2)
     {
         seasonLastDate = getDateFromDoy (predictionYear, wgDoy2);
-        daysWg = wgDoy2 - wgDoy1 + 1;
+        nrDaysWg = wgDoy2 - wgDoy1 + 1;
     }
     else
     {
         seasonLastDate = getDateFromDoy (predictionYear+1, wgDoy2);
         if (isLeapYear(predictionYear))
         {
-            daysWg = (366 - wgDoy1) + wgDoy2 + 1;
+            nrDaysWg = (366 - wgDoy1) + wgDoy2 + 1;
         }
         else
         {
-            daysWg = (365 - wgDoy1) + wgDoy2 + 1;
+            nrDaysWg = (365 - wgDoy1) + wgDoy2 + 1;
         }
     }
 
-    if (! initializeWaterTableData(dailyObsData, waterTable, predictionYear, wgDoy1, nrDaysBeforeWgDoy1, daysWg))
+    if (! initializeWaterTableData(dailyObsData, waterTable, predictionYear, wgDoy1, nrDaysBeforeWgDoy1, nrDaysWg))
     {
         qDebug() << "ERROR in initializeWaterTableData";
         return false;
@@ -938,6 +939,7 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
     float lastTmin = NODATA;
 
     Crit3DDate myDate = firstDatePrediction;
+    // costant period (9 months)
     for (int tmp = 0; tmp < nrDaysBeforeWgDoy1; tmp++)
     {
         dailyPredictions[tmp].date = myDate;
@@ -947,7 +949,7 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
         dailyPredictions[tmp].prec = dailyObsData->inputPrecip[obsIndex];
 
         float waterTableDepth = waterTable->getWaterTableDaily(getQDate(myDate));   // [cm]
-        if (waterTableDepth != NODATA)
+        if (! isEqual(waterTableDepth, NODATA))
         {
             dailyPredictions[tmp].waterTableDepth = waterTableDepth * 0.01;         // [m]
         }
@@ -1116,62 +1118,37 @@ bool computeSeasonalPredictions(TinputObsData *dailyObsData, TweatherGenClimate 
 
     firstDate = outputDailyData[currentIndex-1].date.addDays(1);
 
-    if (wgDoy1 < wgDoy2)
-    {
-        lastYear = firstYear + nrRepetitions - 1;
+    lastYear = firstYear + nrRepetitions;
+    lastDate = outputDailyData[currentIndex-1].date;
+    lastDate.year = lastYear;
 
-        if (isLastMember)
+    /*
+    if (isLastMember)
+    {
+        if ( (!isLeapYear(predictionYear) && !isLeapYear(lastYear)) || (isLeapYear(predictionYear) && isLeapYear(lastYear)))
         {
-            if ( (!isLeapYear(predictionYear) && !isLeapYear(lastYear)) || (isLeapYear(predictionYear) && isLeapYear(lastYear)))
-            {
-                lastDate = getDateFromDoy(lastYear,wgDoy2);
-            }
-            else
-            {
-                if(isLeapYear(predictionYear) && wgDoy2 >= 60 )
-                    lastDate = getDateFromDoy(lastYear, wgDoy2-1);
-                if(isLeapYear(lastYear) && wgDoy2 >= 59 )
-                    lastDate = getDateFromDoy(lastYear, wgDoy2+1);
-            }
+            lastDate = getDateFromDoy(lastYear,wgDoy2);
         }
         else
         {
-            lastDate = outputDailyData[currentIndex-1].date;
-            lastDate.year = lastYear;
+            if(isLeapYear(predictionYear) && wgDoy2 >= 60 )
+                lastDate = getDateFromDoy(lastYear, wgDoy2-1);
+            if(isLeapYear(lastYear) && wgDoy2 >= 59 )
+                lastDate = getDateFromDoy(lastYear, wgDoy2+1);
         }
     }
     else
     {
-        lastYear = firstYear + nrRepetitions;
-
-        if (isLastMember)
-        {
-            if ( (!isLeapYear(predictionYear+1) && !isLeapYear(lastYear)) || (isLeapYear(predictionYear+1) && isLeapYear(lastYear)))
-            {
-                lastDate = getDateFromDoy(lastYear, wgDoy2);
-            }
-            else
-            {
-                if(isLeapYear(predictionYear+1) && wgDoy2 >= 60)
-                    lastDate = getDateFromDoy(lastYear, wgDoy2-1);
-                if(isLeapYear(lastYear) && wgDoy2 >= 59 )
-                    lastDate = getDateFromDoy(lastYear, wgDoy2+1);
-            }
-        }
-        else
-        {
-            lastDate = outputDailyData[currentIndex-1].date;
-            lastDate.year = lastYear;
-        }
-
+        lastDate = outputDailyData[currentIndex-1].date;
+        lastDate.year = lastYear;
     }
+*/
 
     // initialize WG
     initializeWeather(wgClimate);
 
     for (myDate = firstDate; myDate <= lastDate; ++myDate)
     {
-
         setCorrectWgDoy(wgDoy1, wgDoy2, predictionYear, myDate.year, fixWgDoy1, fixWgDoy2);
         myDoy = getDoyFromDate(myDate);
 
@@ -1195,7 +1172,6 @@ bool computeSeasonalPredictions(TinputObsData *dailyObsData, TweatherGenClimate 
         }
         else
         {
-
             obsDate.day = myDate.day;
             obsDate.month = myDate.month;
 

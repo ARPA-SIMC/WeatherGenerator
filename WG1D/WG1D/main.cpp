@@ -67,7 +67,8 @@
 //#define TEST_WG_CLIMATE
 //#define TEST_WG_SEASONAL
 //#define TEST_WG_SCENARIO
-#define TEST_WG_WATERTABLE
+#define TEST_WG_WATERTABLE_DATA
+//#define TEST_WG_WATERTABLE_DB
 
 void usage()
 {
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
                 settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
                 //settingsFileName = dataPath + "TEST_scenario/testWG_Scenario.ini"; //
             #else
-                #ifdef TEST_WG_WATERTABLE
+                #ifdef TEST_WG_WATERTABLE_DATA
                     settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable_Data.ini";
                 #else
                     if (argc > 1)

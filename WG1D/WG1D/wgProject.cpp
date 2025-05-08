@@ -368,7 +368,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 // clean vector
                 waterTable.cleanAllVectors();
 
-                // weather generator - computes climate without anomaly, water table case
+                // weather generator - computes climate without anomaly
                 if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
                 {
                     qDebug() << "Error in climateGenerator";

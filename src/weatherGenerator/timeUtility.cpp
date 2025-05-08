@@ -28,9 +28,9 @@ int getMonthsInPeriod(int month1, int month2)
 // it checks if observed data includes the last 9 months before wgDoy_1
 // it updates wgDoy_1 and nr_DaysBefore if some days are missing (lower than NRDAYSTOLERANCE)
 bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &inputLastDate, int dataLength,
-                       int myPredictionYear, int &wgDoy1, int &nrDaysBefore)
+                       int predictionYear, int &wgDoy1, int &nrDaysBeforeWGDay1)
 {
-    Crit3DDate predictionFirstDate = getDateFromDoy (myPredictionYear, wgDoy1);
+    Crit3DDate predictionFirstDate = getDateFromDoy(predictionYear, wgDoy1);
 
     if (inputLastDate.addDays(NRDAYSTOLERANCE+1) <  predictionFirstDate)
     {
@@ -40,16 +40,16 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
 
     int predictionMonth = predictionFirstDate.month;
     int monthIndex = 0;
-    nrDaysBefore = 0;
+    nrDaysBeforeWGDay1 = 0;
     for (int i = 0; i < 9; i++)
     {
         monthIndex = (predictionMonth -1) -i;
         if (monthIndex <= 0)
         {
             monthIndex = monthIndex + 12 ;
-            myPredictionYear = myPredictionYear - 1;
+            predictionYear = predictionYear - 1;
         }
-        nrDaysBefore += getDaysInMonth(monthIndex, myPredictionYear);
+        nrDaysBeforeWGDay1 += getDaysInMonth(monthIndex, predictionYear);
     }
 
     // shift wgDoy1 if there are missing data
@@ -57,7 +57,7 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
     {
         int delta = difference(inputLastDate, predictionFirstDate) - 1;
         wgDoy1 -= delta;
-        nrDaysBefore -= delta;
+        nrDaysBeforeWGDay1 -= delta;
     }
 
     // use or not the observed data in the forecast period
@@ -77,10 +77,10 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
             wgDoy1 = (wgDoy1 + (difference(predictionFirstDate, inputLastDate)) + 1 ) % 365;
         }
 
-        nrDaysBefore += (difference(predictionFirstDate, inputLastDate)) + 1 ;
+        nrDaysBeforeWGDay1 += (difference(predictionFirstDate, inputLastDate)) + 1 ;
     }
 
-    if ( difference(inputFirstDate, predictionFirstDate) < nrDaysBefore || dataLength < (nrDaysBefore-NRDAYSTOLERANCE) )
+    if ( difference(inputFirstDate, predictionFirstDate) < nrDaysBeforeWGDay1 || dataLength < (nrDaysBeforeWGDay1-NRDAYSTOLERANCE) )
     {
         // observed data does not include 9 months before wgDoy1 or more than NRDAYSTOLERANCE days missing
         return false;
@@ -90,48 +90,42 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
 }
 
 
-bool getDoyFromSeason(const QString &season, int myPredictionYear, int &wgDoy1, int &wgDoy2)
+bool getDoyFromSeason(const QString &season, int predictionYear, int &wgDoy1, int &wgDoy2)
 {
     QString period[12] = {"JFM","FMA","MAM","AMJ","MJJ","JJA","JAS","ASO","SON","OND","NDJ","DJF"};
     int i = 0;
-    int found = 0;
+    bool isFound = false;
 
     for (i = 0; i < 12; i++)
     {
         if (season.compare(period[i]) == 0)
         {
-            found = 1;
+            isFound = true;
             break;
         }
     }
-    if (found == 0)
+    if (! isFound)
     {
         qDebug() << "Wrong season" ;
         return false;
     }
 
-    int month1 = i + 1;             // first month of my season
-    int month2 = (i + 3) % 12;      // last month of my season
-    if (month2 == 0) month2 = 12;
+    int firstMonth = i + 1;             // first month of my season
+    int lastMonth = (i + 3) % 12;       // last month of my season
+    if (lastMonth == 0)
+        lastMonth = 12;
 
-    Crit3DDate predictionFirstDate;
-    predictionFirstDate.year = myPredictionYear;
-    predictionFirstDate.month = month1;
-    predictionFirstDate.day = 1;
-
+    Crit3DDate predictionFirstDate = Crit3DDate(1, firstMonth, predictionYear);
     wgDoy1 = getDoyFromDate(predictionFirstDate);
 
     // season between 2 years
     if (season.compare(period[10]) == 0 || season.compare(period[11]) == 0)
     {
-        myPredictionYear = myPredictionYear + 1 ;
+        predictionYear = predictionYear + 1 ;
     }
 
-    Crit3DDate predictionLastDate;
-    predictionLastDate.year = myPredictionYear;
-    predictionLastDate.month = month2;
-    predictionLastDate.day = getDaysInMonth(month2, myPredictionYear);
-
+    int lastDayMonth = getDaysInMonth(lastMonth, predictionYear);
+    Crit3DDate predictionLastDate = Crit3DDate(lastDayMonth, lastMonth, predictionYear);
     wgDoy2 = getDoyFromDate(predictionLastDate);
 
     return true;
