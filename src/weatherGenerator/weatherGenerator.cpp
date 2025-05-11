@@ -813,37 +813,32 @@ bool initializeWaterTableData(TinputObsData* dailyObsData, WaterTable *waterTabl
     Crit3DDate seasonFirstDate = getDateFromDoy(predictionYear, wgDoy1);
     Crit3DDate outputFirstDate = seasonFirstDate.addDays(-nrDaysBeforeWgDoy1);
 
-    int firstIndex = difference(dailyObsData->inputFirstDate, outputFirstDate);
-    int totDays = firstIndex + nrDaysBeforeWgDoy1 + daysWg;
+    int nrPreviousDays = difference(dailyObsData->inputFirstDate, outputFirstDate);
+    int totDays = nrPreviousDays + nrDaysBeforeWgDoy1 + daysWg;
 
-    std::vector<float> inputTMin, inputTMax, inputPrec;
-    for (int i = 0; i < totDays; i++)
+    QDate firstDate = getQDate(dailyObsData->inputFirstDate);
+    QDate lastDate = firstDate.addDays(totDays-1);
+    waterTable->initializeMeteoData(firstDate, lastDate);
+
+    QDate myDate = firstDate;
+    int i = 0;
+    while (myDate <= lastDate)
     {
-        if (i < (firstIndex + nrDaysBeforeWgDoy1))
+        if (i < (nrPreviousDays + nrDaysBeforeWgDoy1))
         {
-            inputTMin.push_back(dailyObsData->inputTMin[i]);
-            inputTMax.push_back(dailyObsData->inputTMax[i]);
-            inputPrec.push_back(dailyObsData->inputPrecip[i]);
+            float tmin = dailyObsData->inputTMin[i];
+            float tmax = dailyObsData->inputTMax[i];
+            float prec = dailyObsData->inputPrecip[i];
+            waterTable->setMeteoData(myDate, tmin, tmax, prec);
         }
         else
         {
             // aggiungo giorni (vuoti) a watertable
-            inputTMin.push_back(NODATA);
-            inputTMax.push_back(NODATA);
-            inputPrec.push_back(NODATA);
+            waterTable->setMeteoData(myDate, NODATA, NODATA, NODATA);
         }
+        i++;
+        myDate = myDate.addDays(1);
     }
-
-    QDate firstDate = QDate(dailyObsData->inputFirstDate.year, dailyObsData->inputFirstDate.month, dailyObsData->inputFirstDate.day);
-    QDate lastDate = firstDate.addDays(totDays-1);
-
-    waterTable->initializeMeteoData(firstDate, lastDate);
-
-    // TODO pass lat lon
-    // TODO pass data
-    //waterTable->setInputTMin(inputTMin);
-    //waterTable->setInputTMax(inputTMax);
-    //waterTable->setInputPrec(inputPrec);
 
     waterTable->computeWholeSeriesETP(false);
 
@@ -1105,7 +1100,6 @@ bool computeSeasonalPredictions(TinputObsData *dailyObsData, TweatherGenClimate 
                                 int predictionYear, int firstYear, int nrRepetitions,
                                 int wgDoy1, int wgDoy2, float rainfallThreshold, bool isLastMember,
                                 std::vector<ToutputDailyMeteo>& outputDailyData, int *outputDataLength, std::vector<int>& indexWg)
-
 {
     Crit3DDate myDate, obsDate;
     Crit3DDate firstDate, lastDate;
@@ -1117,15 +1111,12 @@ bool computeSeasonalPredictions(TinputObsData *dailyObsData, TweatherGenClimate 
     currentIndex = *outputDataLength;
 
     firstDate = outputDailyData[currentIndex-1].date.addDays(1);
-
     lastYear = firstYear + nrRepetitions;
-    lastDate = outputDailyData[currentIndex-1].date;
-    lastDate.year = lastYear;
 
-    /*
     if (isLastMember)
     {
-        if ( (!isLeapYear(predictionYear) && !isLeapYear(lastYear)) || (isLeapYear(predictionYear) && isLeapYear(lastYear)))
+        lastYear--;
+        if ((!isLeapYear(predictionYear) && !isLeapYear(lastYear)) || (isLeapYear(predictionYear) && isLeapYear(lastYear)))
         {
             lastDate = getDateFromDoy(lastYear,wgDoy2);
         }
@@ -1140,9 +1131,8 @@ bool computeSeasonalPredictions(TinputObsData *dailyObsData, TweatherGenClimate 
     else
     {
         lastDate = outputDailyData[currentIndex-1].date;
-        lastDate.year = lastYear;
     }
-*/
+    lastDate.year = lastYear;
 
     // initialize WG
     initializeWeather(wgClimate);
