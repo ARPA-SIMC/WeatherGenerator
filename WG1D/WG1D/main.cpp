@@ -67,7 +67,7 @@
 //#define TEST_WG_CLIMATE
 //#define TEST_WG_SEASONAL
 //#define TEST_WG_SCENARIO
-#define TEST_WG_WATERTABLE_DATA
+//#define TEST_WG_WATERTABLE_DATA
 //#define TEST_WG_WATERTABLE_DB
 
 void usage()
