@@ -4,6 +4,9 @@
 
 #include "crit3dDate.h"
 #include "timeUtility.h"
+#include "commonConstants.h"
+#include "basicMath.h"
+#include "weatherGenerator.h"
 
 
 int getMonthsInPeriod(int month1, int month2)
@@ -27,12 +30,28 @@ int getMonthsInPeriod(int month1, int month2)
 
 // it checks if observed data includes the last 9 months before wgDoy_1
 // it updates wgDoy_1 and nr_DaysBefore if some days are missing (lower than NRDAYSTOLERANCE)
-bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &inputLastDate, int dataLength,
-                       int predictionYear, int &wgDoy1, int &nrDaysBeforeWGDay1)
+bool checkLastYearDate(TinputObsData* dailyObsData, int predictionYear, int &wgDoy1, int &nrDaysBeforeWGDay1)
 {
     Crit3DDate predictionFirstDate = getDateFromDoy(predictionYear, wgDoy1);
 
-    if (inputLastDate.addDays(NRDAYSTOLERANCE+1) <  predictionFirstDate)
+    // check NODATA at the end of observed period
+    bool isCheck = true;
+    while (isCheck && dailyObsData->inputLastDate > dailyObsData->inputFirstDate)
+    {
+        int obsIndex = difference(dailyObsData->inputFirstDate, dailyObsData->inputLastDate);
+        if ( isEqual(dailyObsData->inputTMin[obsIndex], NODATA)
+            || isEqual(dailyObsData->inputTMax[obsIndex], NODATA)
+            || isEqual(dailyObsData->inputPrecip[obsIndex], NODATA) )
+        {
+            qDebug() << "WARNING! Missing data:" << QString::fromStdString(dailyObsData->inputLastDate.toISOString());
+            dailyObsData->inputLastDate = dailyObsData->inputLastDate.addDays(-1);
+            dailyObsData->dataLength--;
+        }
+        else
+            isCheck = false;
+    }
+
+    if (dailyObsData->inputLastDate.addDays(NRDAYSTOLERANCE+1) <  predictionFirstDate)
     {
         qDebug() << "\nObserved days missing are more than NRDAYSTOLERANCE" << NRDAYSTOLERANCE << "\n";
         return false;
@@ -41,6 +60,7 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
     int predictionMonth = predictionFirstDate.month;
     int monthIndex = 0;
     nrDaysBeforeWGDay1 = 0;
+
     for (int i = 0; i < 9; i++)
     {
         monthIndex = (predictionMonth -1) -i;
@@ -53,9 +73,9 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
     }
 
     // shift wgDoy1 if there are missing data
-    if (inputLastDate < predictionFirstDate)
+    if (dailyObsData->inputLastDate < predictionFirstDate)
     {
-        int delta = difference(inputLastDate, predictionFirstDate) - 1;
+        int delta = difference(dailyObsData->inputLastDate, predictionFirstDate) - 1;
         wgDoy1 -= delta;
         nrDaysBeforeWGDay1 -= delta;
     }
@@ -63,24 +83,24 @@ bool checkLastYearDate(const Crit3DDate &inputFirstDate, const Crit3DDate &input
     // use or not the observed data in the forecast period
     else if (USEDATA)
     {
-        if (inputLastDate > predictionFirstDate.addDays(80))
+        if (dailyObsData->inputLastDate > predictionFirstDate.addDays(80))
         {
             qDebug() << "Check your XML: you have already all observed data" << "\n";
             return false;
         }
         if (isLeapYear(predictionFirstDate.year))
         {
-            wgDoy1 = (wgDoy1 + (difference(predictionFirstDate, inputLastDate)) + 1 ) % 366;
+            wgDoy1 = (wgDoy1 + (difference(predictionFirstDate, dailyObsData->inputLastDate)) + 1 ) % 366;
         }
         else
         {
-            wgDoy1 = (wgDoy1 + (difference(predictionFirstDate, inputLastDate)) + 1 ) % 365;
+            wgDoy1 = (wgDoy1 + (difference(predictionFirstDate, dailyObsData->inputLastDate)) + 1 ) % 365;
         }
 
-        nrDaysBeforeWGDay1 += (difference(predictionFirstDate, inputLastDate)) + 1 ;
+        nrDaysBeforeWGDay1 += (difference(predictionFirstDate, dailyObsData->inputLastDate)) + 1 ;
     }
 
-    if ( difference(inputFirstDate, predictionFirstDate) < nrDaysBeforeWGDay1 || dataLength < (nrDaysBeforeWGDay1-NRDAYSTOLERANCE) )
+    if ( difference(dailyObsData->inputFirstDate, predictionFirstDate) < nrDaysBeforeWGDay1 || dailyObsData->dataLength < (nrDaysBeforeWGDay1-NRDAYSTOLERANCE) )
     {
         // observed data does not include 9 months before wgDoy1 or more than NRDAYSTOLERANCE days missing
         return false;

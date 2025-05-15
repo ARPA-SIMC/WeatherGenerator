@@ -102,13 +102,17 @@ int main(int argc, char *argv[])
                 #ifdef TEST_WG_WATERTABLE_DATA
                     settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable_Data.ini";
                 #else
-                    if (argc > 1)
-                        settingsFileName = argv[1];
-                    else
-                    {
-                        usage();
-                        return 0;
-                    }
+                    #ifdef TEST_WG_WATERTABLE_DB
+                        settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt2025_JJA/wg/WG_2025_JJA_C1.ini";
+                    #else
+                        if (argc > 1)
+                            settingsFileName = argv[1];
+                        else
+                        {
+                            usage();
+                            return 0;
+                        }
+                    #endif
                 #endif
             #endif
         #endif

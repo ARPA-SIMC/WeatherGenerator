@@ -19,27 +19,30 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
         return false;
     }
 
-    QStringList listDate;
-    QStringList listTMin;
-    QStringList listTMax;
-    QStringList listPrecip;
+    QList<QString> listDate;
+    QList<QString> listTMin;
+    QList<QString> listTMax;
+    QList<QString> listPrecip;
 
     int indexLine = 0;
     int indexDate = 0;
-    Crit3DDate tempDate;
+    Crit3DDate tmpDate;
 
     QString noDataString = QString::number(noData);
-    QString strDate;
+    QString currentDateStr;
 
     // header
     file.readLine();
 
-    while (!file.atEnd())
+    while (! file.atEnd())
     {
         QByteArray line = file.readLine();
 
+        // split
+        QList<QByteArray> valueList = line.split(mySeparator);
+
         // check format
-        if (line.split(mySeparator).count() < 5)
+        if (valueList.count() < 5)
         {
             qDebug() << "ERROR!" << "\nfile =" << fileName << "\nline =" << indexLine+2;;
             qDebug() << "missing data or invalid format or invalid separator";
@@ -47,12 +50,15 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
             return false;
         }
 
-        //DATE
-        strDate = line.split(mySeparator)[0];
+        // date
+        currentDateStr = valueList[0];
+
         //check presence of quotation
-        if (strDate.left(1) == "\"")
-            strDate = strDate.mid(1, strDate.length()-2);
-        listDate.append(strDate);
+        if (currentDateStr.left(1) == "\"")
+        {
+            currentDateStr = currentDateStr.mid(1, currentDateStr.length()-2);
+        }
+        listDate.append(currentDateStr);
 
         // save the first date into the struct and check it is a valid date
         if (indexLine == 0)
@@ -78,11 +84,11 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
         }
         else
         {
-            tempDate.year = listDate[indexLine].mid(0,4).toInt();
-            tempDate.month = listDate[indexLine].mid(5,2).toInt();
-            tempDate.day = listDate[indexLine].mid(8,2).toInt();
+            tmpDate.year = listDate[indexLine].mid(0,4).toInt();
+            tmpDate.month = listDate[indexLine].mid(5,2).toInt();
+            tmpDate.day = listDate[indexLine].mid(8,2).toInt();
 
-            indexDate = difference(inputData.inputFirstDate , tempDate );
+            indexDate = difference(inputData.inputFirstDate, tmpDate);
 
             // check LACK of data
             if (indexDate != indexLine)
@@ -97,24 +103,27 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
                     listPrecip.append(noDataString);
                     indexLine++;
                 }
-                listDate.append(line.split(mySeparator)[0]);
+                listDate.append(currentDateStr);
             }
         }
 
-        if (line.split(mySeparator)[1] == "" || line.split(mySeparator)[1] == " " || line.split(mySeparator)[1] == noDataString )
+        // tmin
+        if (valueList[1] == "" || valueList[1] == " " || valueList[1] == noDataString )
             listTMin.append(QString::number(NODATA));
         else
             listTMin.append(line.split(mySeparator)[1]);
 
-        if (line.split(mySeparator)[2] == "" || line.split(mySeparator)[2] == " " || line.split(mySeparator)[2] == noDataString)
+        // tmax
+        if (valueList[2] == "" || valueList[2] == " " || valueList[2] == noDataString)
             listTMax.append(QString::number(NODATA));
         else
-            listTMax.append(line.split(mySeparator)[2]);
+            listTMax.append(valueList[2]);
 
-        if (line.split(mySeparator)[4] == "" || line.split(mySeparator)[4] == " " || line.split(mySeparator)[4] == noDataString)
+        // prec
+        if (valueList[4] == "" || valueList[4] == " " || valueList[4] == noDataString)
             listPrecip.append(QString::number(NODATA));
         else
-            listPrecip.append(line.split(mySeparator)[4]);
+            listPrecip.append(valueList[4]);
 
         indexLine++;
     }
@@ -122,7 +131,7 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
     file.close();
 
     // save and check the last date
-    inputData.inputLastDate = tempDate;
+    inputData.inputLastDate = tmpDate;
     if (inputData.inputLastDate.year == 0)
     {
         qDebug() << "Invalid date format ";
@@ -157,7 +166,7 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
         inputData.inputPrecip[i] = listPrecip[i].toFloat();
 
         // check tmin <= tmax
-        if ((inputData.inputTMin[i] != noData) && (inputData.inputTMax[i] != noData)
+        if ((inputData.inputTMin[i] != NODATA) && (inputData.inputTMax[i] != NODATA)
              && (inputData.inputTMin[i] > inputData.inputTMax[i]))
         {
             // switch

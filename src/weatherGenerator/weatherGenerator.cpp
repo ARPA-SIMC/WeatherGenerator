@@ -668,8 +668,7 @@ bool makeSeasonalForecast(QString outputFileName, char separator, XMLSeasonalAno
 
     // it checks if observed data includes the last 9 months before wgDoy1
     int nrDaysBeforeWgDoy1;
-    if (! checkLastYearDate(dailyObsData->inputFirstDate, dailyObsData->inputLastDate,
-                            dailyObsData->dataLength, myPredictionYear, wgDoy1, nrDaysBeforeWgDoy1))
+    if (! checkLastYearDate(dailyObsData, myPredictionYear, wgDoy1, nrDaysBeforeWgDoy1))
     {
         qDebug() << "ERROR: observed data should include at least 9 months before wgDoy1";
         return false;
@@ -687,9 +686,13 @@ bool makeSeasonalForecast(QString outputFileName, char separator, XMLSeasonalAno
 
     // wgDoy1 within myPredictionYear, wgDoy2 within myPredictionYear+1
     if (wgDoy1 < wgDoy2)
+    {
         lastYear = firstYear + signed(nrYears) - 1;
+    }
     else
+    {
         lastYear = firstYear + signed(nrYears);
+    }
 
     seasonFirstDate = getDateFromDoy (myPredictionYear, wgDoy1);
     if (wgDoy1 < wgDoy2)
@@ -726,9 +729,9 @@ bool makeSeasonalForecast(QString outputFileName, char separator, XMLSeasonalAno
         dailyPredictions[tmp].maxTemp = dailyObsData->inputTMax[obsIndex];
         dailyPredictions[tmp].prec = dailyObsData->inputPrecip[obsIndex];
 
-        if ((int(dailyPredictions[tmp].maxTemp) == int(NODATA))
-                || (int(dailyPredictions[tmp].minTemp) == int(NODATA))
-                || (int(dailyPredictions[tmp].prec) == int(NODATA)))
+        if ( isEqual(dailyPredictions[tmp].maxTemp, NODATA)
+             || isEqual(dailyPredictions[tmp].minTemp, NODATA)
+             || isEqual(dailyPredictions[tmp].prec, NODATA) )
         {
             if (tmp == 0)
             {
@@ -860,8 +863,7 @@ bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLS
 {
     // it checks if observed data includes the last 9 months before wgDoy1
     int nrDaysBeforeWgDoy1;
-    if (! checkLastYearDate(dailyObsData->inputFirstDate, dailyObsData->inputLastDate,
-                           dailyObsData->dataLength, predictionYear, wgDoy1, nrDaysBeforeWgDoy1))
+    if (! checkLastYearDate(dailyObsData, predictionYear, wgDoy1, nrDaysBeforeWgDoy1))
     {
         qDebug() << "ERROR: observed data should include at least 9 months before wgDoy1";
         return false;
