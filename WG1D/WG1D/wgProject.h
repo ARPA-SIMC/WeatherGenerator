@@ -17,13 +17,14 @@
             QString seasonalForecastPath;
             QString scenarioPath;
             QString outputPath;
-            QString waterTablePath;
-            QString waterTableDbFileName;
-
-            QString waterTableId;
 
             bool isSeasonalForecast;
             bool isScenario;
+
+            // watertable
+            QString waterTablePath;
+            QString waterTableDbFileName;
+            QString waterTableId;
 
             bool isWaterTableData;
             bool isWaterTableDB;

@@ -843,8 +843,6 @@ bool initializeWaterTableData(TinputObsData* dailyObsData, WaterTable *waterTabl
         myDate = myDate.addDays(1);
     }
 
-    waterTable->computeWholeSeriesETP(false);
-
     return true;
 }
 

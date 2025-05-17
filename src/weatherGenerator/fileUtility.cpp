@@ -203,17 +203,22 @@ bool writeMeteoDataCsv(const QString &fileName, char separator, std::vector<Tout
             if (dailyData[i].date == NO_DATE)
                 break;
 
-            QString year = QString::number(dailyData[i].date.year);
-            QString month = QString::number(dailyData[i].date.month).rightJustified(2, '0');
-            QString day = QString::number(dailyData[i].date.day).rightJustified(2, '0');
-            QString myDate = year + "-" + month + "-" + day;
+            QString yearStr = QString::number(dailyData[i].date.year);
+            QString monthStr = QString::number(dailyData[i].date.month).rightJustified(2, '0');
+            QString dayStr = QString::number(dailyData[i].date.day).rightJustified(2, '0');
+            QString dateStr = yearStr + "-" + monthStr + "-" + dayStr;
 
             QString tMin = QString::number(double(dailyData[i].minTemp), 'f', 1);
             QString tMax = QString::number(double(dailyData[i].maxTemp), 'f', 1);
             QString prec = QString::number(double(dailyData[i].prec), 'f', 1);
-            QString waterTableDepth = QString::number(double(dailyData[i].waterTableDepth), 'f', 2);
 
-            stream << myDate << separator << tMin << separator << tMax << separator << prec << separator << waterTableDepth << "\n";
+            QString waterTableDepth = QString::number(double(dailyData[i].waterTableDepth), 'f', 2);
+            if (dailyData[i].waterTableDepth == NODATA)
+            {
+                waterTableDepth = QString::number(NODATA);
+            }
+
+            stream << dateStr << separator << tMin << separator << tMax << separator << prec << separator << waterTableDepth << "\n";
         }
     }
     else
