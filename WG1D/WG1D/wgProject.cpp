@@ -8,6 +8,7 @@
 #include "waterTable.h"
 #include "gis.h"
 #include "crit3dDate.h"
+#include "waterTableDb.h"
 
 #include <time.h>
 #include <QFile>
@@ -214,10 +215,33 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
     int wgDoy2 = NODATA;
     Crit3DDate climateDateIni, climateDateFin;
 
-    // check watertbale db
-    if (wgSettings.isWaterTableData)
+    // read watertbale DB
+    if (wgSettings.isWaterTableDB)
     {
-        // TODO
+        QString errorStr;
+        WaterTableDb wtDataBase = WaterTableDb(wgSettings.waterTableDbFileName, errorStr);
+        if (! errorStr.isEmpty())
+        {
+            qDebug() << "\nWATERTABLE ERROR\n" << errorStr;
+            return false;
+        }
+        WaterTableParameters wtParameters;
+        if (! wtDataBase.readSingleWaterTableParameters(wgSettings.waterTableId, wtParameters, errorStr))
+        {
+            qDebug() << "\nWATERTABLE ERROR\n" << errorStr;
+            return false;
+        }
+
+        // assign WT parameters
+        waterTable.setLatLon(wtParameters.lat, wtParameters.lon);
+        waterTable.setParameters(wtParameters.nrDaysPeriod, wtParameters.alpha,
+                                   wtParameters.h0, wtParameters.avgDailyCWB);
+
+        qDebug() << "\nWater Table OK";
+        qDebug() << "alpha [-]: " << waterTable.getAlpha();
+        qDebug() << "H0 [cm]: " << (int)waterTable.getH0();
+        qDebug() << "Nr days: " << waterTable.getNrDaysPeriod();
+        qDebug();
     }
 
     // iterate input files on climate (climateName.csv = observedName.csv = forecastName.xml)
@@ -372,7 +396,6 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
                 qDebug() << "\n***** ERROR! *****" << waterTable.getErrorString() << "computeWaterTableParameters FAILED\n";
                 continue;
             }
-
             qDebug() << "Water Table OK";
             qDebug() << "Nr of observed depth: " << waterTable.getNrObsData();
             qDebug() << "alpha [-]: " << waterTable.getAlpha();

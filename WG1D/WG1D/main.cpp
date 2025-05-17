@@ -67,11 +67,13 @@
 //#define TEST_WG_CLIMATE
 //#define TEST_WG_SEASONAL
 //#define TEST_WG_SCENARIO
-#define TEST_WG_WATERTABLE_DATA
+//#define TEST_WG_WATERTABLE_DATA
 //#define TEST_WG_WATERTABLE_DB
+
 
 void usage()
 {
+    std::cout << "execution mode: CLIMATE | SEASONAL FORECAST | SCENARIO\n";
     std::cout << std::endl << "USAGE:" << std::endl;
     std::cout << "WG1D.exe [settingsFile.ini]" << std::endl;
     std::cout << std::flush;
@@ -86,7 +88,6 @@ int main(int argc, char *argv[])
     if (! searchDataPath(&dataPath)) return -1;
 
     std::cout << "WG1D - daily Weather Generator\n";
-    std::cout << "execution mode: CLIMATE | SEASONAL FORECAST | SCENARIO\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
@@ -128,6 +129,7 @@ int main(int argc, char *argv[])
 
     if (wgSettings.isSeasonalForecast)
     {
+        std::cout << "execution mode: SEASONAL FORECAST\n";
         if (! WG_SeasonalForecast(wgSettings))
         {
             qDebug() << "*** Error in Seasonal forecast computation!";
@@ -136,6 +138,7 @@ int main(int argc, char *argv[])
     }
     else if (wgSettings.isScenario)
     {
+        std::cout << "execution mode: SCENARIO\n";
         if (! WG_Scenario(wgSettings))
         {
             qDebug() << "*** Error in Scenario computation!";
@@ -144,7 +147,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        // CLIMATE
+        std::cout << "execution mode: CLIMATE\n";
         if (! WG_Climate(wgSettings))
         {
             qDebug() << "*** Error in Climate computation!";
