@@ -41,7 +41,7 @@ win32:{
 }
 
 INCLUDEPATH +=  ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions ../../../agrolib/gis  \
-                ../../../agrolib/meteo ../../../agrolib/waterTable  \
+                ../../../agrolib/utilities ../../../agrolib/meteo ../../../agrolib/waterTable  \
                 ../../src/weatherGenerator
 
 CONFIG(debug, debug|release) {
@@ -49,6 +49,7 @@ CONFIG(debug, debug|release) {
     LIBS += -L../../../agrolib/waterTable/debug -lwaterTable
     LIBS += -L../../../agrolib/meteo/debug -lmeteo
     LIBS += -L../../../agrolib/gis/debug -lgis
+    LIBS += -L../../../agrolib/utilities/debug -lutilities
     LIBS += -L../../../agrolib/mathFunctions/debug -lmathFunctions
     LIBS += -L../../../agrolib/crit3dDate/debug -lcrit3dDate
 
@@ -57,6 +58,7 @@ CONFIG(debug, debug|release) {
     LIBS += -L../../../agrolib/waterTable/release -lwaterTable
     LIBS += -L../../../agrolib/meteo/release -lmeteo
     LIBS += -L../../../agrolib/gis/release -lgis
+    LIBS += -L../../../agrolib/utilities/release -lutilities
     LIBS += -L../../../agrolib/mathFunctions/release -lmathFunctions
     LIBS += -L../../../agrolib/crit3dDate/release -lcrit3dDate
 }

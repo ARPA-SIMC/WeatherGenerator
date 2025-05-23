@@ -9,7 +9,7 @@
 #---------------------------------------------------------------------
 
 
-QT      += xml
+QT      += sql xml
 QT      -= gui
 
 
@@ -28,7 +28,7 @@ win32:{
 }
 
 
-INCLUDEPATH +=  ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions  \
+INCLUDEPATH +=  ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions  ../../../agrolib/utilities \
                 ../../../agrolib/meteo ../../../agrolib/gis ../../../agrolib/waterTable
 
 SOURCES += \

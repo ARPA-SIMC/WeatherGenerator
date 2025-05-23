@@ -17,20 +17,30 @@
             QString seasonalForecastPath;
             QString scenarioPath;
             QString outputPath;
-            QString waterTablePath;
 
             bool isSeasonalForecast;
             bool isScenario;
-            bool isWaterTable;
+
+            // watertable
+            QString waterTablePath;
+            QString waterTableDbFileName;
+            QString waterTableId;
+
+            bool isWaterTableData;
+            bool isWaterTableDB;
+
             char valuesSeparator;
             float minDataPercentage;
             float rainfallThreshold;
             double lat;
             double lon;
 
+            // climate and scenario
             int firstYear;
             int nrYears;
-            int waterTableMaximumDepth;
+
+            // watertable check
+            int waterTableMaximumDepth;         // same units of data (default: cm)
 
             std::vector<Well> wellPoints;
             WGSettings();
