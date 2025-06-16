@@ -73,7 +73,9 @@
 
 void usage()
 {
-    std::cout << "execution mode: CLIMATE | SEASONAL FORECAST | SCENARIO\n";
+    std::cout << "Daily Weather Generator by ARPAE ER \n";
+    std::cout << "Variables: temperature, precipitation and watertable\n";
+    std::cout << "execution mode: CLIMATE | SCENARIO | SEASONAL FORECAST \n";
     std::cout << std::endl << "USAGE:" << std::endl;
     std::cout << "WG1D.exe [settingsFile.ini]" << std::endl;
     std::cout << std::flush;
@@ -87,7 +89,7 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "WG1D - daily Weather Generator\n";
+    std::cout << "WG1D  V1.0.1\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
