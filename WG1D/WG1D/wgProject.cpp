@@ -665,7 +665,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
                     qDebug() << "Output:" << outputFileName[counterMember];
                 }
             }
-            qDebug() << "Weather Generator OK";
+            qDebug() << "Scenario OK";
         }
 
         clearInputData(climateDailyObsData);

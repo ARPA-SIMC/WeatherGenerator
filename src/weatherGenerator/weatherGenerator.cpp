@@ -353,6 +353,7 @@ void genTemps(float *tMax, float *tMin, float meanTMax, float meanTMin, float st
     *tMax = resTMaxCurr * stdMax + meanTMax;
     *tMin = resTMinCurr * stdMin + meanTMin;
 
+    // switch
     if (*tMin > *tMax)
     {
         NorTMax = *tMin;
@@ -360,9 +361,13 @@ void genTemps(float *tMax, float *tMin, float meanTMax, float meanTMin, float st
         *tMax = NorTMax;
     }
 
-    // minimum deltaT (TODO improve)
-    if (*tMax - *tMin < 1)
-        *tMin = *tMax - 1;
+    // minimum deltaT (1 degree)
+    if ((*tMax - *tMin) < 1.)
+    {
+        float dt = 1. - (*tMax - *tMin);
+        *tMin -= dt * 0.5;
+        *tMax += dt * 0.5;
+    }
 }
 
 
