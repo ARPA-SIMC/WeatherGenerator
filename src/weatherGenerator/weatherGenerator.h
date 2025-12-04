@@ -31,6 +31,8 @@
         float fractionWetDays [12];       // [-]    fraction of wet days (must be >0)
         float dw_Tmax [12];               // [°C]   difference between maximum temperatures on dry and wet days
         float probabilityWetWet[12];      // [-]    probability of a wet day after a wet day
+        float probabilityWetDay[12][5];   // [-]    probability of a wet day after a wet day
+        float probabilityDryDay[12][5];   // [-]    probability of a wet day after a wet day
         float stDevTmin [12];             // [-]    monthly minimum temperature standard deviation
         float stDevTmax [12];             // [-]    monthly maximum temperature standard deviation
         float stDevTminWet [12];             // [-]    monthly minimum temperature standard deviation
@@ -55,6 +57,8 @@
 
     struct Tdailyweather
     {
+        float pWetDay[366][5];
+        float pDryDay[366][5];
         float pww [366];                  // [-]    daily probability wet/wet
         float pwd [366];                  // [-]    daily probability wet/dry
         float meanPrecip [366];           // [mm]   average mm/wet day

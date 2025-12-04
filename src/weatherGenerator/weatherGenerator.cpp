@@ -171,6 +171,8 @@ void initializeDailyDataBasic(ToutputDailyMeteo* dailyData, Crit3DDate myDate)
 
 void initializeWeather(TweatherGenClimate &wGen)
 {
+    float mPWetDay[12][5];
+    float mPDryDay[12][5];
     float mpww[12];
     float mpwd[12];
     float mMeanPrecip[12];

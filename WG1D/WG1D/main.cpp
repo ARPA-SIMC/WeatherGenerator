@@ -64,7 +64,7 @@
 
 
 // uncomment to execute test:
-//#define TEST_WG_CLIMATE
+#define TEST_WG_CLIMATE
 //#define TEST_WG_SEASONAL
 //#define TEST_WG_SCENARIO
 //#define TEST_WG_WATERTABLE_DATA
