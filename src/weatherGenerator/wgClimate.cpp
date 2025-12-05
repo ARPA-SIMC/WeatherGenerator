@@ -36,6 +36,8 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
     long nWetDays[12] = {0};
     long nWetWetDays[12] = {0};
     long nDryDays[12] = {0};
+    long nConsecutiveWetDays[12][5] = {{0}};
+    long nConsecutiveDryDays[12][5] = {{0}};
     long nrData[12] = {0};
     double sumTmaxWet[12] = {0};
     double sumTmaxDry[12] = {0};
@@ -55,7 +57,8 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
 
     int daysInMonth;
     bool isPreviousDayWet = false;
-
+    bool arePreviousDayWet[5] = {false,false,false,false,false};
+    bool arePreviousDayDry[5] = {false,false,false,false,false};
     // read data
     int m;
     Crit3DDate myDate = inputFirstDate;
@@ -83,6 +86,19 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                 sumTmaxWet[m] += double(inputTMax[n]);
                 sumTminWet[m] += double(inputTMin[n]);
                 isPreviousDayWet = true;
+                for (int i=0; i<4; i++)
+                    arePreviousDayWet[i+1]=arePreviousDayWet[i];
+                arePreviousDayWet[0] = true;
+                for (int i=0; i<5; i++)
+                {
+                    bool isConsecutive = false;
+                    for (int j=0; j<i; j++)
+                    {
+                        isConsecutive = arePreviousDayWet[i];
+                    }
+                    if (isConsecutive) ++nConsecutiveWetDays[m][i];
+                }
+
 
                 maxTmaxWet[m] = MAXVALUE(maxTmaxWet[m],inputTMax[n]);
                 maxTminWet[m] = MAXVALUE(maxTminWet[m],inputTMin[n]);
@@ -96,6 +112,19 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                 sumTmaxDry[m] += double(inputTMax[n]);
                 sumTminDry[m] += double(inputTMin[n]);
                 isPreviousDayWet = false;
+                for (int i=0; i<4; i++)
+                    arePreviousDayDry[i+1]=arePreviousDayDry[i];
+                arePreviousDayDry[0] = true;
+                for (int i=0; i<5; i++)
+                {
+                    bool isConsecutive = false;
+                    for (int j=0; j<i; j++)
+                    {
+                        isConsecutive = arePreviousDayDry[i];
+                    }
+                    if (isConsecutive) ++nConsecutiveDryDays[m][i];
+                }
+
 
                 maxTmaxDry[m] = MAXVALUE(maxTmaxDry[m],inputTMax[n]);
                 maxTminDry[m] = MAXVALUE(maxTminDry[m],inputTMin[n]);
@@ -129,6 +158,11 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
 
             wGen->monthly.fractionWetDays[m] = float(nWetDays[m]) / float(nrData[m]);
             wGen->monthly.probabilityWetWet[m] = float(nWetWetDays[m]) / float(nWetDays[m]);
+            for (int i=0; i<4; i++)
+            {
+                wGen->monthly.probabilityWetDay[m][i] = float(nConsecutiveWetDays[m][i+1])/float(nConsecutiveWetDays[m][i]);
+                wGen->monthly.probabilityDryDay[m][i] = float(nConsecutiveDryDays[m][i+1])/float(nConsecutiveDryDays[m][i]);
+            }
 
             if ( (nDryDays[m] > 0) && (nWetDays[m] > 0) )
                 wGen->monthly.dw_Tmax[m] = (sumTmaxDry[m] / nDryDays[m]) - (sumTmaxWet[m] / nWetDays[m]);
