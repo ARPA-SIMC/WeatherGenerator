@@ -25,14 +25,15 @@
 
     struct Tmonthlyweather
     {
+        int nCheckedDays=10;
         float monthlyTmin [12];           // [°C]   monthly maximum temp.
         float monthlyTmax [12];           // [°C]   monthly minimum temp.
         float sumPrec [12];               // [mm]   total monthly precipitation
         float fractionWetDays [12];       // [-]    fraction of wet days (must be >0)
         float dw_Tmax [12];               // [°C]   difference between maximum temperatures on dry and wet days
         float probabilityWetWet[12];      // [-]    probability of a wet day after a wet day
-        float probabilityWetDay[12][5];   // [-]    probability of a wet day after a wet day
-        float probabilityDryDay[12][5];   // [-]    probability of a wet day after a wet day
+        //std::vector<std::vector<float>> probabilityWetDay(12,std::vector<float>(nCheckedDays,0));   // [-]    probability of a wet day after a wet day
+        std::vector<std::vector<float>> probabilityDryDay;  // [-]    probability of a wet day after a wet day
         float stDevTmin [12];             // [-]    monthly minimum temperature standard deviation
         float stDevTmax [12];             // [-]    monthly maximum temperature standard deviation
         float stDevTminWet [12];             // [-]    monthly minimum temperature standard deviation

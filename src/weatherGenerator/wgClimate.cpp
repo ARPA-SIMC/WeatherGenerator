@@ -26,6 +26,7 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                       float precThreshold, float minPrecData,
                       TweatherGenClimate* wGen, bool writeOutput, QString outputFileName)
 {
+    int nCheckedDays = 10;
     long nValidData = 0;
     float dataPresence = 0;
     double sumTMin[12] = {0};
@@ -36,8 +37,8 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
     long nWetDays[12] = {0};
     long nWetWetDays[12] = {0};
     long nDryDays[12] = {0};
-    long nConsecutiveWetDays[12][5] = {{0}};
-    long nConsecutiveDryDays[12][5] = {{0}};
+    std::vector<std::vector<int>> nConsecutiveWetDays(12,std::vector<int>(nCheckedDays,0));
+    std::vector<std::vector<int>> nConsecutiveDryDays(12,std::vector<int>(nCheckedDays,0));
     long nrData[12] = {0};
     double sumTmaxWet[12] = {0};
     double sumTmaxDry[12] = {0};
@@ -54,11 +55,11 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
     float minTminWet[12] = {9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999};
     float minTminDry[12] = {9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999};
 
-
     int daysInMonth;
     bool isPreviousDayWet = false;
-    bool arePreviousDayWet[5] = {false,false,false,false,false};
-    bool arePreviousDayDry[5] = {false,false,false,false,false};
+
+    std::vector<bool> arePreviousDayWet(nCheckedDays,false);
+    std::vector<bool> arePreviousDayDry(nCheckedDays,false);
     // read data
     int m;
     Crit3DDate myDate = inputFirstDate;
@@ -85,24 +86,11 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                 nWetDays[m]++;
                 sumTmaxWet[m] += double(inputTMax[n]);
                 sumTminWet[m] += double(inputTMin[n]);
-                for (int i=0; i<5; i++)
+                for (int i=0; i<nCheckedDays; i++)
                 {
                     arePreviousDayDry[i] = false;
                 }
                 isPreviousDayWet = true;
-                for (int i=0; i<4; i++)
-                    arePreviousDayWet[i+1]=arePreviousDayWet[i];
-                arePreviousDayWet[0] = true;
-                for (int i=0; i<5; i++)
-                {
-                    bool isConsecutive = false;
-                    for (int j=0; j<i; j++)
-                    {
-                        isConsecutive = arePreviousDayWet[i];
-                    }
-                    if (isConsecutive) ++nConsecutiveWetDays[m][i];
-                }
-
 
                 maxTmaxWet[m] = MAXVALUE(maxTmaxWet[m],inputTMax[n]);
                 maxTminWet[m] = MAXVALUE(maxTminWet[m],inputTMin[n]);
@@ -117,7 +105,7 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                 sumTminDry[m] += double(inputTMin[n]);
                 isPreviousDayWet = false;
                 arePreviousDayDry[0] = true;
-                for (int i=0; i<5; i++)
+                for (int i=0; i<nCheckedDays; i++)
                 {
                     bool isConsecutive = false;
                     for (int j=0; j<=i; j++)
@@ -129,7 +117,7 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                         ++nConsecutiveDryDays[m][i];
                     }
                 }
-                for (int i=4; i>=0; i--)
+                for (int i=(nCheckedDays-2); i>=0; i--)
                     arePreviousDayDry[i+1]=arePreviousDayDry[i];
 
 
@@ -148,6 +136,7 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
         return false;
 
     // compute Climate
+    wGen->monthly.probabilityDryDay.resize(12,std::vector<float>(nCheckedDays,0)); //initialize
     for (m=0; m<12; m++)
     {
         if (nrData[m] > 0)
@@ -165,9 +154,9 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
 
             wGen->monthly.fractionWetDays[m] = float(nWetDays[m]) / float(nrData[m]);
             wGen->monthly.probabilityWetWet[m] = float(nWetWetDays[m]) / float(nWetDays[m]);
-            for (int i=0; i<4; i++)
+            for (int i=0; i<(nCheckedDays-1); i++)
             {
-                wGen->monthly.probabilityWetDay[m][i] = float(nConsecutiveWetDays[m][i+1])/float(nConsecutiveWetDays[m][i]);
+                //wGen->monthly.probabilityWetDay[m][i] = float(nConsecutiveWetDays[m][i+1])/float(nConsecutiveWetDays[m][i]);
                 wGen->monthly.probabilityDryDay[m][i] = float(nConsecutiveDryDays[m][i+1])/float(nConsecutiveDryDays[m][i]);
             }
 
