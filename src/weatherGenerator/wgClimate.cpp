@@ -39,6 +39,9 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
     long nDryDays[12] = {0};
     std::vector<std::vector<int>> nConsecutiveWetDays(12,std::vector<int>(nCheckedDays,0));
     std::vector<std::vector<int>> nConsecutiveDryDays(12,std::vector<int>(nCheckedDays,0));
+    float normalizedDryPeriod[12] = {1};
+    float ratioDryDaysWetDays[12] = {1};
+    float correctedProbabilityPwd[12];
     long nrData[12] = {0};
     double sumTmaxWet[12] = {0};
     double sumTmaxDry[12] = {0};
@@ -159,6 +162,10 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                 //wGen->monthly.probabilityWetDay[m][i] = float(nConsecutiveWetDays[m][i+1])/float(nConsecutiveWetDays[m][i]);
                 wGen->monthly.probabilityDryDay[m][i] = float(nConsecutiveDryDays[m][i+1])/float(nConsecutiveDryDays[m][i]);
             }
+            averagedVectorProbability(wGen->monthly.probabilityDryDay[m]);
+            normalizedDryPeriod[m] = computeNormalizedDryDayLength(wGen->monthly.probabilityDryDay[m]);
+            ratioDryDaysWetDays[m] = (float(nrData[m]) - float(nWetDays[m]))/ float(nWetDays[m]);
+            correctedProbabilityPwd[m] = (1 - wGen->monthly.probabilityWetWet[m]) * ratioDryDaysWetDays[m]/normalizedDryPeriod[m];
 
             if ( (nDryDays[m] > 0) && (nWetDays[m] > 0) )
                 wGen->monthly.dw_Tmax[m] = (sumTmaxDry[m] / nDryDays[m]) - (sumTmaxWet[m] / nWetDays[m]);
@@ -689,4 +696,43 @@ float sampleStdDeviation(float values[], int nElement)
         stdDeviation = sqrt( std::max(nElement * sum2 - (sum * sum), 0.f) / float(nElement * (nElement - 1)) );
     }
     return stdDeviation;
+}
+
+float computeNormalizedDryDayLength(std::vector<float>& probabiltyConsecutiveDays)
+{
+    int iterations = 31;
+    float length = 1;
+    float averageProbability = statistics::mean(probabiltyConsecutiveDays);
+    float factor = 1;
+    for (int i=1;i<iterations;i++)
+    {
+        for (int j=0; j<i; j++)
+        {
+            if (j < probabiltyConsecutiveDays.size())
+                factor *= probabiltyConsecutiveDays[j];
+            else
+                factor *= averageProbability;
+        }
+        length += factor;
+    }
+    return length;
+}
+
+void averagedVectorProbability(std::vector<float>& probabiltyConsecutiveDays)
+{
+    float averageProbability = statistics::mean(probabiltyConsecutiveDays);
+    for (int j=0; j<probabiltyConsecutiveDays.size(); j++)
+    {
+        if (probabiltyConsecutiveDays[j] < EPSILON)
+        {
+            probabiltyConsecutiveDays[j] = averageProbability;
+            averageProbability = statistics::mean(probabiltyConsecutiveDays);
+            probabiltyConsecutiveDays[j] = averageProbability;
+            averageProbability = statistics::mean(probabiltyConsecutiveDays);
+            probabiltyConsecutiveDays[j] = averageProbability;
+            averageProbability = statistics::mean(probabiltyConsecutiveDays);
+            probabiltyConsecutiveDays[j] = averageProbability;
+        }
+    }
+    return;
 }

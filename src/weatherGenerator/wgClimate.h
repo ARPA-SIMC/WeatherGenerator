@@ -29,5 +29,8 @@
                           TweatherGenClimate* wGen, bool writeOutput, bool outputForStats,
                           QString outputFileName, float* monthlyPrecipitation);
 
+    float computeNormalizedDryDayLength(std::vector<float> &probabiltyConsecutiveDays);
+    void averagedVectorProbability(std::vector<float>& probabiltyConsecutiveDays);
+
 #endif // WGCLIMATE_H
 
