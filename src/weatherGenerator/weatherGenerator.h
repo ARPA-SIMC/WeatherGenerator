@@ -32,8 +32,10 @@
         float fractionWetDays [12];       // [-]    fraction of wet days (must be >0)
         float dw_Tmax [12];               // [°C]   difference between maximum temperatures on dry and wet days
         float probabilityWetWet[12];      // [-]    probability of a wet day after a wet day
-        //std::vector<std::vector<float>> probabilityWetDay(12,std::vector<float>(nCheckedDays,0));   // [-]    probability of a wet day after a wet day
-        std::vector<std::vector<float>> probabilityDryDay;  // [-]    probability of a wet day after a wet day
+
+        float dryProbabilityIncrease[12]; // [-]    increase of the probability of a dry day after a dry day
+        float wetProbabilityIncrease[12]; // [-]    increase of the probability of a wet day after a wet day
+
         float stDevTmin [12];             // [-]    monthly minimum temperature standard deviation
         float stDevTmax [12];             // [-]    monthly maximum temperature standard deviation
         float stDevTminWet [12];             // [-]    monthly minimum temperature standard deviation
@@ -110,7 +112,7 @@
 
     void normalRandom(float *rnd_1, float *rnd_2);
 
-    bool markov(float pwd, float pww, bool isWetPreviousDay);
+    bool markov(float pWet);
     float weibull (float mean, float precThreshold);
 
     void genTemps(float *tMax, float *tMin, float meanTMax, float meanTMin, float stdMax,

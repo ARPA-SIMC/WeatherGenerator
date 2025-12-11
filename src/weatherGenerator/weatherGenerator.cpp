@@ -132,7 +132,19 @@ void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
     dayOfYear = dayOfYear - 1;
 
     //Precipitation
-    bool isWetDay = markov(wGen.daily.pwd[dayOfYear], wGen.daily.pww[dayOfYear], wGen.state.wetPreviousDay);
+    bool isWetDay;
+    if (wGen.state.wetPreviousDay)
+    {
+        float pw = wGen.daily.pww[dayOfYear];
+        // TODO: incrementare Pw in base a quanti consecutivi wet
+        isWetDay = markov(pw);
+    }
+    else
+    {
+        float pw = wGen.daily.pwd[dayOfYear];
+        // TODO: diminuire Pw in base a quanti consecutivi dry (Pwd = 1-Pdd)
+        isWetDay = markov(pw);
+    }
 
     if (isWetDay)
     {
@@ -171,8 +183,6 @@ void initializeDailyDataBasic(ToutputDailyMeteo* dailyData, Crit3DDate myDate)
 
 void initializeWeather(TweatherGenClimate &wGen)
 {
-    float mPWetDay[12][5];
-    float mPDryDay[12][5];
     float mpww[12];
     float mpwd[12];
     float mMeanPrecip[12];
@@ -184,9 +194,6 @@ void initializeWeather(TweatherGenClimate &wGen)
     float mMeanDiff[12];
     float mMaxTempStd[12];
     float mMinTempStd[12];
-    float sumPrecip = 0;
-    int daysInMonth;
-    int m;
 
     wGen.state.currentDay = NODATA;
     wGen.state.currentTmax = NODATA;
@@ -210,7 +217,7 @@ void initializeWeather(TweatherGenClimate &wGen)
         wGen.daily.pww[i] = 0;
     }
 
-    for (m = 0; m < 12; m++)
+    for (int m = 0; m < 12; m++)
     {
         mMeanTMax[m] = wGen.monthly.monthlyTmax[m];
         mMeanTMin[m] = wGen.monthly.monthlyTmin[m];
@@ -220,17 +227,16 @@ void initializeWeather(TweatherGenClimate &wGen)
         mMeanDiff[m] = wGen.monthly.dw_Tmax[m];
         mMaxTempStd[m] = wGen.monthly.stDevTmax[m];
         mMinTempStd[m] = wGen.monthly.stDevTmin[m];
-        sumPrecip = sumPrecip + mMeanPrecip[m];
     }
 
-    for (m = 0; m < 12; m++)
+    for (int m = 0; m < 12; m++)
     {
         mMeanDryTMax[m] = mMeanTMax[m] + fWetDays[m] * mMeanDiff[m];
         mMeanWetTMax[m] = mMeanDryTMax[m] - mMeanDiff[m];
 
         mpwd[m] = (1.f - mpww[m]) * (fWetDays[m] / (1.f - fWetDays[m]));
 
-        daysInMonth = getDaysInMonth(m+1, 2001); // year = 2001 is to avoid leap year
+        int daysInMonth = getDaysInMonth(m+1, 2001); // year = 2001 is to avoid leap year
 
         // convert from total mm/month to average mm/wet day
         mMeanPrecip[m] = mMeanPrecip[m] / (fWetDays[m] * float(daysInMonth));
@@ -275,12 +281,29 @@ void normalRandom(float *rnd_1, float *rnd_2)
 
 
 /*!
+ * \brief markov chain (wet / dry day)
+ * \param pWet     wet probability
+ * \return true if the day is wet, false otherwise
+ */
+bool markov(float pWet)
+{
+    double c = double(rand()) / double(RAND_MAX) - double(pWet);
+
+    if (c <= 0)
+        return true;  // wet
+    else
+        return false; // dry
+}
+
+
+/*!
  * \brief dry/wet markov chain
  * \param pwd     probability wet-dry
  * \param pww     probability wet-wet
  * \param isWetPreviousDay  true if the previous day has been a wet day, false otherwise
  * \return true if the day is wet, false otherwise
  */
+ /*
 bool markov(float pwd,float pww, bool isWetPreviousDay)
 {
     double c;
@@ -297,7 +320,7 @@ bool markov(float pwd,float pww, bool isWetPreviousDay)
     else
         return false; // dry
 }
-
+*/
 
 /*!
   * \brief weibull distribution uses only avg precipitation (computed on wet days)

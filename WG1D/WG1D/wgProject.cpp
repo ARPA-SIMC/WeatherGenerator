@@ -123,6 +123,7 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
             wgSettings.waterTablePath = pathSettingsFile + wgSettings.waterTablePath;
         }
     }
+
     wgSettings.isWaterTableDB = false;
     myValue = mySettings->value("waterTableDB");
     if (myValue.isValid())
@@ -151,6 +152,7 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
         return false;
     }
 
+
     wgSettings.outputPath = mySettings->value("output").toString();
     if (wgSettings.outputPath.left(1) == ".")
     {
@@ -165,14 +167,16 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
         }
     }
 
-    //check output directory
+    // check output directory
     QDir outputDirectory(wgSettings.outputPath);
     if (! outputDirectory.exists())
+    {
         if (! outputDirectory.mkdir(wgSettings.outputPath))
         {
             qDebug() << "Error: missing output directory" << wgSettings.outputPath;
             return false;
         }
+    }
 
     QString mySeparator = mySettings->value("separator").toString();
     wgSettings.valuesSeparator = mySeparator.toStdString().c_str()[0];
@@ -186,14 +190,14 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
     // nr of repetitions (deafult: 1)
     wgSettings.nrYears = mySettings->value("nrYears", 1).toInt();
 
-    bool ok;
-    wgSettings.lat = mySettings->value("latitude_default").toFloat(&ok);
-    if (ok == false)
+    bool isOk;
+    wgSettings.lat = mySettings->value("latitude_default").toFloat(&isOk);
+    if (isOk == false)
     {
         wgSettings.lat = NODATA;
     }
-    wgSettings.lon = mySettings->value("longitude_default").toFloat(&ok);
-    if (ok == false)
+    wgSettings.lon = mySettings->value("longitude_default").toFloat(&isOk);
+    if (isOk == false)
     {
         wgSettings.lon = NODATA;
     }
@@ -408,7 +412,9 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         }
 
         // weather generator - computes climate without anomaly
-        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate,
+                              climateObsLastDate, wgSettings.rainfallThreshold,
+                              wgSettings.minDataPercentage, &wGenClimate))
         {
             qDebug() << "Error in climateGenerator";
             qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -543,7 +549,9 @@ bool WG_Scenario(const WGSettings &wgSettings)
         else
         {
             // weather generator - computes climate without anomaly
-            if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+            if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate,
+                                  climateObsLastDate, wgSettings.rainfallThreshold,
+                                  wgSettings.minDataPercentage, &wGenClimate))
             {
                 qDebug() << "Error in climateGenerator";
                 qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -714,6 +722,7 @@ bool WG_Climate(const WGSettings &wgSettings)
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
 
+        // watertable
         if (wgSettings.isWaterTableData)
         {
             Well myWell;
@@ -774,7 +783,8 @@ bool WG_Climate(const WGSettings &wgSettings)
         }
 
         // weather generator - computes climate
-        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate,
+                              climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
         {
             qDebug() << "Error in climateGenerator";
             qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
