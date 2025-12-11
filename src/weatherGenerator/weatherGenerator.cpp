@@ -136,13 +136,13 @@ void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
     if (wGen.state.wetPreviousDay)
     {
         float pw = wGen.daily.pww[dayOfYear];
-        // TODO: incrementare Pw in base a quanti consecutivi wet
+        // TODO: incrementare Pw in base a consecutiveWetDays
         isWetDay = markov(pw);
     }
     else
     {
         float pw = wGen.daily.pwd[dayOfYear];
-        // TODO: diminuire Pw in base a quanti consecutivi dry (Pwd = 1-Pdd)
+        // TODO: diminuire Pw in base a consecutiveDryDays (Pwd = 1-Pdd)
         isWetDay = markov(pw);
     }
 
@@ -150,11 +150,15 @@ void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
     {
         meanTMax = wGen.daily.meanWetTMax[dayOfYear];
         wGen.state.currentPrec = weibull(wGen.daily.meanPrecip[dayOfYear], precThreshold);
+        wGen.state.consecutiveDryDays = 0;
+        ++wGen.state.consecutiveWetDays;
     }
     else
     {
         meanTMax = wGen.daily.meanDryTMax[dayOfYear];
         wGen.state.currentPrec = 0;
+        wGen.state.consecutiveWetDays = 0;
+        ++wGen.state.consecutiveDryDays;
     }
 
     //store information
@@ -204,6 +208,8 @@ void initializeWeather(TweatherGenClimate &wGen)
     wGen.state.resTMaxPrev = 0;
     wGen.state.resTMinPrev = 0;
     wGen.state.wetPreviousDay = false;
+    wGen.state.consecutiveDryDays = 0;
+    wGen.state.consecutiveWetDays = 0;
 
     for (int i = 0; i < 366; i++)
     {

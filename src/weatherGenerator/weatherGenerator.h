@@ -81,6 +81,8 @@
         float resTMaxPrev;                 // [-]   residual of maximum temperature for previous day
         float resTMinPrev;                 // [-]   residual of minimum temperature for previous day
         bool wetPreviousDay;               // [-]   true if the previous day has been a wet day, false otherwise
+        int consecutiveDryDays;            // [-]
+        int consecutiveWetDays;            // [-]
     };
 
     struct TweatherGenClimate
