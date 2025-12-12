@@ -783,8 +783,9 @@ bool WG_Climate(const WGSettings &wgSettings)
         }
 
         // weather generator - computes climate
-        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate,
-                              climateObsLastDate, wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate))
+        QString climateObsFileName = wgSettings.outputPath + "/" + "climate_obs_" + fileName;
+        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate,
+                              wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate, true, climateObsFileName))
         {
             qDebug() << "Error in climateGenerator";
             qDebug() << "\n***** ERROR! *****" << fileName << "Computation FAILED\n";
@@ -808,6 +809,21 @@ bool WG_Climate(const WGSettings &wgSettings)
             qDebug() << "Weather Generator OK";
             qDebug() << "Output:" << outputFileName;
             writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData, false);
+
+            qDebug() << "\n...Check output" << fileName;
+
+            // read CLIMATE data
+            if (! readMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, NODATA, climateDailyObsData) )
+                return false;
+
+            climateObsFirstDate = climateDailyObsData.inputFirstDate;
+            climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+            QString climateOutFileName = wgSettings.outputPath + "/" + "climate_output_" + fileName;
+            if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate,
+                                  wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate, true, climateOutFileName))
+            {
+                qDebug() << "Error in check output";
+            }
         }
 
         clearInputData(climateDailyObsData);

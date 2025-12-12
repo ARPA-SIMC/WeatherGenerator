@@ -13,6 +13,8 @@
         #include "waterTable.h"
     #endif
 
+    #define NRDAYS_MAXDRYINCREASE  4
+
     struct TinputObsData
     {
         Crit3DDate inputFirstDate;
@@ -60,8 +62,8 @@
 
     struct Tdailyweather
     {
-        float pWetDay[366][5];
-        float pDryDay[366][5];
+        float wetIncrease[366];           // [-]
+        float dryIncrease[366];           // [-]
         float pww [366];                  // [-]    daily probability wet/wet
         float pwd [366];                  // [-]    daily probability wet/dry
         float meanPrecip [366];           // [mm]   average mm/wet day
@@ -115,6 +117,7 @@
     void normalRandom(float *rnd_1, float *rnd_2);
 
     bool markov(float pWet);
+    bool markov_old(float pwd,float pww, bool isWetPreviousDay);
     float weibull (float mean, float precThreshold);
 
     void genTemps(float *tMax, float *tMin, float meanTMax, float meanTMin, float stdMax,

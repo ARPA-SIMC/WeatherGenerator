@@ -123,55 +123,62 @@ float getPrecip(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 }
 
 
-// main function
+// wg main function
 void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 {
-    float meanTMax, meanTMin, stdTMax, stdTMin;
-
     // daily structure is 0-365
     dayOfYear = dayOfYear - 1;
 
-    //Precipitation
+    // dry/wet day
     bool isWetDay;
     if (wGen.state.wetPreviousDay)
     {
         float pw = wGen.daily.pww[dayOfYear];
-        // TODO: incrementare Pw in base a consecutiveWetDays
+        int nrDaysIncrease = std::min(wGen.state.consecutiveWetDays-1, NRDAYS_MAXDRYINCREASE);
+        pw += nrDaysIncrease * wGen.daily.wetIncrease[dayOfYear];
         isWetDay = markov(pw);
     }
     else
     {
         float pw = wGen.daily.pwd[dayOfYear];
-        // TODO: diminuire Pw in base a consecutiveDryDays (Pwd = 1-Pdd)
+        int nrDaysDecrease = std::min(wGen.state.consecutiveDryDays-1, NRDAYS_MAXDRYINCREASE);
+        // Pwd = 1 - Pdd
+        pw -= nrDaysDecrease * wGen.daily.dryIncrease[dayOfYear];
         isWetDay = markov(pw);
     }
 
+    // precipitation
     if (isWetDay)
     {
-        meanTMax = wGen.daily.meanWetTMax[dayOfYear];
         wGen.state.currentPrec = weibull(wGen.daily.meanPrecip[dayOfYear], precThreshold);
         wGen.state.consecutiveDryDays = 0;
         ++wGen.state.consecutiveWetDays;
     }
     else
     {
-        meanTMax = wGen.daily.meanDryTMax[dayOfYear];
         wGen.state.currentPrec = 0;
         wGen.state.consecutiveWetDays = 0;
         ++wGen.state.consecutiveDryDays;
     }
 
-    //store information
-    wGen.state.wetPreviousDay = isWetDay;
+    // temperature
+    float meanTMin = wGen.daily.meanTMin[dayOfYear];
 
-    //temperature
-    meanTMin = wGen.daily.meanTMin[dayOfYear];
-    stdTMax = wGen.daily.maxTempStd[dayOfYear];
-    stdTMin = wGen.daily.minTempStd[dayOfYear];
+    float meanTMax;
+    if (isWetDay)
+        meanTMax = wGen.daily.meanWetTMax[dayOfYear];
+    else
+        meanTMax = wGen.daily.meanDryTMax[dayOfYear];
 
-    genTemps(&wGen.state.currentTmax, &wGen.state.currentTmin, meanTMax, meanTMin, stdTMax, stdTMin, &(wGen.state.resTMaxPrev), &(wGen.state.resTMinPrev));
+    float stdTMax = wGen.daily.maxTempStd[dayOfYear];
+    float stdTMin = wGen.daily.minTempStd[dayOfYear];
 
+    genTemps(&wGen.state.currentTmax, &wGen.state.currentTmin, meanTMax, meanTMin, stdTMax, stdTMin,
+             &(wGen.state.resTMaxPrev), &(wGen.state.resTMinPrev));
+
+    // update state
     wGen.state.currentDay = dayOfYear;
+    wGen.state.wetPreviousDay = isWetDay;
 }
 
 
@@ -187,18 +194,7 @@ void initializeDailyDataBasic(ToutputDailyMeteo* dailyData, Crit3DDate myDate)
 
 void initializeWeather(TweatherGenClimate &wGen)
 {
-    float mpww[12];
-    float mpwd[12];
-    float mMeanPrecip[12];
-    float fWetDays[12];
-    float mMeanDryTMax[12];
-    float mMeanWetTMax[12];
-    float mMeanTMax[12];
-    float mMeanTMin[12];
-    float mMeanDiff[12];
-    float mMaxTempStd[12];
-    float mMinTempStd[12];
-
+    // initialize state
     wGen.state.currentDay = NODATA;
     wGen.state.currentTmax = NODATA;
     wGen.state.currentTmin = NODATA;
@@ -207,10 +203,31 @@ void initializeWeather(TweatherGenClimate &wGen)
     // TODO: pass residual data of last observed day
     wGen.state.resTMaxPrev = 0;
     wGen.state.resTMinPrev = 0;
+
     wGen.state.wetPreviousDay = false;
-    wGen.state.consecutiveDryDays = 0;
+    wGen.state.consecutiveDryDays = 1;
     wGen.state.consecutiveWetDays = 0;
 
+    // derived variables
+    float mpwd[12];
+    float mMeanPrecip[12];
+    float mMeanDryTMax[12];
+    float mMeanWetTMax[12];
+
+    for (int m = 0; m < 12; m++)
+    {
+        mMeanDryTMax[m] = wGen.monthly.monthlyTmax[m] + wGen.monthly.fractionWetDays[m] * wGen.monthly.dw_Tmax[m];
+        mMeanWetTMax[m] = mMeanDryTMax[m] - wGen.monthly.dw_Tmax[m];
+
+        mpwd[m] = (1.f - wGen.monthly.probabilityWetWet[m]) * (wGen.monthly.fractionWetDays[m] / (1.f - wGen.monthly.fractionWetDays[m]));
+
+        int daysInMonth = getDaysInMonth(m+1, 2001);    // year = 2001 to avoid leap year
+
+        // convert from total mm/month to average mm/wet day
+        mMeanPrecip[m] = wGen.monthly.sumPrec[m] / (wGen.monthly.fractionWetDays[m] * float(daysInMonth));
+    }
+
+    // initialize daily climate
     for (int i = 0; i < 366; i++)
     {
         wGen.daily.maxTempStd[i] = 0;
@@ -221,41 +238,23 @@ void initializeWeather(TweatherGenClimate &wGen)
         wGen.daily.minTempStd[i] = 0;
         wGen.daily.pwd[i] = 0;
         wGen.daily.pww[i] = 0;
+        wGen.daily.wetIncrease[i] = 0.;
+        wGen.daily.dryIncrease[i] = 0.;
     }
 
-    for (int m = 0; m < 12; m++)
-    {
-        mMeanTMax[m] = wGen.monthly.monthlyTmax[m];
-        mMeanTMin[m] = wGen.monthly.monthlyTmin[m];
-        mMeanPrecip[m] = wGen.monthly.sumPrec[m];
-        fWetDays[m] = wGen.monthly.fractionWetDays[m];
-        mpww[m] = wGen.monthly.probabilityWetWet[m];
-        mMeanDiff[m] = wGen.monthly.dw_Tmax[m];
-        mMaxTempStd[m] = wGen.monthly.stDevTmax[m];
-        mMinTempStd[m] = wGen.monthly.stDevTmin[m];
-    }
-
-    for (int m = 0; m < 12; m++)
-    {
-        mMeanDryTMax[m] = mMeanTMax[m] + fWetDays[m] * mMeanDiff[m];
-        mMeanWetTMax[m] = mMeanDryTMax[m] - mMeanDiff[m];
-
-        mpwd[m] = (1.f - mpww[m]) * (fWetDays[m] / (1.f - fWetDays[m]));
-
-        int daysInMonth = getDaysInMonth(m+1, 2001); // year = 2001 is to avoid leap year
-
-        // convert from total mm/month to average mm/wet day
-        mMeanPrecip[m] = mMeanPrecip[m] / (fWetDays[m] * float(daysInMonth));
-    }
-
-    interpolation::cubicSplineYearInterpolate(mpww, wGen.daily.pww);
-    interpolation::cubicSplineYearInterpolate(mpwd, wGen.daily.pwd);
+    // temperature
     interpolation::cubicSplineYearInterpolate(mMeanDryTMax, wGen.daily.meanDryTMax);
-    interpolation::cubicSplineYearInterpolate(mMeanPrecip, wGen.daily.meanPrecip);
     interpolation::cubicSplineYearInterpolate(mMeanWetTMax, wGen.daily.meanWetTMax);
-    interpolation::cubicSplineYearInterpolate(mMeanTMin, wGen.daily.meanTMin);
-    interpolation::cubicSplineYearInterpolate(mMinTempStd, wGen.daily.minTempStd);
-    interpolation::cubicSplineYearInterpolate(mMaxTempStd, wGen.daily.maxTempStd);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.monthlyTmin, wGen.daily.meanTMin);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmin, wGen.daily.minTempStd);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmax, wGen.daily.maxTempStd);
+
+    // precipitation
+    interpolation::cubicSplineYearInterpolate(mMeanPrecip, wGen.daily.meanPrecip);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.probabilityWetWet, wGen.daily.pww);
+    interpolation::cubicSplineYearInterpolate(mpwd, wGen.daily.pwd);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.wetProbabilityIncrease, wGen.daily.wetIncrease);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.dryProbabilityIncrease, wGen.daily.dryIncrease);
 }
 
 
@@ -293,6 +292,7 @@ void normalRandom(float *rnd_1, float *rnd_2)
  */
 bool markov(float pWet)
 {
+    pWet = std::max(std::min(pWet, 1.f), 0.f);
     double c = double(rand()) / double(RAND_MAX) - double(pWet);
 
     if (c <= 0)
@@ -309,8 +309,8 @@ bool markov(float pWet)
  * \param isWetPreviousDay  true if the previous day has been a wet day, false otherwise
  * \return true if the day is wet, false otherwise
  */
- /*
-bool markov(float pwd,float pww, bool isWetPreviousDay)
+
+bool markov_old(float pwd,float pww, bool isWetPreviousDay)
 {
     double c;
 
@@ -326,7 +326,7 @@ bool markov(float pwd,float pww, bool isWetPreviousDay)
     else
         return false; // dry
 }
-*/
+
 
 /*!
   * \brief weibull distribution uses only avg precipitation (computed on wet days)

@@ -42,13 +42,18 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
         QList<QByteArray> valueList = line.split(mySeparator);
 
         // check format
-        if (valueList.count() < 5)
+        if (valueList.count() < 4)
         {
             qDebug() << "ERROR!" << "\nfile =" << fileName << "\nline =" << indexLine+2;;
             qDebug() << "missing data or invalid format or invalid separator";
             qDebug() << "required separator = " << mySeparator <<"\n";
             return false;
         }
+
+        int precPosition = 3;
+        // presence of tavg
+        if (valueList.count() > 4)
+            precPosition = 4;
 
         // date
         currentDateStr = valueList[0];
@@ -120,10 +125,11 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
             listTMax.append(valueList[2]);
 
         // prec
-        if (valueList[4] == "" || valueList[4] == " " || valueList[4] == noDataString)
+        QString precString = valueList[precPosition];
+        if (precString == "" || precString == " " || precString == noDataString)
             listPrecip.append(QString::number(NODATA));
         else
-            listPrecip.append(valueList[4]);
+            listPrecip.append(precString);
 
         indexLine++;
     }

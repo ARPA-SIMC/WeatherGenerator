@@ -1,6 +1,7 @@
 #include <math.h>
 
 #include "commonConstants.h"
+#include "basicMath.h"
 #include "wgClimate.h"
 #include "weatherGenerator.h"
 #include "timeUtility.h"
@@ -24,7 +25,7 @@ using namespace std;
 bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<float>& inputTMin,
                       const std::vector<float>& inputTMax, const std::vector<float>& inputPrec,
                       float precThreshold, float minDataPercentage, TweatherGenClimate* wGen,
-                      bool isWriteOutput, QString outputFileName)
+                      bool isWriteOutput, const QString& outputFileName)
 {
     double sumTMin[12] = {0};
     double sumTMax[12] = {0};
@@ -35,9 +36,6 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
     long nWetWetDays[12] = {0};
     long nDryDays[12] = {0};
 
-    float normalizedDryPeriod[12] = {1};
-    float ratioDryDaysWetDays[12] = {1};
-    float correctedProbabilityPwd[12];
     long nrData[12] = {0};
     double sumTmaxWet[12] = {0};
     double sumTmaxDry[12] = {0};
@@ -54,16 +52,38 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
     float minTminWet[12] = {9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999};
     float minTminDry[12] = {9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999,9999};
 
-    int daysInMonth;
-    bool isPreviousDayWet = false;
-
-    int nCheckedDays = 10;
+    int nCheckedDays = NRDAYS_MAXDRYINCREASE * 2 + 1;
     std::vector<std::vector<int>> nConsecutiveWetDays(12, std::vector<int>(nCheckedDays,0));
     std::vector<std::vector<int>> nConsecutiveDryDays(12, std::vector<int>(nCheckedDays, 0));
     std::vector<bool> arePreviousDayWet(nCheckedDays, false);
     std::vector<bool> arePreviousDayDry(nCheckedDays, false);
 
+    // initialize climate
+    for (int m = 0; m < 12; m++)
+    {
+        wGen->monthly.monthlyTmax[m] = NODATA;
+        wGen->monthly.monthlyTmin[m] = NODATA;
+        wGen->monthly.sumPrec[m] = NODATA;
+        wGen->monthly.fractionWetDays[m] = NODATA;
+        wGen->monthly.stDevTmax[m] = NODATA;
+        wGen->monthly.stDevTmin[m] = NODATA;
+        wGen->monthly.dw_Tmax[m] = NODATA;
+        wGen->monthly.probabilityWetWet[m] = NODATA;
+        wGen->monthly.dryProbabilityIncrease[m] = NODATA;
+        wGen->monthly.wetProbabilityIncrease[m] = NODATA;
+
+        wGen->monthly.maxTminDry[m] = NODATA;
+        wGen->monthly.maxTminWet[m] = NODATA;
+        wGen->monthly.minTminDry[m] = NODATA;
+        wGen->monthly.minTminWet[m] = NODATA;
+        wGen->monthly.maxTmaxDry[m] = NODATA;
+        wGen->monthly.maxTmaxWet[m] = NODATA;
+        wGen->monthly.minTmaxDry[m] = NODATA;
+        wGen->monthly.minTmaxWet[m] = NODATA;
+    }
+
     // read data
+    bool isPreviousDayWet = false;
     long nrValidData = 0;
     Crit3DDate myDate = inputFirstDate;
     for (int n = 0; n < nrDays; n++)
@@ -178,7 +198,7 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
             wGen->monthly.monthlyTminDry[m] = sumTminDry[m] / nDryDays[m];
             wGen->monthly.monthlyTminWet[m] = sumTminWet[m] / nWetDays[m];
 
-            daysInMonth = getDaysInMonth(m+1,2001);                 // year = 2001 is to avoid leap year
+            int daysInMonth = getDaysInMonth(m+1,2001);                 // year = 2001 is to avoid leap year
 
             wGen->monthly.sumPrec[m] = sumPrec[m] / nrData[m] * daysInMonth;
 
@@ -201,15 +221,32 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
                     probabilityWetDay[i] = float(nConsecutiveWetDays[m][i+1]) / float(nConsecutiveWetDays[m][i]);
             }
 
-            // ??
+            /*
             averagedVectorProbability(probabilityDryDay);
             normalizedDryPeriod[m] = computeNormalizedDryDayLength(probabilityDryDay);
             ratioDryDaysWetDays[m] = (float(nrData[m]) - float(nWetDays[m])) / float(nWetDays[m]);
             correctedProbabilityPwd[m] = (1 - wGen->monthly.probabilityWetWet[m]) * ratioDryDaysWetDays[m]/normalizedDryPeriod[m];
+            */
 
-            // TODO compute dryProbabilityIncrease[m] (crescita media serie da 1 a 5)
-            // TODO compute wetProbabilityIncrease[m] (crescita media serie da 1 a 5)
+            float dryProbabilityTail = avgProbabilityVectorTail(probabilityDryDay);
+            if (isEqual(dryProbabilityTail, NODATA))
+                wGen->monthly.dryProbabilityIncrease[m] = 0.;
+            else
+            {
+                wGen->monthly.dryProbabilityIncrease[m] = (dryProbabilityTail - probabilityDryDay[0]) / NRDAYS_MAXDRYINCREASE;
+                if (abs(wGen->monthly.dryProbabilityIncrease[m]) < 0.001)
+                    wGen->monthly.dryProbabilityIncrease[m] = 0.;
+            }
 
+            float wetProbabilityTail = avgProbabilityVectorTail(probabilityWetDay);
+            if (isEqual(wetProbabilityTail, NODATA))
+                wGen->monthly.wetProbabilityIncrease[m] = 0.;
+            else
+            {
+                wGen->monthly.wetProbabilityIncrease[m] = (wetProbabilityTail - probabilityWetDay[0]) / NRDAYS_MAXDRYINCREASE;
+                if (abs(wGen->monthly.wetProbabilityIncrease[m]) < 0.001)
+                    wGen->monthly.wetProbabilityIncrease[m] = 0.;
+            }
 
             if (nDryDays[m] > 0 && nWetDays[m] > 0)
                 wGen->monthly.dw_Tmax[m] = (sumTmaxDry[m] / nDryDays[m]) - (sumTmaxWet[m] / nWetDays[m]);
@@ -218,17 +255,6 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
 
             wGen->monthly.stDevTmax[m] = sqrt(MAXVALUE(nrData[m]*sumTMax2[m]-(sumTMax[m]*sumTMax[m]), 0) / (nrData[m]*(nrData[m]-1)));
             wGen->monthly.stDevTmin[m] = sqrt(MAXVALUE(nrData[m]*sumTMin2[m]-(sumTMin[m]*sumTMin[m]), 0) / (nrData[m]*(nrData[m]-1)));
-        }
-        else
-        {
-            wGen->monthly.monthlyTmax[m] = NODATA;
-            wGen->monthly.monthlyTmin[m] = NODATA;
-            wGen->monthly.sumPrec[m] = NODATA;
-            wGen->monthly.fractionWetDays[m] = NODATA;
-            wGen->monthly.stDevTmax[m] = NODATA;
-            wGen->monthly.stDevTmin[m] = NODATA;
-            wGen->monthly.dw_Tmax[m] = NODATA;
-            wGen->monthly.dryProbabilityIncrease[m] = NODATA;
         }
 
         wGen->monthly.maxTminDry[m] = maxTminDry[m];
@@ -677,7 +703,7 @@ bool computeWG2DClimate(int nrDays, Crit3DDate inputFirstDate, float *inputTMin,
   */
 bool climateGenerator(int nrData, TinputObsData climateDailyObsData, Crit3DDate climateDateIni,
                       Crit3DDate climateDateFin, float precThreshold, float minDataPercentage,
-                      TweatherGenClimate* wGen)
+                      TweatherGenClimate* wGen, bool isWriteOutput, const QString &outputFileName)
 {
     int startIndex = difference(climateDailyObsData.inputFirstDate, climateDateIni);  // starts from 0
     int nrDays = difference(climateDateIni, climateDateFin)+1;
@@ -700,10 +726,9 @@ bool climateGenerator(int nrData, TinputObsData climateDailyObsData, Crit3DDate 
         }
     }
 
-    bool isWriteOutput = false;
     bool result = computeWGClimate(nrDays, dailyObsData.inputFirstDate, dailyObsData.inputTMin,
                                     dailyObsData.inputTMax, dailyObsData.inputPrecip,
-                                    precThreshold, minDataPercentage, wGen, isWriteOutput, "");
+                                    precThreshold, minDataPercentage, wGen, isWriteOutput, outputFileName);
 
     dailyObsData.inputTMin.clear();
     dailyObsData.inputTMax.clear();
@@ -745,7 +770,7 @@ float computeNormalizedDryDayLength(std::vector<float>& probabiltyConsecutiveDay
     float length = 1;
     float averageProbability = statistics::mean(probabiltyConsecutiveDays);
     float factor = 1;
-    for (int i=1;i<iterations;i++)
+    for (int i=1; i < iterations; i++)
     {
         for (int j=0; j < i; j++)
         {
@@ -758,6 +783,7 @@ float computeNormalizedDryDayLength(std::vector<float>& probabiltyConsecutiveDay
     }
     return length;
 }
+
 
 void averagedVectorProbability(std::vector<float>& probabiltyConsecutiveDays)
 {
@@ -776,4 +802,25 @@ void averagedVectorProbability(std::vector<float>& probabiltyConsecutiveDays)
         }
     }
     return;
+}
+
+
+float avgProbabilityVectorTail(std::vector<float>& probabiltyConsecutiveDays)
+{
+    if (probabiltyConsecutiveDays.size() <= NRDAYS_MAXDRYINCREASE)
+        return NODATA;
+
+    float sum = 0;
+    int nrDays = 0;
+    for (int i = NRDAYS_MAXDRYINCREASE; i < (probabiltyConsecutiveDays.size()-1); i++)
+    {
+        // TODO considerare gli zeri?
+        sum += probabiltyConsecutiveDays[i];
+        ++nrDays;
+    }
+
+    if (nrDays == 0)
+        return NODATA;
+
+    return sum / nrDays;
 }
