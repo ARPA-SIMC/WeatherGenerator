@@ -13,7 +13,7 @@
         #include "waterTable.h"
     #endif
 
-    #define NRDAYS_MAXDRYINCREASE  3
+    #define NRDAYS_MAXDRYINCREASE  4
 
     struct TinputObsData
     {

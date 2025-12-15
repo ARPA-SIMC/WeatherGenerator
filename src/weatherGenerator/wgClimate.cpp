@@ -826,22 +826,24 @@ void averagedVectorProbability(std::vector<float>& probabiltyConsecutiveDays)
 }
 
 
-float avgProbabilityVectorTail(std::vector<float>& probabiltyConsecutiveDays)
+float avgProbabilityVectorTail(std::vector<float>& probabilityConsecutiveDays)
 {
-    if (probabiltyConsecutiveDays.size() <= NRDAYS_MAXDRYINCREASE)
+    if (probabilityConsecutiveDays.size() <= NRDAYS_MAXDRYINCREASE)
         return NODATA;
 
-    float sum = 0;
-    int nrDays = 0;
-    for (int i = NRDAYS_MAXDRYINCREASE; i < (probabiltyConsecutiveDays.size()-1); i++)
+    double sum = 0;
+    double sumWeights = 0;
+    double p = probabilityConsecutiveDays[NRDAYS_MAXDRYINCREASE];
+    double weight = 1;
+    for (int i = NRDAYS_MAXDRYINCREASE; i < (probabilityConsecutiveDays.size()-1); i++)
     {
-        // TODO considerare gli zeri?
-        sum += probabiltyConsecutiveDays[i];
-        ++nrDays;
+        weight *= p;
+        sum += weight * probabilityConsecutiveDays[i];
+        sumWeights += weight;
     }
 
-    if (nrDays == 0)
+    if (sumWeights == 0)
         return NODATA;
 
-    return sum / nrDays;
+    return float(sum / sumWeights);
 }
