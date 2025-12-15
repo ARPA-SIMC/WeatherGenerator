@@ -13,7 +13,7 @@
         #include "waterTable.h"
     #endif
 
-    #define NRDAYS_MAXDRYINCREASE  4
+    #define NRDAYS_MAXDRYINCREASE  3
 
     struct TinputObsData
     {
@@ -33,6 +33,7 @@
         float sumPrec [12];               // [mm]   total monthly precipitation
         float fractionWetDays [12];       // [-]    fraction of wet days (must be >0)
         float dw_Tmax [12];               // [°C]   difference between maximum temperatures on dry and wet days
+        float dw_Tmin [12];               // [°C]   difference between minimum temperatures on dry and wet days
         float probabilityWetWet[12];      // [-]    probability of a wet day after a wet day
 
         float dryProbabilityIncrease[12]; // [-]    increase of the probability of a dry day after a dry day
@@ -64,12 +65,13 @@
     {
         float wetIncrease[366];           // [-]
         float dryIncrease[366];           // [-]
-        float pww [366];                  // [-]    daily probability wet/wet
-        float pwd [366];                  // [-]    daily probability wet/dry
+        float pww [366];                  // [-]    daily probability wet after wet
+        float pwd [366];                  // [-]    daily probability wet after dry
         float meanPrecip [366];           // [mm]   average mm/wet day
+        float meanDryTMin [366];          // [°C]   daily minimum temperature on dry days
+        float meanWetTMin [366];          // [°C]   daily minimum temperature on wet days
         float meanDryTMax [366];          // [°C]   daily maximum temperature on dry days
         float meanWetTMax [366];          // [°C]   daily maximum temperature on wet days
-        float meanTMin [366];             // [°C]   daily minimum temperature
         float maxTempStd [366];           // [°C]   daily maximum temperature standard deviation
         float minTempStd [366];           // [°C]   daily minimum temperature standard deviation
     };
@@ -114,14 +116,14 @@
 
     void initializeWeather(TweatherGenClimate &wGen);
 
-    void normalRandom(float *rnd_1, float *rnd_2);
+    void normalRandom(float &rnd_1, float &rnd_2);
 
     bool markov(float pWet);
     bool markov_old(float pwd,float pww, bool isWetPreviousDay);
     float weibull (float mean, float precThreshold);
 
-    void genTemps(float *tMax, float *tMin, float meanTMax, float meanTMin, float stdMax,
-                  float stdMin, float *resTMaxPrev, float *resTMinPrev);
+    void genTemps(float &tMax, float &tMin, float meanTMax, float meanTMin, float stdMax,
+                  float stdMin, float &resTMaxPrev, float &resTMinPrev);
 
     bool isWGDate(Crit3DDate myDate, int wgDoy1, int wgDoy2);
 

@@ -162,19 +162,23 @@ void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
     }
 
     // temperature
-    float meanTMin = wGen.daily.meanTMin[dayOfYear];
-
-    float meanTMax;
+    float meanTMin, meanTMax;
     if (isWetDay)
+    {
         meanTMax = wGen.daily.meanWetTMax[dayOfYear];
+        meanTMin = wGen.daily.meanWetTMin[dayOfYear];
+    }
     else
+    {
         meanTMax = wGen.daily.meanDryTMax[dayOfYear];
+        meanTMin = wGen.daily.meanDryTMin[dayOfYear];
+    }
 
     float stdTMax = wGen.daily.maxTempStd[dayOfYear];
     float stdTMin = wGen.daily.minTempStd[dayOfYear];
 
-    genTemps(&wGen.state.currentTmax, &wGen.state.currentTmin, meanTMax, meanTMin, stdTMax, stdTMin,
-             &(wGen.state.resTMaxPrev), &(wGen.state.resTMinPrev));
+    genTemps(wGen.state.currentTmax, wGen.state.currentTmin, meanTMax, meanTMin, stdTMax, stdTMin,
+             wGen.state.resTMaxPrev, wGen.state.resTMinPrev);
 
     // update state
     wGen.state.currentDay = dayOfYear;
@@ -211,11 +215,18 @@ void initializeWeather(TweatherGenClimate &wGen)
     // derived variables
     float mpwd[12];
     float mMeanPrecip[12];
+    float mMeanDryTMin[12];
+    float mMeanWetTMin[12];
     float mMeanDryTMax[12];
     float mMeanWetTMax[12];
 
     for (int m = 0; m < 12; m++)
     {
+        // minimum temperature
+        mMeanDryTMin[m] = wGen.monthly.monthlyTmin[m] + wGen.monthly.fractionWetDays[m] * wGen.monthly.dw_Tmin[m];
+        mMeanWetTMin[m] = mMeanDryTMin[m] - wGen.monthly.dw_Tmin[m];
+
+        // maximum temperature
         mMeanDryTMax[m] = wGen.monthly.monthlyTmax[m] + wGen.monthly.fractionWetDays[m] * wGen.monthly.dw_Tmax[m];
         mMeanWetTMax[m] = mMeanDryTMax[m] - wGen.monthly.dw_Tmax[m];
 
@@ -230,12 +241,13 @@ void initializeWeather(TweatherGenClimate &wGen)
     // initialize daily climate
     for (int i = 0; i < 366; i++)
     {
-        wGen.daily.maxTempStd[i] = 0;
         wGen.daily.meanDryTMax[i] = 0;
-        wGen.daily.meanTMin[i] = 0;
-        wGen.daily.meanPrecip[i] = 0;
         wGen.daily.meanWetTMax[i] = 0;
+        wGen.daily.meanDryTMin[i] = 0;
+        wGen.daily.meanWetTMin[i] = 0;
+        wGen.daily.maxTempStd[i] = 0;
         wGen.daily.minTempStd[i] = 0;
+        wGen.daily.meanPrecip[i] = 0;
         wGen.daily.pwd[i] = 0;
         wGen.daily.pww[i] = 0;
         wGen.daily.wetIncrease[i] = 0.;
@@ -245,7 +257,8 @@ void initializeWeather(TweatherGenClimate &wGen)
     // temperature
     interpolation::cubicSplineYearInterpolate(mMeanDryTMax, wGen.daily.meanDryTMax);
     interpolation::cubicSplineYearInterpolate(mMeanWetTMax, wGen.daily.meanWetTMax);
-    interpolation::cubicSplineYearInterpolate(wGen.monthly.monthlyTmin, wGen.daily.meanTMin);
+    interpolation::cubicSplineYearInterpolate(mMeanDryTMin, wGen.daily.meanDryTMin);
+    interpolation::cubicSplineYearInterpolate(mMeanWetTMin, wGen.daily.meanWetTMin);
     interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmin, wGen.daily.minTempStd);
     interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmax, wGen.daily.maxTempStd);
 
@@ -262,7 +275,7 @@ void initializeWeather(TweatherGenClimate &wGen)
   * \brief Generate two standard normally-distributed random numbers
   * \cite  Numerical Recipes in Pascal, W. H. Press et al. 1989, p. 225
 */
-void normalRandom(float *rnd_1, float *rnd_2)
+void normalRandom(float &rnd_1, float &rnd_2)
 {
     double rnd, factor, r, v1, v2;
 
@@ -280,8 +293,8 @@ void normalRandom(float *rnd_1, float *rnd_2)
     factor = sqrt(-2.0 * log(r) / r);
 
     // Gaussian random deviates
-    *rnd_1 = float(v1 * factor);
-    *rnd_2 = float(v2 * factor);
+    rnd_1 = float(v1 * factor);
+    rnd_2 = float(v2 * factor);
 }
 
 
@@ -295,7 +308,7 @@ bool markov(float pWet)
     pWet = std::max(std::min(pWet, 1.f), 0.f);
     double c = double(rand()) / double(RAND_MAX) - double(pWet);
 
-    if (c <= 0)
+    if (c < 0)
         return true;  // wet
     else
         return false; // dry
@@ -352,7 +365,8 @@ float weibull (float dailyAvgPrec, float precThreshold)
 /*!
   * \brief generates maximum and minimum temperature
 */
-void genTemps(float *tMax, float *tMin, float meanTMax, float meanTMin, float stdMax, float stdMin, float *resTMaxPrev, float *resTMinPrev)
+void genTemps(float &tMax, float &tMin, float meanTMax, float meanTMin, float stdMax, float stdMin,
+              float &resTMaxPrev, float &resTMinPrev)
 {
     // matrix of serial correlation coefficients.
     float serialCorrelation[2][2]=
@@ -370,34 +384,36 @@ void genTemps(float *tMax, float *tMin, float meanTMax, float meanTMin, float st
 
     // standard normal random value for TMax and TMin
     float NorTMin, NorTMax;
-    normalRandom(&NorTMin, &NorTMax);
+    normalRandom(NorTMin, NorTMax);
 
     float resTMaxCurr, resTMinCurr;
-    resTMaxCurr = crossCorrelation[0][0] * NorTMax + serialCorrelation[0][0] * (*resTMaxPrev) + serialCorrelation[0][1] * (*resTMinPrev);
-    resTMinCurr = crossCorrelation[1][0] * NorTMax + crossCorrelation[1][1] * NorTMin + serialCorrelation[1][0] * (*resTMaxPrev) + serialCorrelation[1][1] * (*resTMinPrev);
+    resTMaxCurr = crossCorrelation[0][0] * NorTMax + serialCorrelation[0][0] * resTMaxPrev + serialCorrelation[0][1] * resTMinPrev;
+    resTMinCurr = crossCorrelation[1][0] * NorTMax + crossCorrelation[1][1] * NorTMin
+                  + serialCorrelation[1][0] * resTMaxPrev + serialCorrelation[1][1] * resTMinPrev;
 
     // residual tmax for previous day
-    *resTMaxPrev = resTMaxCurr;
+    resTMaxPrev = resTMaxCurr;
     // residual tmin for previous day
-    *resTMinPrev = resTMinCurr;
+    resTMinPrev = resTMinCurr;
 
-    *tMax = resTMaxCurr * stdMax + meanTMax;
-    *tMin = resTMinCurr * stdMin + meanTMin;
+    tMax = resTMaxCurr * stdMax + meanTMax;
+    tMin = resTMinCurr * stdMin + meanTMin;
 
     // switch
-    if (*tMin > *tMax)
+    if (tMin > tMax)
     {
-        NorTMax = *tMin;
-        *tMin = *tMax;
-        *tMax = NorTMax;
+        float tmp = tMin;
+        tMin = tMax;
+        tMax = tmp;
     }
 
-    // minimum deltaT (1 degree)
-    if ((*tMax - *tMin) < 1.)
+    // minimum deltaT
+    const float MINIMUM_DELTAT = 0.5f;
+    if ((tMax - tMin) < MINIMUM_DELTAT)
     {
-        float dt = 1. - (*tMax - *tMin);
-        *tMin -= dt * 0.5;
-        *tMax += dt * 0.5;
+        float dt = MINIMUM_DELTAT - (tMax - tMin);
+        tMin -= dt * 0.5;
+        tMax += dt * 0.5;
     }
 }
 
