@@ -31,6 +31,7 @@ WGSettings::WGSettings()
 
     this->isSeasonalForecast = false;
     this->isScenario = false;
+    this->isDryWetPeriodsComputation = false;
 
     this->isWaterTableData = false;
     this->isWaterTableDB = false;
@@ -185,6 +186,8 @@ bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
     wgSettings.rainfallThreshold = mySettings->value("rainfallThreshold").toFloat();
     wgSettings.waterTableMaximumDepth = mySettings->value("waterTableMaximumDepth").toInt();
 
+    wgSettings.isDryWetPeriodsComputation = mySettings->value("isDryWetPeriodsComputation").toBool();
+
     // first year for climate and scenario
     wgSettings.firstYear = mySettings->value("firstYear", NODATA).toInt();
     // nr of repetitions (deafult: 1)
@@ -212,6 +215,8 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
     TinputObsData climateDailyObsData;
     TinputObsData dailyObsData;
     TweatherGenClimate wGenClimate;
+    wGenClimate.isDryWetPeriodsComputation = wgSettings.isDryWetPeriodsComputation;
+
     WaterTable waterTable;
 
     QString season;
@@ -461,7 +466,9 @@ bool WG_Scenario(const WGSettings &wgSettings)
 {
     XMLScenarioAnomaly XMLAnomaly;
     TinputObsData climateDailyObsData;
-    TweatherGenClimate wGenClimate,wGen;
+    TweatherGenClimate wGenClimate, wGen;
+    wGenClimate.isDryWetPeriodsComputation = wgSettings.isDryWetPeriodsComputation;
+
     std::vector<ToutputDailyMeteo> outputDailyData;
     std::vector<QString> outputFileName;
     QDir climateDirectory(wgSettings.climatePath);
@@ -665,8 +672,6 @@ bool WG_Scenario(const WGSettings &wgSettings)
                             }
                             */
                         }
-
-
                         currentIndex++;
                     }
                     writeMeteoDataCsv(outputFileName[counterMember], wgSettings.valuesSeparator, outputDailyData, false);
@@ -686,6 +691,7 @@ bool WG_Climate(const WGSettings &wgSettings)
 {
     TinputObsData climateDailyObsData;
     TweatherGenClimate wGenClimate;
+    wGenClimate.isDryWetPeriodsComputation = wgSettings.isDryWetPeriodsComputation;
 
     // iterate input files on climate
     QString fileName, climateFileName, outputFileName;

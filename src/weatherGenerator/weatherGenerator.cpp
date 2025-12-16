@@ -134,14 +134,14 @@ void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
     if (wGen.state.wetPreviousDay)
     {
         float pw = wGen.daily.pww[dayOfYear];
-        int nrDaysIncrease = std::min(wGen.state.consecutiveWetDays-1, NRDAYS_MAXDRYINCREASE);
+        int nrDaysIncrease = std::max(0, std::min(wGen.state.consecutiveWetDays-1, NRDAYS_MAXDRYINCREASE));
         pw += nrDaysIncrease * wGen.daily.wetIncrease[dayOfYear];
         isWetDay = markov(pw);
     }
     else
     {
         float pw = wGen.daily.pwd[dayOfYear];
-        int nrDaysDecrease = std::min(wGen.state.consecutiveDryDays-1, NRDAYS_MAXDRYINCREASE);
+        int nrDaysDecrease = std::max(0, std::min(wGen.state.consecutiveDryDays-1, NRDAYS_MAXDRYINCREASE));
         // Pwd = 1 - Pdd
         pw -= nrDaysDecrease * wGen.daily.dryIncrease[dayOfYear];
         isWetDay = markov(pw);
@@ -162,23 +162,24 @@ void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
     }
 
     // temperature
-    float meanTMin, meanTMax;
+    float meanTMin, meanTMax, stdTMax, stdTMin;
     if (isWetDay)
     {
         meanTMax = wGen.daily.meanWetTMax[dayOfYear];
         meanTMin = wGen.daily.meanWetTMin[dayOfYear];
+        stdTMax = wGen.daily.stdDevWetTmax[dayOfYear];
+        stdTMin = wGen.daily.stdDevWetTmin[dayOfYear];
     }
     else
     {
         meanTMax = wGen.daily.meanDryTMax[dayOfYear];
         meanTMin = wGen.daily.meanDryTMin[dayOfYear];
+        stdTMax = wGen.daily.stdDevDryTmax[dayOfYear];
+        stdTMin = wGen.daily.stdDevDryTmin[dayOfYear];
     }
 
-    float stdTMax = wGen.daily.maxTempStd[dayOfYear];
-    float stdTMin = wGen.daily.minTempStd[dayOfYear];
-
-    genTemps(wGen.state.currentTmax, wGen.state.currentTmin, meanTMax, meanTMin, stdTMax, stdTMin,
-             wGen.state.resTMaxPrev, wGen.state.resTMinPrev);
+    genTemps(wGen.state.currentTmax, wGen.state.currentTmin, wGen.state.resTMaxPrev, wGen.state.resTMinPrev,
+             meanTMax, meanTMin, stdTMax, stdTMin);
 
     // update state
     wGen.state.currentDay = dayOfYear;
@@ -245,8 +246,10 @@ void initializeWeather(TweatherGenClimate &wGen)
         wGen.daily.meanWetTMax[i] = 0;
         wGen.daily.meanDryTMin[i] = 0;
         wGen.daily.meanWetTMin[i] = 0;
-        wGen.daily.maxTempStd[i] = 0;
-        wGen.daily.minTempStd[i] = 0;
+        wGen.daily.stdDevDryTmin[i] = 0;
+        wGen.daily.stdDevDryTmax[i] = 0;
+        wGen.daily.stdDevWetTmin[i] = 0;
+        wGen.daily.stdDevWetTmax[i] = 0;
         wGen.daily.meanPrecip[i] = 0;
         wGen.daily.pwd[i] = 0;
         wGen.daily.pww[i] = 0;
@@ -259,8 +262,10 @@ void initializeWeather(TweatherGenClimate &wGen)
     interpolation::cubicSplineYearInterpolate(mMeanWetTMax, wGen.daily.meanWetTMax);
     interpolation::cubicSplineYearInterpolate(mMeanDryTMin, wGen.daily.meanDryTMin);
     interpolation::cubicSplineYearInterpolate(mMeanWetTMin, wGen.daily.meanWetTMin);
-    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmin, wGen.daily.minTempStd);
-    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmax, wGen.daily.maxTempStd);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmaxDry, wGen.daily.stdDevDryTmax);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTmaxWet, wGen.daily.stdDevWetTmax);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTminDry, wGen.daily.stdDevDryTmin);
+    interpolation::cubicSplineYearInterpolate(wGen.monthly.stDevTminWet, wGen.daily.stdDevWetTmin);
 
     // precipitation
     interpolation::cubicSplineYearInterpolate(mMeanPrecip, wGen.daily.meanPrecip);
@@ -365,8 +370,8 @@ float weibull (float dailyAvgPrec, float precThreshold)
 /*!
   * \brief generates maximum and minimum temperature
 */
-void genTemps(float &tMax, float &tMin, float meanTMax, float meanTMin, float stdMax, float stdMin,
-              float &resTMaxPrev, float &resTMinPrev)
+void genTemps(float &tMax, float &tMin, float &residualTMaxPrev, float &residualTMinPrev,
+              float meanTMax, float meanTMin, float stdMax, float stdMin)
 {
     // matrix of serial correlation coefficients.
     float serialCorrelation[2][2]=
@@ -383,21 +388,21 @@ void genTemps(float &tMax, float &tMin, float meanTMax, float meanTMin, float st
     };
 
     // standard normal random value for TMax and TMin
-    float NorTMin, NorTMax;
-    normalRandom(NorTMin, NorTMax);
+    float normalTMin, normalTMax;
+    normalRandom(normalTMin, normalTMax);
 
-    float resTMaxCurr, resTMinCurr;
-    resTMaxCurr = crossCorrelation[0][0] * NorTMax + serialCorrelation[0][0] * resTMaxPrev + serialCorrelation[0][1] * resTMinPrev;
-    resTMinCurr = crossCorrelation[1][0] * NorTMax + crossCorrelation[1][1] * NorTMin
-                  + serialCorrelation[1][0] * resTMaxPrev + serialCorrelation[1][1] * resTMinPrev;
+    float residualTMaxCurr = crossCorrelation[0][0] * normalTMax + serialCorrelation[0][0] * residualTMaxPrev
+                            + serialCorrelation[0][1] * residualTMinPrev;
+    float residualTMinCurr = crossCorrelation[1][0] * normalTMax + crossCorrelation[1][1] * normalTMin
+                            + serialCorrelation[1][0] * residualTMaxPrev + serialCorrelation[1][1] * residualTMinPrev;
 
     // residual tmax for previous day
-    resTMaxPrev = resTMaxCurr;
+    residualTMaxPrev = residualTMaxCurr;
     // residual tmin for previous day
-    resTMinPrev = resTMinCurr;
+    residualTMinPrev = residualTMinCurr;
 
-    tMax = resTMaxCurr * stdMax + meanTMax;
-    tMin = resTMinCurr * stdMin + meanTMin;
+    tMax = residualTMaxCurr * stdMax + meanTMax;
+    tMin = residualTMinCurr * stdMin + meanTMin;
 
     // switch
     if (tMin > tMax)

@@ -20,6 +20,7 @@
 
             bool isSeasonalForecast;
             bool isScenario;
+            bool isDryWetPeriodsComputation;
 
             // watertable
             QString waterTablePath;

@@ -39,8 +39,6 @@
         float dryProbabilityIncrease[12]; // [-]    increase of the probability of a dry day after a dry day
         float wetProbabilityIncrease[12]; // [-]    increase of the probability of a wet day after a wet day
 
-        float stDevTmin [12];             // [-]    monthly minimum temperature standard deviation
-        float stDevTmax [12];             // [-]    monthly maximum temperature standard deviation
         float stDevTminWet [12];             // [-]    monthly minimum temperature standard deviation
         float stDevTmaxWet [12];             // [-]    monthly maximum temperature standard deviation
         float stDevTminDry [12];             // [-]    monthly minimum temperature standard deviation
@@ -65,15 +63,17 @@
     {
         float wetIncrease[366];           // [-]
         float dryIncrease[366];           // [-]
-        float pww [366];                  // [-]    daily probability wet after wet
-        float pwd [366];                  // [-]    daily probability wet after dry
-        float meanPrecip [366];           // [mm]   average mm/wet day
-        float meanDryTMin [366];          // [°C]   daily minimum temperature on dry days
-        float meanWetTMin [366];          // [°C]   daily minimum temperature on wet days
-        float meanDryTMax [366];          // [°C]   daily maximum temperature on dry days
-        float meanWetTMax [366];          // [°C]   daily maximum temperature on wet days
-        float maxTempStd [366];           // [°C]   daily maximum temperature standard deviation
-        float minTempStd [366];           // [°C]   daily minimum temperature standard deviation
+        float pww [366];                  // [-]    probability wet after wet
+        float pwd [366];                  // [-]    probability wet after dry
+        float meanPrecip [366];           // [mm]   average precipitation on wet day
+        float meanDryTMin [366];          // [°C]   minimum temperature on dry days
+        float meanWetTMin [366];          // [°C]   minimum temperature on wet days
+        float meanDryTMax [366];          // [°C]   maximum temperature on dry days
+        float meanWetTMax [366];          // [°C]   maximum temperature on wet days
+        float stdDevDryTmin [366];        // [°C]   minimum temperature standard deviation (dry days)
+        float stdDevWetTmin [366];        // [°C]   minimum temperature standard deviation (wet days)
+        float stdDevDryTmax [366];        // [°C]   maximum temperature standard deviation (dry days)
+        float stdDevWetTmax [366];        // [°C]   maximum temperature standard deviation (wet days)
     };
 
     struct Tstateweather
@@ -91,6 +91,7 @@
 
     struct TweatherGenClimate
     {
+        bool isDryWetPeriodsComputation = false;
         Tmonthlyweather monthly;
         Tdailyweather daily;
         Tstateweather state;
@@ -122,8 +123,8 @@
     bool markov_old(float pwd,float pww, bool isWetPreviousDay);
     float weibull (float mean, float precThreshold);
 
-    void genTemps(float &tMax, float &tMin, float meanTMax, float meanTMin, float stdMax,
-                  float stdMin, float &resTMaxPrev, float &resTMinPrev);
+    void genTemps(float &tMax, float &tMin, float &residualTMaxPrev, float &residualTMinPrev,
+                  float meanTMax, float meanTMin, float stdMax, float stdMin);
 
     bool isWGDate(Crit3DDate myDate, int wgDoy1, int wgDoy2);
 
