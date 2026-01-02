@@ -33,7 +33,7 @@
     -   observed water table detph are in the directory: DATA\TEST_waterTable\input\waterTable
     -   predicted seasonal anomalies (xml files): DATA\TEST_waterTable\input\seasonalForecast
 
-    \copyright 2024 Fausto Tomei, Antonio Volta, Laura Costantini
+    \copyright 2024 Fausto Tomei, Antonio Volta, Caterina Toscano, Laura Costantini
 
     WG1D has been developed under contract issued by ARPAE Emilia-Romagna
 
