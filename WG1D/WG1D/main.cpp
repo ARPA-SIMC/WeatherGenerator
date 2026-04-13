@@ -1,7 +1,7 @@
 /*!
     \name WG1D
     \brief it generates synthetic daily time series of Tmin, Tmax, Prec (csv files)
-    and possibly Water table depth (if observed data are available)
+    and possibly Water table depth (if observed data or parameters are available)
     Mode: CLIMATE, SEASONAL FORECAST, SCENARIO
 
     CLIMATE test: uncomment #define TEST_WG_CLIMATE
@@ -17,20 +17,23 @@
     Synthetic data are generated from climate (calculated from wg) + forecasted seasonal anomalies.
     The number of years of data output depends on the number of model members in the xml files.
     -   the settings are in the file: DATA\TEST\testWG_seasonal.ini
-    -   climate data are in the directory: DATA\TEST\input\climate
-    -   observed data are in the directory: DATA\TEST\input\observed
-    -   predicted seasonal anomalies (xml files): DATA\TEST\input\seasonalForecast_2016_JJA
+    -   the climate data are in the directory: DATA\TEST\input\climate
+    -   the observed data are in the directory: DATA\TEST\input\observed
+    -   the predicted seasonal anomalies (xml files): DATA\TEST\input\seasonalForecast_2016_JJA
 
     SCENARIO test: uncomment #define TEST_WG_SCENARIO
-    It generates years of synthetic data referring to a test scenario for two points.
-    ...
+    It generates 30 years of synthetic data referring to a test scenario for two points.
+    -   the settings are in the file: DATA\TEST_waterTable\testWG_Scenario.ini
+    -   the climate data are in the directory: DATA\TEST_waterTable\input\climate
+    -   the scenarios data (xml files) are in the directory: DATA\TEST_waterTable\input\scenarios
 
-    WATERTABLE test: uncomment #define TEST_WG_WATERTABLE
+    WATERTABLE test: uncomment #define TEST_WG_WATERTABLE (_DATA or _DB)
     It generates seasonal forecasts (JJA 2024) for two test points, with water table depth data.
     -   the settings are in the file: DATA\TEST_waterTable\testWG_waterTable.ini
     -   climate data are in the directory: DATA\TEST_waterTable\input\climate
     -   observed data are in the directory: DATA\TEST_waterTable\input\observed
-    -   observed water table detph are in the directory: DATA\TEST_waterTable\input\waterTable
+    -   observed water table detph (for the _DATA test) are in the directory: DATA\TEST_waterTable\input\waterTable
+    -   water table parameters (for the _DB test) are in the SQLite database: DATA\TEST_waterTable\input\waterTable\watertable_ER.db
     -   predicted seasonal anomalies (xml files): DATA\TEST_waterTable\input\seasonalForecast
 
     \copyright 2024 Fausto Tomei, Antonio Volta, Caterina Toscano, Laura Costantini
@@ -89,7 +92,7 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "WG-1D  V1.0.2\n";
+    std::cout << "WG-1D  V1.1.0\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
