@@ -64,7 +64,7 @@
 
 
 // uncomment to execute test:
-#define TEST_WG_CLIMATE
+//#define TEST_WG_CLIMATE
 //#define TEST_WG_SEASONAL
 //#define TEST_WG_SCENARIO
 //#define TEST_WG_WATERTABLE_DATA
@@ -74,7 +74,7 @@
 void usage()
 {
     std::cout << "Daily Weather Generator by ARPAE ER \n";
-    std::cout << "Variables: temperature, precipitation and watertable\n";
+    std::cout << "Variables: temperature (minimum and maximum), precipitation sum and watertable depth\n";
     std::cout << "execution mode: CLIMATE | SCENARIO | SEASONAL FORECAST \n";
     std::cout << std::endl << "USAGE:" << std::endl;
     std::cout << "WG1D.exe [settingsFile.ini]" << std::endl;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "WG1D  V1.0.1\n";
+    std::cout << "WG-1D  V1.0.2\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
@@ -99,14 +99,14 @@ int main(int argc, char *argv[])
             //settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt2024_MJJ/wg/WG_2024_MJJ_C1.ini";
         #else
             #ifdef TEST_WG_SCENARIO
-                //settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
-                settingsFileName = dataPath + "ARCADIA_WG/testWG_Scenario.ini"; //
+                settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
+                //settingsFileName = dataPath + "ARCADIA_WG/testWG_Scenario.ini";
             #else
                 #ifdef TEST_WG_WATERTABLE_DATA
                     settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable_Data.ini";
                 #else
                     #ifdef TEST_WG_WATERTABLE_DB
-                        settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt2025_JJA/wg/WG_2025_JJA_C1.ini";
+                        settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable_DB.ini";
                     #else
                         if (argc > 1)
                             settingsFileName = argv[1];
