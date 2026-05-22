@@ -49,25 +49,14 @@ int main3() {
 
 int main()
 {
-    //std::string dataPath = "C:/Github/WeatherGenerator/WG1D/DATA/ARCADIA_WG/";
+    //std::string dataPath = "C:/Github/WeatherGenerator/WG1D/DATA/ARCADIA_WG/";   // TODO
     //std::string filenameAnagraphicExtraER = dataPath + "anagrafica_Erg5_Eraclito_pointsExtraER.csv";
-
-    //int a1=650;
-
-    //printf("\n a1 %d \n",a1);
-
-
 
     std::string dataPath = "C:/Github/WeatherGenerator/WG1D/DATA/ARCADIA_WG/";
 
     std::string filenameAnagraphic = dataPath + "input/originalCsvFiles/anagrafica_SDs_scenari_ER.csv";
     std::vector<DataAnagraphic> dataAnagraphicCodeName;
     readAnagraficaCSV(filenameAnagraphic,dataAnagraphicCodeName);
-
-
-
-
-
 
     std::vector<std::string> filenameTmax;
     std::vector<std::string> filenameTmin;
@@ -88,6 +77,8 @@ int main()
     filenameTmin[3] = dataPath + "input/originalCsvFiles/SD_GCMs-SD_EM-1961-1990-RCP4.5-2021-2050-SON-Tmin-anomaly.csv";
 
 
+    // TODO VAR
+    // TODO PARTE FISSA filename
     filenamePrec3M[0] = dataPath + "input/originalCsvFiles/SD_GCMs-SD_EM-1961-1990-RCP4.5-2021-2050-DJF-Prec3M-anomaly.csv";
     filenameWetDaysFrequency[0] = dataPath +  "input/originalCsvFiles/SD_GCMs-SD_EM-1961-1990-RCP4.5-2021-2050-DJF-WetDaysFrequency-anomaly.csv";
     filenamePrec3M[1] = dataPath +  "input/originalCsvFiles/SD_GCMs-SD_EM-1961-1990-RCP4.5-2021-2050-MAM-Prec3M-anomaly.csv";
@@ -125,6 +116,8 @@ int main()
     {
         std::cout << var << std::endl;
     }
+
+    // TODO pos code, lat, lon, valore
     // lettura dei file uno per variabile
     for(int i=0;i<4;i++)
     {
@@ -139,7 +132,7 @@ int main()
     int cell = 0;
     for (cell = 0; cell < dataTmax[0].size();cell++)
     {
-        std::string pathXML = dataPath + "input/scenarios/";
+        std::string pathXML = dataPath + "input/scenarios/";   // TODO
         std::string filenameXML = generateFilename(pathXML, dataTmax[0][cell].col1);
         writeXML(filenameXML,dataTmin,dataTmax,dataPrec3M,dataWetDaysFrequency,cell,variables,dataAnagraphicCodeName);
     }
