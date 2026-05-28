@@ -2,7 +2,15 @@
 
 #include <QSettings>
 #include <QDir>
+#include <QSet>
 
+
+QSet<QString> validVariablesSet = {
+    "TMIN",
+    "TMAX",
+    "PREC",
+    "FWET"
+};
 
 XmlScenarioSettings::XmlScenarioSettings()
 {
@@ -10,10 +18,9 @@ XmlScenarioSettings::XmlScenarioSettings()
     inputPath = "";
     outputPath = "";
 
+    // default: comma separated values
     suffix = ".csv";
     csvSeparator = ',';
-
-    meteoVarList.clear();
 
     climateYear1 = 2000;
     climateYear2 = 2000;
@@ -30,7 +37,7 @@ XmlScenarioSettings::XmlScenarioSettings()
     latPosition = -1;
     lonPosition = -1;
     heightPosition = -1;
-    changePosition = -1;
+    anomalyPosition = -1;
 }
 
 
@@ -104,10 +111,112 @@ bool XmlProject::readSettings(const QString &settingsFileName)
 
     logger.writeInfo("Output path = " + xmlSettings.outputPath);
 
-
     QString mySeparator = mySettings->value("separator").toString();
-    xmlSettings.csvSeparator = mySeparator.toStdString().c_str()[0];
+    if (! mySeparator.isEmpty())
+        xmlSettings.csvSeparator = mySeparator.toStdString().c_str()[0];
 
+    QString mySuffix = mySettings->value("suffix").toString();
+    if (! mySuffix.isEmpty())
+        xmlSettings.suffix = mySuffix;
+
+    // climate period
+    bool isNumberOk;
+    QString yearStr = mySettings->value("climateYear1").toString();
+    if (yearStr.isEmpty())
+    {
+        logger.writeError("Missing climateYear1 in file .ini");
+        return false;
+    }
+    else
+    {
+        xmlSettings.climateYear1 = yearStr.toInt(&isNumberOk);
+        if (! isNumberOk)
+        {
+            logger.writeError("Wrong climateYear1 in file .ini");
+            return false;
+        }
+    }
+
+    yearStr = mySettings->value("climateYear2").toString();
+    if (yearStr.isEmpty())
+    {
+        logger.writeError("Missing climateYear2 in file .ini");
+        return false;
+    }
+    else
+    {
+        xmlSettings.climateYear2 = yearStr.toInt(&isNumberOk);
+        if (! isNumberOk)
+        {
+            logger.writeError("Wrong climateYear2 in file .ini");
+            return false;
+        }
+    }
+
+    logger.writeInfo("CLIMATE period = " + QString::number(xmlSettings.climateYear1) + "-"
+                     + QString::number(xmlSettings.climateYear2));
+
+    // scenarios period
+    yearStr = mySettings->value("scenarioYear1").toString();
+    if (yearStr.isEmpty())
+    {
+        logger.writeError("Missing scenarioYear1 in file .ini");
+        return false;
+    }
+    else
+    {
+        xmlSettings.scenarioYear1 = yearStr.toInt(&isNumberOk);
+        if (! isNumberOk)
+        {
+            logger.writeError("Wrong scenarioYear1 in file .ini");
+            return false;
+        }
+    }
+
+    yearStr = mySettings->value("scenarioYear2").toString();
+    if (yearStr.isEmpty())
+    {
+        logger.writeError("Missing scenarioYear2 in file .ini");
+        return false;
+    }
+    else
+    {
+        xmlSettings.scenarioYear2 = yearStr.toInt(&isNumberOk);
+        if (! isNumberOk)
+        {
+            logger.writeError("Wrong scenarioYear2 in file .ini");
+            return false;
+        }
+    }
+
+    logger.writeInfo("SCENARIOS period = " + QString::number(xmlSettings.scenarioYear1) + "-"
+                     + QString::number(xmlSettings.scenarioYear2));
+
+    // variables
+    xmlSettings.variableList = mySettings->value("variables").toStringList();
+    if (xmlSettings.variableList.empty())
+    {
+        logger.writeError("Missig variables in file .ini");
+        return false;
+    }
+
+    QString variablesStr = "";
+    for (size_t i = 0; i < xmlSettings.variableList.size(); i++)
+    {
+        const QString newVar = xmlSettings.variableList[i];
+        if (! validVariablesSet.contains(newVar))
+        {
+            logger.writeError("Wrong variables: " + newVar);
+            return false;
+        }
+
+        if (i > 0)
+            variablesStr += ",";
+
+        variablesStr += newVar;
+    }
+
+    logger.writeInfo("Variables = " + variablesStr);
 
     return true;
 }

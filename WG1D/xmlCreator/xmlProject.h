@@ -5,6 +5,7 @@
 #include "logger.h"
 
 
+
 class XmlScenarioSettings
 {
 public:
@@ -17,7 +18,7 @@ public:
     QString suffix;
     char csvSeparator;
 
-    QList<QString> meteoVarList;
+    QList<QString> variableList;
 
     // periods
     int climateYear1, climateYear2;
@@ -32,7 +33,7 @@ public:
     int cellCodePosition = 0;
     int latPosition, lonPosition;
     int heightPosition;
-    int changePosition;
+    int anomalyPosition;
 };
 
 
