@@ -48,10 +48,14 @@ int main(int argc, char *argv[])
         }
     #endif
 
-
     // read settings
     if (! myProject.readSettings(settingsFileName))
         return -1;
+
+
+
+    // TODO
+
 
 
     return 0;
