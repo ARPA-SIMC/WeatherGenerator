@@ -1,14 +1,29 @@
-QT = core
+QT += core sql xml
+QT -= gui
 
 CONFIG += c++17 cmdline
 
-# You can make your code fail to compile if it uses deprecated APIs.
-# In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+INCLUDEPATH +=  ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions ../../../agrolib/utilities
+
+CONFIG(debug, debug|release) {
+    LIBS += -L../../../agrolib/utilities/debug -lutilities
+    LIBS += -L../../../agrolib/mathFunctions/debug -lmathFunctions
+    LIBS += -L../../../agrolib/crit3dDate/debug -lcrit3dDate
+
+} else {
+    LIBS += -L../../../agrolib/utilities/release -lutilities
+    LIBS += -L../../../agrolib/mathFunctions/release -lmathFunctions
+    LIBS += -L../../../agrolib/crit3dDate/release -lcrit3dDate
+}
 
 SOURCES += \
         functionsIO.cpp \
-        main.cpp
+        main.cpp \
+        main_old.cpp \
+        xmlProject.cpp
 
 HEADERS += \
-    functionsIO.h
+    functionsIO.h \
+    xmlProject.h
+

@@ -15,7 +15,7 @@
 QT += sql xml
 QT -= gui
 
-CONFIG += c++11
+CONFIG += c++11 c++17
 
 CONFIG += console
 CONFIG -= app_bundle

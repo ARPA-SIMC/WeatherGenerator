@@ -48,6 +48,7 @@ WGSettings::WGSettings()
     this->nrYears = NODATA;
 }
 
+
 bool readWGSettings(const QString &settingsFileName, WGSettings &wgSettings)
 {
     QFile myFile(settingsFileName);
