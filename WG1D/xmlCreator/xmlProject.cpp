@@ -57,16 +57,16 @@ bool XmlProject::readSettings(const QString &settingsFileName)
     }
 
     QFileInfo fileInfo(settingsFileName);
-    QString currentPath = fileInfo.path() + "/";
+    QString currentPath = fileInfo.path();
 
-    QSettings* mySettings = new QSettings(settingsFileName, QSettings::IniFormat);
-    mySettings->beginGroup("settings");
+    QSettings mySettings(settingsFileName, QSettings::IniFormat);
+    mySettings.beginGroup("settings");
 
     // INPUT path
-    xmlSettings.inputPath = mySettings->value("input").toString();
-    if (xmlSettings.inputPath.left(1) == ".")
+    xmlSettings.inputPath = mySettings.value("input").toString();
+    if (QDir::isRelativePath(xmlSettings.inputPath))
     {
-        xmlSettings.inputPath = QDir::cleanPath(currentPath + xmlSettings.inputPath);
+        xmlSettings.inputPath = QDir::cleanPath(currentPath + "/" + xmlSettings.inputPath);
     }
 
     if (xmlSettings.inputPath.isEmpty())
@@ -77,7 +77,7 @@ bool XmlProject::readSettings(const QString &settingsFileName)
     QDir inputDirectory(xmlSettings.inputPath);
     if (! inputDirectory.exists())
     {
-        if (! inputDirectory.mkdir(xmlSettings.inputPath))
+        if (! QDir().mkpath(xmlSettings.inputPath))
         {
             logger.writeError("Error creating directory: " + xmlSettings.inputPath);
             return false;
@@ -87,13 +87,13 @@ bool XmlProject::readSettings(const QString &settingsFileName)
     logger.writeInfo("Input path = " + xmlSettings.inputPath);
 
     // OUTPUT path
-    xmlSettings.outputPath = mySettings->value("output").toString();
-    if (xmlSettings.outputPath.left(1) == ".")
+    xmlSettings.outputPath = mySettings.value("output").toString();
+    if (QDir::isRelativePath(xmlSettings.outputPath))
     {
-        xmlSettings.outputPath = QDir::cleanPath(currentPath + xmlSettings.outputPath);
+        xmlSettings.outputPath = QDir::cleanPath(currentPath + "/" + xmlSettings.outputPath);
     }
 
-    if (xmlSettings.outputPath == "")
+    if (xmlSettings.outputPath.isEmpty())
     {
         logger.writeError("Missing output path in file .ini");
         return false;
@@ -102,7 +102,7 @@ bool XmlProject::readSettings(const QString &settingsFileName)
     QDir outputDirectory(xmlSettings.outputPath);
     if (! outputDirectory.exists())
     {
-        if (! outputDirectory.mkdir(xmlSettings.outputPath))
+        if (!QDir().mkpath(xmlSettings.outputPath))
         {
             logger.writeError("Error creating directory: " + xmlSettings.outputPath);
             return false;
@@ -111,112 +111,172 @@ bool XmlProject::readSettings(const QString &settingsFileName)
 
     logger.writeInfo("Output path = " + xmlSettings.outputPath);
 
-    QString mySeparator = mySettings->value("separator").toString();
+    QString mySeparator = mySettings.value("separator").toString();
     if (! mySeparator.isEmpty())
-        xmlSettings.csvSeparator = mySeparator.toStdString().c_str()[0];
+        xmlSettings.csvSeparator = mySeparator.at(0).toLatin1();
 
-    QString mySuffix = mySettings->value("suffix").toString();
+    QString mySuffix = mySettings.value("suffix").toString();
     if (! mySuffix.isEmpty())
         xmlSettings.suffix = mySuffix;
 
     // climate period
     bool isNumberOk;
-    QString yearStr = mySettings->value("climateYear1").toString();
+    QString yearStr = mySettings.value("climateYear1").toString();
     if (yearStr.isEmpty())
     {
         logger.writeError("Missing climateYear1 in file .ini");
         return false;
     }
-    else
+    xmlSettings.climateYear1 = yearStr.toInt(&isNumberOk);
+    if (! isNumberOk)
     {
-        xmlSettings.climateYear1 = yearStr.toInt(&isNumberOk);
-        if (! isNumberOk)
-        {
-            logger.writeError("Wrong climateYear1 in file .ini");
-            return false;
-        }
+        logger.writeError("Wrong climateYear1 in file .ini");
+        return false;
     }
 
-    yearStr = mySettings->value("climateYear2").toString();
+    yearStr = mySettings.value("climateYear2").toString();
     if (yearStr.isEmpty())
     {
         logger.writeError("Missing climateYear2 in file .ini");
         return false;
     }
-    else
+    xmlSettings.climateYear2 = yearStr.toInt(&isNumberOk);
+    if (! isNumberOk)
     {
-        xmlSettings.climateYear2 = yearStr.toInt(&isNumberOk);
-        if (! isNumberOk)
-        {
-            logger.writeError("Wrong climateYear2 in file .ini");
-            return false;
-        }
+        logger.writeError("Wrong climateYear2 in file .ini");
+        return false;
+    }
+
+    // check
+    if (xmlSettings.climateYear1 > xmlSettings.climateYear2)
+    {
+        logger.writeError("climateYear1 must be <= climateYear2");
+        return false;
     }
 
     logger.writeInfo("CLIMATE period = " + QString::number(xmlSettings.climateYear1) + "-"
                      + QString::number(xmlSettings.climateYear2));
 
     // scenarios period
-    yearStr = mySettings->value("scenarioYear1").toString();
+    yearStr = mySettings.value("scenarioYear1").toString();
     if (yearStr.isEmpty())
     {
         logger.writeError("Missing scenarioYear1 in file .ini");
         return false;
     }
-    else
+    xmlSettings.scenarioYear1 = yearStr.toInt(&isNumberOk);
+    if (! isNumberOk)
     {
-        xmlSettings.scenarioYear1 = yearStr.toInt(&isNumberOk);
-        if (! isNumberOk)
-        {
-            logger.writeError("Wrong scenarioYear1 in file .ini");
-            return false;
-        }
+        logger.writeError("Wrong scenarioYear1 in file .ini");
+        return false;
     }
 
-    yearStr = mySettings->value("scenarioYear2").toString();
+    yearStr = mySettings.value("scenarioYear2").toString();
     if (yearStr.isEmpty())
     {
         logger.writeError("Missing scenarioYear2 in file .ini");
         return false;
     }
-    else
+    xmlSettings.scenarioYear2 = yearStr.toInt(&isNumberOk);
+    if (! isNumberOk)
     {
-        xmlSettings.scenarioYear2 = yearStr.toInt(&isNumberOk);
-        if (! isNumberOk)
-        {
-            logger.writeError("Wrong scenarioYear2 in file .ini");
-            return false;
-        }
+        logger.writeError("Wrong scenarioYear2 in file .ini");
+        return false;
+    }
+
+    // check
+    if (xmlSettings.scenarioYear1 > xmlSettings.scenarioYear2)
+    {
+        logger.writeError("scenarioYear1 must be <= scenarioYear2");
+        return false;
     }
 
     logger.writeInfo("SCENARIOS period = " + QString::number(xmlSettings.scenarioYear1) + "-"
                      + QString::number(xmlSettings.scenarioYear2));
 
     // variables
-    xmlSettings.variableList = mySettings->value("variables").toStringList();
-    if (xmlSettings.variableList.empty())
+    xmlSettings.variableList = mySettings.value("variables").toStringList();
+    if (xmlSettings.variableList.isEmpty())
     {
-        logger.writeError("Missig variables in file .ini");
+        logger.writeError("Missing variables in file .ini");
         return false;
     }
 
-    QString variablesStr = "";
-    for (size_t i = 0; i < xmlSettings.variableList.size(); i++)
+    for (const QString& newVar : xmlSettings.variableList)
     {
-        const QString newVar = xmlSettings.variableList[i];
         if (! validVariablesSet.contains(newVar))
         {
-            logger.writeError("Wrong variables: " + newVar);
+            logger.writeError("Wrong variable: " + newVar);
             return false;
         }
-
-        if (i > 0)
-            variablesStr += ",";
-
-        variablesStr += newVar;
     }
 
-    logger.writeInfo("Variables = " + variablesStr);
+    logger.writeInfo("Variables = " + xmlSettings.variableList.join(","));
+
+    // info position in the filename (start from zero)
+    xmlSettings.varPosition = mySettings.value("varPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong varPosition in file .ini");
+        return false;
+    }
+    if (xmlSettings.varPosition < 0)
+    {
+        logger.writeError("varPosition must be >= 0");
+        return false;
+    }
+
+    xmlSettings.seasonPosition = mySettings.value("seasonPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong seasonPosition in file .ini");
+        return false;
+    }
+    xmlSettings.modelPosition = mySettings.value("modelPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong modelPosition in file .ini");
+        return false;
+    }
+
+    // data position in the csv file (start from zero)
+    xmlSettings.cellCodePosition = mySettings.value("cellCodePosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong cellCodePosition in file .ini");
+        return false;
+    }
+
+    if (xmlSettings.cellCodePosition < 0)
+    {
+        logger.writeError("cellCodePosition must be >= 0");
+        return false;
+    }
+
+    xmlSettings.latPosition = mySettings.value("latPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong latPosition in file .ini");
+        return false;
+    }
+    xmlSettings.lonPosition = mySettings.value("lonPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong lonPosition in file .ini");
+        return false;
+    }
+    xmlSettings.heightPosition = mySettings.value("heightPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong heightPosition in file .ini");
+        return false;
+    }
+    xmlSettings.anomalyPosition = mySettings.value("anomalyPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong anomalyPosition in file .ini");
+        return false;
+    }
 
     return true;
 }
