@@ -14,6 +14,8 @@ public:
     QString settingsFileName;
     QString inputPath;
     QString outputPath;
+    QString model;
+    QString scenario;
 
     QString suffix;
     char csvSeparator;
@@ -28,6 +30,7 @@ public:
     int varPosition;
     int seasonPosition;
     int modelPosition;
+    int scenarioPosition;
 
     // data position in the csv file (start from zero)
     int cellCodePosition = 0;

@@ -4,138 +4,160 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <algorithm>
 
 #include "functionsIO.h"
 
 
-void extractVariables(const std::string &filename, std::vector<std::string> &variables) {
-    size_t start = filename.find_last_of("/\\") + 1; // Trova l'ultimo separatore di percorso
-    size_t end = filename.find_last_of('.'); // Trova l'ultimo punto per rimuovere l'estensione
-    std::string baseFilename = filename.substr(start, end - start);
 
-    std::istringstream ss(baseFilename);
-    std::string token;
-
-    while (std::getline(ss, token, '-')) {
-        variables.push_back(token);
-    }
-}
-
-
-void readAnagraficaCSV(const std::string &filename, std::vector<DataAnagraphic> &data) {
+bool readPropertiesCSV(const std::string &filename, const XmlScenarioSettings &settings,
+                       std::vector<DataProperties> &data)
+{
     std::fstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Errore nell'apertura del file " << filename << std::endl;
-        return;
-    }
-
-    std::string line;
-    // Salta la prima riga (intestazione)
-    std::getline(file, line);
-    DataAnagraphic row;
-    //int counter=0;
-    while (std::getline(file, line)) {
-        std::istringstream ss(line);
-        std::string token;
-        //row.resize(counter+1);
-        std::getline(ss, token, ',');
-        row.code = std::stoi(token);
-        std::getline(ss, token, ',');
-        row.name = token;
-        std::getline(ss, token, ',');
-        std::getline(ss, token, ',');
-        std::getline(ss, token, ',');
-        std::getline(ss, token, ',');
-        row.lat = std::stof(token);
-        std::getline(ss, token, ',');
-        row.lon = std::stof(token);
-        std::getline(ss, token, ',');
-        std::getline(ss, token, ',');
-        std::getline(ss, token, ',');
-        std::getline(ss, token, ',');
-        std::getline(ss, token, ',');
-        row.height = std::stof(token);
-        data.push_back(row);
-    }
-    file.close();
-}
-
-void readCSV(const std::string &filename, std::vector<DataRow> &data) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Errore nell'apertura del file " << filename << std::endl;
-        return;
-    }
-
-    std::string line;
-    // Salta la prima riga (intestazione)
-    std::getline(file, line);
-    DataRow row;
-    //int counter=0;
-    while (std::getline(file, line)) {
-        std::istringstream ss(line);
-        std::string token;
-        //row.resize(counter+1);
-        std::getline(ss, token, ',');
-        row.col1 = std::stoi(token);
-
-        std::getline(ss, token, ',');
-        row.col2 = std::stof(token);
-
-        std::getline(ss, token, ',');
-        row.col3 = std::stof(token);
-
-        std::getline(ss, token, ',');
-        row.col4 = std::stof(token);
-
-        std::getline(ss, token, ',');
-        row.col5 = std::stof(token);
-
-        data.push_back(row);
-        //counter++;
-    }
-    file.close();
-}
-
-void writeCsvForTest(const std::string &filename, std::vector<DataAnagraphic> &data, float anomaly)
-{
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Errore nell'apertura del file " << filename << std::endl;
-        return;
-    }
-    file << "Code,Latitude,Longitude,Height,Changes2021-2050"<< std::endl;
-    for (int i=0;i<data.size();i++)
+    if (! file.is_open())
     {
-        file << std::setw(5) << std::setfill('0') << data[i].code << "," << data[i].lat << "," << data[i].lon << "," << data[i].height << "," << anomaly << std::endl;
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return false;
     }
+
+    std::string line;
+    // skip header
+    std::getline(file, line);
+
+    int maxPosition = std::max({
+        settings.cellCodePosition,
+        settings.latPosition,
+        settings.lonPosition,
+        settings.heightPosition
+    });
+
+    while (std::getline(file, line))
+    {
+        if (line.empty())
+            continue;
+
+        std::vector<std::string> properties;
+        std::stringstream ss(line);
+        std::string item;
+        while (std::getline(ss, item, settings.csvSeparator))
+        {
+            properties.push_back(item);
+        }
+
+        if (properties.size() <= maxPosition)
+        {
+            std::cerr << "missing properties in file: " << filename << std::endl;
+            return false;
+        }
+
+        DataProperties row;
+        row.code = properties[settings.cellCodePosition];
+        row.name = row.code;
+
+        try
+        {
+            row.lat = std::stof(properties[settings.latPosition]);
+
+            row.lon = std::stof(properties[settings.lonPosition]);
+
+            row.height = std::stof(properties[settings.heightPosition]);
+        }
+        catch (const std::exception&)
+        {
+            std::cerr << "Invalid numeric value in file: " << filename << std::endl;
+            return false;
+        }
+
+        data.push_back(row);
+    }
+
     file.close();
+
+    return true;
 }
 
 
-void writeXML(const std::string& filename, std::vector<std::vector<DataRow>>& dataTmin,
-              std::vector<std::vector<DataRow>>& dataTmax, std::vector<std::vector<DataRow>>& dataPrec3M,
-              std::vector<std::vector<DataRow>>& dataWetDaysFrequency,
-              int cell,std::vector<std::string>& variables,std::vector<DataAnagraphic> &data)
+bool readCSV(const std::string &filename, const XmlScenarioSettings &settings, std::vector<float> &data)
 {
-    // Valori delle variabili
-    std::string point_name = data[cell].name;
-    int point_code = data[cell].code;
-    std::string point_info = "";
-    float point_lat = data[cell].lat;
-    float point_lon = data[cell].lon;
-    float point_height = data[cell].height;
+    data.clear();
 
-    std::string models_type = variables[0];
-    std::string models_value = variables[1];
+    std::ifstream file(filename);
+    if (! file.is_open())
+    {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return false;
+    }
+
+    // skip header
+    std::string line;
+    std::getline(file, line);
+
+    int lineNr = 1;
+    while (std::getline(file, line))
+    {
+        ++lineNr;
+        if (line.empty())
+            continue;
+
+        std::vector<std::string> values;
+        std::stringstream ss(line);
+        std::string item;
+        while (std::getline(ss, item, settings.csvSeparator))
+        {
+            values.push_back(item);
+        }
+
+        if (values.size() <= settings.anomalyPosition)
+        {
+            std::cerr << "missing properties in file: " << filename << std::endl;
+            return false;
+        }
+
+        float value;
+        try
+        {
+            value = std::stof(values[settings.anomalyPosition]);
+        }
+        catch (const std::exception&)
+        {
+            std::cerr << "Invalid numeric value at line " << lineNr
+                      << " in file: " << filename << std::endl;
+            return false;
+        }
+
+        data.push_back(value);
+    }
+
+    file.close();
+    return true;
+}
+
+
+void writeXML(const std::string& filename, const XmlScenarioSettings &settings,
+              std::vector<std::vector<float>>& dataTmin,
+              std::vector<std::vector<float>>& dataTmax,
+              std::vector<std::vector<float>>& dataPrec3M,
+              std::vector<std::vector<float>>& dataWetDaysFrequency,
+              int cell, std::vector<DataProperties> &properties)
+{
+    // properties
+    std::string point_name = properties[cell].name;
+    std::string point_code = properties[cell].code;
+    std::string point_info = "";
+    float point_lat = properties[cell].lat;
+    float point_lon = properties[cell].lon;
+    float point_height = properties[cell].height;
+
+    std::string models_type = "";
+    std::string models_value = settings.model.toStdString();
 
     std::string climate_type = "";
-    int climate_from = stoi(variables[2]);
-    int climate_to = stoi(variables[3]);
+    int climate_from = settings.climateYear1;
+    int climate_to = settings.climateYear2;
 
-    std::string scenario_type = variables[4];
-    int scenario_from = stoi(variables[5]);
-    int scenario_to = stoi(variables[6]);
+    std::string scenario_type = settings.scenario.toStdString();
+    int scenario_from = settings.scenarioYear1;
+    int scenario_to = settings.scenarioYear2;
 
     // Periodi e variabili
     struct PeriodVar {
@@ -152,14 +174,14 @@ void writeXML(const std::string& filename, std::vector<std::vector<DataRow>>& da
     };
 
     std::vector<Period> periods = {
-        {"DJF", "", "", {{"Tmin", "anomaly", dataTmin[0][cell].col5}, {"Tmax", "anomaly", dataTmax[0][cell].col5}, {"Prec3M", "anomaly",dataPrec3M[0][cell].col5}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[0][cell].col5}}},
-        {"MAM", "", "", {{"Tmin", "anomaly", dataTmin[1][cell].col5}, {"Tmax", "anomaly", dataTmax[1][cell].col5}, {"Prec3M", "anomaly",dataPrec3M[1][cell].col5}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[1][cell].col5}}},
-        {"JJA", "", "", {{"Tmin", "anomaly", dataTmin[2][cell].col5}, {"Tmax", "anomaly", dataTmax[2][cell].col5}, {"Prec3M", "anomaly",dataPrec3M[2][cell].col5}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[2][cell].col5}}},
-        {"SON", "", "", {{"Tmin", "anomaly", dataTmin[3][cell].col5}, {"Tmax", "anomaly", dataTmax[3][cell].col5}, {"Prec3M", "anomaly",dataPrec3M[3][cell].col5}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[3][cell].col5}}}
+        {"DJF", "", "", {{"Tmin", "anomaly", dataTmin[0][cell]}, {"Tmax", "anomaly", dataTmax[0][cell]}, {"Prec3M", "anomaly",dataPrec3M[0][cell]}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[0][cell]}}},
+        {"MAM", "", "", {{"Tmin", "anomaly", dataTmin[1][cell]}, {"Tmax", "anomaly", dataTmax[1][cell]}, {"Prec3M", "anomaly",dataPrec3M[1][cell]}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[1][cell]}}},
+        {"JJA", "", "", {{"Tmin", "anomaly", dataTmin[2][cell]}, {"Tmax", "anomaly", dataTmax[2][cell]}, {"Prec3M", "anomaly",dataPrec3M[2][cell]}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[2][cell]}}},
+        {"SON", "", "", {{"Tmin", "anomaly", dataTmin[3][cell]}, {"Tmax", "anomaly", dataTmax[3][cell]}, {"Prec3M", "anomaly",dataPrec3M[3][cell]}, {"WetDaysFrequency", "anomaly", dataWetDaysFrequency[3][cell]}}}
     };
 
     std::ofstream file(filename);
-    if (!file.is_open()) {
+    if (! file.is_open()) {
         std::cerr << "Errore nell'apertura del file " << filename << std::endl;
         return;
     }
@@ -213,8 +235,10 @@ void writeXML(const std::string& filename, std::vector<std::vector<DataRow>>& da
     file.close();
 }
 
-std::string generateFilename(const std::string& path, int number) {
+
+std::string generateFilename(const std::string& path, const std::string& code)
+{
     std::ostringstream oss;
-    oss << path << "GRD_" << std::setw(5) << std::setfill('0') << number << ".xml";
+    oss << path << "GRD_" << code << ".xml";
     return oss.str();
 }

@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <string>
+#include "xmlProject.h"
 
 struct DataRow {
     int col1;
@@ -13,10 +14,10 @@ struct DataRow {
     float col5;
 };
 
-struct DataAnagraphic {
-    int code;
+struct DataProperties {
+    std::string code;
     std::string name;
-    float lat,lon,height;
+    float lat, lon, height;
 };
 
 
@@ -27,14 +28,21 @@ struct DataVariable {
     float WetDaysFrequency;
 };
 
-std::string generateFilename(const std::string& path, int number);
-void writeXML(const std::string& filename, std::vector<std::vector<DataRow>>& dataTmin,
-              std::vector<std::vector<DataRow>>& dataTmax, std::vector<std::vector<DataRow>>& dataPrec3M,
-              std::vector<std::vector<DataRow>>& dataWetDaysFrequency,
-              int cell, std::vector<std::string>& variables, std::vector<DataAnagraphic> &data);
-void extractVariables(const std::string &filename, std::vector<std::string> &variables);
-void readCSV(const std::string &filename, std::vector<DataRow> &data);
-void readAnagraficaCSV(const std::string &filename, std::vector<DataAnagraphic> &data);
-void writeCsvForTest(const std::string &filename, std::vector<DataAnagraphic> &data, float anomaly);
+
+bool readPropertiesCSV(const std::string &filename, const XmlScenarioSettings &settings,
+                       std::vector<DataProperties> &data);
+
+bool readCSV(const std::string &filename, const XmlScenarioSettings &settings,
+             std::vector<float> &data);
+
+void writeXML(const std::string& filename, const XmlScenarioSettings &settings,
+              std::vector<std::vector<float>>& dataTmin,
+              std::vector<std::vector<float>>& dataTmax,
+              std::vector<std::vector<float>>& dataPrec3M,
+              std::vector<std::vector<float>>& dataWetDaysFrequency,
+              int cell, std::vector<DataProperties> &properties);
+
+std::string generateFilename(const std::string& path, const std::string &code);
+
 
 #endif // FUNCTIONSIO_H

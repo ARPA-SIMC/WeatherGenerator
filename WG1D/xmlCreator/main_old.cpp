@@ -53,8 +53,8 @@ int main_old()
     std::string dataPath = "C:/Github/WeatherGenerator/WG1D/DATA/ARCADIA_WG/";
 
     std::string filenameAnagraphic = dataPath + "input/originalCsvFiles/anagrafica_SDs_scenari_ER.csv";
-    std::vector<DataAnagraphic> dataAnagraphicCodeName;
-    readAnagraficaCSV(filenameAnagraphic,dataAnagraphicCodeName);
+    std::vector<DataProperties> dataAnagraphicCodeName;
+    //readAnagraficaCSV(filenameAnagraphic,dataAnagraphicCodeName);
 
     std::vector<std::string> filenameTmax;
     std::vector<std::string> filenameTmin;
@@ -63,6 +63,7 @@ int main_old()
     filenameTmax.resize(4);
     filenameTmin.resize(4);
     filenamePrec3M.resize(4);
+
     filenameWetDaysFrequency.resize(4);
     // definisce i nomi dei file di scenario
     filenameTmax[0] = dataPath + "input/originalCsvFiles/SD_GCMs-SD_EM-1961-1990-RCP4.5-2021-2050-DJF-Tmax-anomaly.csv";
@@ -92,7 +93,7 @@ int main_old()
         //writeCsvForTest(filenameTmax[i],dataAnagraphicCodeName,0.0);
         //writeCsvForTest(filenameTmin[i],dataAnagraphicCodeName,0.0);
         //writeCsvForTest(filenamePrec3M[i],dataAnagraphicCodeName,0.0);
-        writeCsvForTest(filenameWetDaysFrequency[i],dataAnagraphicCodeName,0.0);
+        //writeCsvForTest(filenameWetDaysFrequency[i],dataAnagraphicCodeName,0.0);
     }
 
     std::vector<std::vector<DataRow>> dataTmax;
@@ -100,14 +101,14 @@ int main_old()
     std::vector<std::vector<DataRow>> dataPrec3M;
     std::vector<std::vector<DataRow>> dataWetDaysFrequency;
 
-
     dataTmax.resize(4);
     dataTmin.resize(4);
     dataPrec3M.resize(4);
     dataWetDaysFrequency.resize(4);
+
     // Estrai le variabili dal nome del file
     std::vector<std::string> variables;
-    extractVariables(filenameTmax[0], variables);
+    //extractVariables(filenameTmax[0], variables);
     // Stampa le variabili estratte
     std::cout << "Variabili estratte dal nome del file:" << std::endl;
     for (const auto &var : variables)
@@ -117,13 +118,15 @@ int main_old()
 
     // TODO pos code, lat, lon, valore
     // lettura dei file uno per variabile
+    /*
     for(int i=0;i<4;i++)
     {
         readCSV(filenameTmax[i], dataTmax[i]);
         readCSV(filenameTmin[i], dataTmin[i]);
         readCSV(filenamePrec3M[i], dataPrec3M[i]);
         readCSV(filenameWetDaysFrequency[i], dataWetDaysFrequency[i]);
-    }
+    }*/
+
     //std::vector<DataVariable> anomalies;
     //anomalies.resize(4);
     // scrive i file xml
@@ -131,8 +134,8 @@ int main_old()
     for (cell = 0; cell < dataTmax[0].size();cell++)
     {
         std::string pathXML = dataPath + "input/scenarios/";   // TODO
-        std::string filenameXML = generateFilename(pathXML, dataTmax[0][cell].col1);
-        writeXML(filenameXML,dataTmin,dataTmax,dataPrec3M,dataWetDaysFrequency,cell,variables,dataAnagraphicCodeName);
+        //std::string filenameXML = generateFilename(pathXML, dataTmax[0][cell].col1);
+        //writeXML(filenameXML,dataTmin,dataTmax,dataPrec3M,dataWetDaysFrequency,cell,variables,dataAnagraphicCodeName);
     }
     return 0;
 }

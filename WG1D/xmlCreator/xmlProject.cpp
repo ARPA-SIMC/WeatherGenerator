@@ -17,6 +17,7 @@ XmlScenarioSettings::XmlScenarioSettings()
     settingsFileName = "";
     inputPath = "";
     outputPath = "";
+    model = "";
 
     // default: comma separated values
     suffix = ".csv";
@@ -31,6 +32,7 @@ XmlScenarioSettings::XmlScenarioSettings()
     varPosition = -1;
     seasonPosition = -1;
     modelPosition = -1;
+    scenarioPosition = -1;
 
     // data position in the csv file (start from zero)
     cellCodePosition = 0;
@@ -220,12 +222,6 @@ bool XmlProject::readSettings(const QString &settingsFileName)
         logger.writeError("Wrong varPosition in file .ini");
         return false;
     }
-    if (xmlSettings.varPosition < 0)
-    {
-        logger.writeError("varPosition must be >= 0");
-        return false;
-    }
-
     xmlSettings.seasonPosition = mySettings.value("seasonPosition").toInt(&isNumberOk);
     if (! isNumberOk)
     {
@@ -236,6 +232,21 @@ bool XmlProject::readSettings(const QString &settingsFileName)
     if (! isNumberOk)
     {
         logger.writeError("Wrong modelPosition in file .ini");
+        return false;
+    }
+    xmlSettings.scenarioPosition = mySettings.value("scenarioPosition").toInt(&isNumberOk);
+    if (! isNumberOk)
+    {
+        logger.writeError("Wrong scenarioPosition in file .ini");
+        return false;
+    }
+
+    // check
+    if (xmlSettings.varPosition < 0 || xmlSettings.seasonPosition < 0 ||
+        xmlSettings.modelPosition < 0 || xmlSettings.scenarioPosition < 0)
+    {
+        logger.writeError("missing information: varPosition or seasonPosition "
+                          "or modelPosition or scenarioPosition.");
         return false;
     }
 
