@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
 
 #include "functionsIO.h"
 #include "xmlProject.h"
@@ -76,8 +77,10 @@ int main(int argc, char *argv[])
     QStringList filenameWetDaysFrequency(4);
     int nrKeyFiles = 0;
 
-    int maxPosition = std::max(myProject.xmlSettings.seasonPosition, myProject.xmlSettings.varPosition);
-    maxPosition = std::max(maxPosition, myProject.xmlSettings.modelPosition);
+    int maxPosition = std::max({myProject.xmlSettings.seasonPosition,
+                                myProject.xmlSettings.varPosition,
+                                myProject.xmlSettings.modelPosition,
+                                myProject.xmlSettings.scenarioPosition});
 
     // scan fileNames
     for (const QFileInfo& fileInfo : fileList)
@@ -177,7 +180,7 @@ int main(int argc, char *argv[])
     std::vector<DataProperties> dataProperties;
     if (! readPropertiesCSV(filenameTmin[0].toStdString(), myProject.xmlSettings, dataProperties))
     {
-        myProject.logger.writeError("Wrong file format.");
+        myProject.logger.writeError("Wrong file format in readPropertiesCSV: " + filenameTmin[0]);
         return false;
     }
 
@@ -224,9 +227,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    // TODO writeXML
-
     // todo generateFilename
+    // writeXML
 
 
     return true;
