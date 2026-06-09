@@ -233,9 +233,6 @@ int main(int argc, char *argv[])
     for (int cell = 0; cell < nrCells;cell++)
     {
         std::string filenameXML;
-        std::ostringstream oss;
-        //oss << std::setfill('0') << std::setw(4) << cell;
-        //const std::string stringCode = oss.str();
         std::string path = inputDir.absolutePath().toStdString();
         filenameXML = generateFilename(path,dataProperties[cell].code);
         writeXML(filenameXML,myProject.xmlSettings,dataTmin,dataTmax,dataPrec3M,dataWetDaysFrequency,cell,dataProperties);
