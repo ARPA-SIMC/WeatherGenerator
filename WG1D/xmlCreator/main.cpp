@@ -4,7 +4,9 @@
 
 #include <iostream>
 #include <vector>
-#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <string>
 #include <filesystem>
 #include <algorithm>
 
@@ -228,7 +230,18 @@ int main(int argc, char *argv[])
     }
 
     // todo generateFilename
-    // writeXML
+    //writeXML()
+    for (int cell = 0; cell < nrCells;cell++)
+    {
+        std::string filenameXML;
+        std::ostringstream oss;
+        oss << std::setfill('0') << std::setw(4) << cell;
+        const std::string stringCode = oss.str();
+        std::string path = inputDir.absolutePath().toStdString();
+        filenameXML = generateFilename(path,stringCode);
+        writeXML(filenameXML,myProject.xmlSettings,dataTmin,dataTmax,dataPrec3M,dataWetDaysFrequency,cell,dataProperties);
+        std::cout << filenameXML << '\n';
+    }
 
 
     return true;
