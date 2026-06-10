@@ -239,6 +239,6 @@ void writeXML(const std::string& filename, const XmlScenarioSettings &settings,
 std::string generateFilename(const std::string& path, const std::string& code)
 {
     std::ostringstream oss;
-    oss << path << "/XML/GRD_" << code << ".xml";
+    oss << path << "/GRD_" << code << ".xml";
     return oss.str();
 }

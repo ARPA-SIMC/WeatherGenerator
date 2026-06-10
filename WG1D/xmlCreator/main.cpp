@@ -230,11 +230,12 @@ int main(int argc, char *argv[])
     }
 
 
+    QDir outpuDir(myProject.xmlSettings.outputPath);
     for (int cell = 0; cell < nrCells;cell++)
     {
         std::string filenameXML;
-        std::string path = inputDir.absolutePath().toStdString();
-        filenameXML = generateFilename(path,dataProperties[cell].code);
+
+        filenameXML = generateFilename(outpuDir.absolutePath().toStdString(), dataProperties[cell].code);
         writeXML(filenameXML,myProject.xmlSettings,dataTmin,dataTmax,dataPrec3M,dataWetDaysFrequency,cell,dataProperties);
         std::cout << filenameXML << '\n';
     }
