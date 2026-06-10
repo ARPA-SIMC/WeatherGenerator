@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
             filenamePrec3M[seasonIndex] = fileInfo.filePath();
             ++nrKeyFiles;
         }
-        else if (variable == "FWET")
+        else if (variable == "WET DAYS")
         {
             filenameWetDaysFrequency[seasonIndex] = fileInfo.filePath();
         }

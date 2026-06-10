@@ -1,7 +1,7 @@
 QT += core sql xml
 QT -= gui
 
-CONFIG += c++11 c++14 c++17 cmdline
+CONFIG += c++17 cmdline
 
 
 INCLUDEPATH +=  ../../../agrolib/crit3dDate ../../../agrolib/mathFunctions ../../../agrolib/utilities
