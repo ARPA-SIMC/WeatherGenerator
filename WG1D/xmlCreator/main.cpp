@@ -222,6 +222,12 @@ int main(int argc, char *argv[])
         if (! filenameWetDaysFrequency[i].isEmpty())
         {
             readCSV(filenameWetDaysFrequency[i].toStdString(), myProject.xmlSettings, dataWetDaysFrequency[i]);
+            if (dataWetDaysFrequency[i].size() != nrCells)
+            {
+                myProject.logger.writeError("Missing/wrong data in file: " + filenamePrec3M[i]);
+                myProject.logger.writeInfo ("Nr of data: " + QString::number(dataWetDaysFrequency[i].size()));
+                return false;
+            }
         }
         else
         {
@@ -233,12 +239,15 @@ int main(int argc, char *argv[])
     QDir outpuDir(myProject.xmlSettings.outputPath);
     for (int cell = 0; cell < nrCells;cell++)
     {
-        std::string filenameXML;
+        std::string filenameXML = generateFilename(outpuDir.absolutePath().toStdString(), dataProperties[cell].code);
 
-        filenameXML = generateFilename(outpuDir.absolutePath().toStdString(), dataProperties[cell].code);
-        writeXML(filenameXML,myProject.xmlSettings,dataTmin,dataTmax,dataPrec3M,dataWetDaysFrequency,cell,dataProperties);
+        writeXML(filenameXML,myProject.xmlSettings,
+                 dataTmin, dataTmax, dataPrec3M, dataWetDaysFrequency,
+                 cell, dataProperties);
+
         std::cout << filenameXML << '\n';
     }
+
     return true;
 }
 
