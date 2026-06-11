@@ -76,6 +76,8 @@ bool readPropertiesCSV(const std::string &filename, const XmlScenarioSettings &s
     return true;
 }
 
+#include <istream> // Assicurati che sia incluso
+
 
 bool readCSV(const std::string &filename, const XmlScenarioSettings &settings, std::vector<float> &data)
 {

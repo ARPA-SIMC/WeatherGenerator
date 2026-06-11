@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
             readCSV(filenameWetDaysFrequency[i].toStdString(), myProject.xmlSettings, dataWetDaysFrequency[i]);
             if (dataWetDaysFrequency[i].size() != nrCells)
             {
-                myProject.logger.writeError("Missing/wrong data in file: " + filenamePrec3M[i]);
+                myProject.logger.writeError("Missing/wrong data in file: " + filenameWetDaysFrequency[i]);
                 myProject.logger.writeInfo ("Nr of data: " + QString::number(dataWetDaysFrequency[i].size()));
                 return false;
             }
