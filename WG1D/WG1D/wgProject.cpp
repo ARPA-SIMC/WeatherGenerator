@@ -581,14 +581,24 @@ bool WG_Scenario(const WGSettings &wgSettings)
                         outputSize++;
                     }
                 }
+
                 outputDailyData.resize(outputSize);
                 int anomalyMonth1[4], anomalyMonth2[4];
                 wGen = wGenClimate;
                 setAnomalyMonthScenario(XMLAnomaly.period[0].type,anomalyMonth1,anomalyMonth2);
                 outputFileName.resize(XMLAnomaly.models.number);
-                for (int counterMember=0; counterMember<XMLAnomaly.models.number;counterMember++)
+
+                for (int counterMember=0; counterMember < XMLAnomaly.models.number; counterMember++)
                 {
-                    outputFileName[counterMember] = wgSettings.outputPath + "/" + XMLAnomaly.models.value[counterMember] + "_" + fileName;
+                    if (XMLAnomaly.models.number > 1)
+                    {
+                        outputFileName[counterMember] = wgSettings.outputPath + "/" + XMLAnomaly.models.value[counterMember] + "_" + fileName;
+                    }
+                    else
+                    {
+                        outputFileName[counterMember] = wgSettings.outputPath + "/" + fileName;
+                    }
+
                     assignXMLAnomalyScenario(&XMLAnomaly, counterMember, anomalyMonth1, anomalyMonth2, wGenClimate, wGen);
 
                     initializeWeather(wGen);
