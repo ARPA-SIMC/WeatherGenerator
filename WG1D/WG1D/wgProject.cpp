@@ -685,7 +685,9 @@ bool WG_Scenario(const WGSettings &wgSettings)
                         }
                         currentIndex++;
                     }
+
                     writeMeteoDataCsv(outputFileName[counterMember], wgSettings.valuesSeparator, outputDailyData, false);
+
                     qDebug() << "Output:" << outputFileName[counterMember];
                 }
             }

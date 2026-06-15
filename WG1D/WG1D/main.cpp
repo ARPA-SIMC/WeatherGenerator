@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     QString dataPath, settingsFileName;
     if (! searchDataPath(&dataPath)) return -1;
 
-    std::cout << "WG-1D  V1.1.0\n";
+    std::cout << "WG-1D  V1.2.0\n";
 
     #ifdef TEST_WG_CLIMATE
         settingsFileName = dataPath + "TEST/testWG_Climate.ini";
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
         #else
             #ifdef TEST_WG_SCENARIO
                 settingsFileName = dataPath + "TEST/testWG_Scenario.ini";
-                //settingsFileName = dataPath + "ARCADIA_WG/testWG_Scenario.ini";
+                //settingsFileName = "//icolt-smr/CRITERIA1D/PROJECTS/icolt_CRATER/wg/WG_CRATER.ini";
             #else
                 #ifdef TEST_WG_WATERTABLE_DATA
                     settingsFileName = dataPath + "TEST_waterTable/testWG_waterTable_Data.ini";
