@@ -467,12 +467,12 @@ bool assignXMLAnomaly(XMLSeasonalAnomaly* XMLAnomaly, int modelIndex, int anomal
             myVar = XMLAnomaly->forecast[i].type.toUpper();
             result = false;
 
-            if (XMLAnomaly->forecast[i].value[modelIndex] != nullptr)
-                myValue = XMLAnomaly->forecast[i].value[modelIndex].toFloat();
+            if (XMLAnomaly->forecast[i].values[modelIndex] != nullptr)
+                myValue = XMLAnomaly->forecast[i].values[modelIndex].toFloat();
             else
                 myValue = NODATA;
 
-            if (int(myValue) != int(NODATA))
+            if (! isEqual(myValue, NODATA))
             {
                 if ( (myVar == "TMIN") || (myVar == "AVGTMIN") )
                     result = assignAnomalyNoPrec(myValue, anomalyMonth1, anomalyMonth2, wGenNoAnomaly.monthly.monthlyTmin, wGen.monthly.monthlyTmin);
@@ -526,87 +526,87 @@ bool assignXMLAnomaly(XMLSeasonalAnomaly* XMLAnomaly, int modelIndex, int anomal
 }
 
 
-bool assignAnomalyNoPrec(float myAnomaly, int anomalyMonth1, int anomalyMonth2,
-                         float* myWGMonthlyVarNoAnomaly, float* myWGMonthlyVar)
+bool assignAnomalyNoPrec(float anomaly, int month1, int month2,
+                         float* monthlyVarClimate, float* monthlyVarOutput)
 {
     int month = 0;
 
-    if (anomalyMonth2 >= anomalyMonth1)
+    if (std::abs(anomaly) > 99.0)
+        return false;
+
+    if (month2 >= month1)
     {
         // regular period
-        for (month = anomalyMonth1; month <= anomalyMonth2; month++)
-            myWGMonthlyVar[month-1] = myWGMonthlyVarNoAnomaly[month-1] + myAnomaly;
+        for (month = month1; month <= month2; ++month)
+            monthlyVarOutput[month-1] = monthlyVarClimate[month-1] + anomaly;
 
     }
     else
     {
-        // irregular period (between years)
-        for (month = anomalyMonth1; month <= 12; month++)
-            myWGMonthlyVar[month-1] = myWGMonthlyVarNoAnomaly[month-1] + myAnomaly;
+        // irregular period (between years, example DJF)
+        for (month = month1; month <= 12; ++month)
+            monthlyVarOutput[month-1] = monthlyVarClimate[month-1] + anomaly;
 
-        for (month = 1; month <=anomalyMonth2; month++)
-            myWGMonthlyVar[month-1] = myWGMonthlyVarNoAnomaly[month-1] + myAnomaly;
+        for (month = 1; month <=month2; ++month)
+            monthlyVarOutput[month-1] = monthlyVarClimate[month-1] + anomaly;
     }
 
     return true;
 }
 
 
-bool assignAnomalyPrec(float myAnomaly, int anomalyMonth1, int anomalyMonth2,
-                       float* myWGMonthlyVarNoAnomaly, float* myWGMonthlyVar)
+bool assignAnomalyPrec(float anomaly, int month1, int month2,
+                       float* monthlyVarClimate, float* monthlyVarOutput)
 {
+    if (std::abs(anomaly) > 999.0)
+        return false;
 
-    int month;
-    float mySumClimatePrec;
-    float myNewSumPrec = 0;
-    float myFraction = 0;
-
-    int nrMonths = getMonthsInPeriod(anomalyMonth1, anomalyMonth2);
+    int nrMonths = getMonthsInPeriod(month1, month2);
 
     // compute sum of precipitation
-    mySumClimatePrec = 0;
-    if (anomalyMonth2 >= anomalyMonth1)
+    double sumClimatePrec = 0.0;
+    if (month2 >= month1)
     {
         // regular period
-        for (month = anomalyMonth1; month <= anomalyMonth2; month++)
-            mySumClimatePrec = mySumClimatePrec + myWGMonthlyVarNoAnomaly[month-1];
-
+        for (int month = month1; month <= month2; ++month)
+            sumClimatePrec += monthlyVarClimate[month-1];
     }
     else
     {
-        // irregular period (between years)
-        for (month = anomalyMonth1; month <= 12; month++)
-            mySumClimatePrec = mySumClimatePrec + myWGMonthlyVarNoAnomaly[month-1];
+        // irregular period (between years, example DJF)
+        for (int month = month1; month <= 12; ++month)
+            sumClimatePrec += monthlyVarClimate[month-1];
 
-        for (month = 1; month <= anomalyMonth2; month++)
-            mySumClimatePrec = mySumClimatePrec + myWGMonthlyVarNoAnomaly[month-1];
+        for (int month = 1; month <= month2; ++month)
+            sumClimatePrec += monthlyVarClimate[month-1];
     }
 
-    myNewSumPrec = std::max(mySumClimatePrec + myAnomaly, 0.f);
+    double newPrecSum = std::max(sumClimatePrec + anomaly, 0.0);
 
-    if (mySumClimatePrec > 0)
-        myFraction = myNewSumPrec / mySumClimatePrec;
+    double newRatio = 0.0;
+    if (sumClimatePrec > 0)
+        newRatio = newPrecSum / sumClimatePrec;
 
-    if (anomalyMonth2 >= anomalyMonth1)
+    if (month2 >= month1)
     {
-        for (month = anomalyMonth1; month <= anomalyMonth2; month++)
+        for (int month = month1; month <= month2; ++month)
         {
-            if (mySumClimatePrec > 0)
-                myWGMonthlyVar[month-1] = myWGMonthlyVarNoAnomaly[month-1] * myFraction;
+            if (sumClimatePrec > 0)
+                monthlyVarOutput[month-1] = monthlyVarClimate[month-1] * newRatio;
             else
-                myWGMonthlyVar[month-1] = myNewSumPrec / float(nrMonths);
+                monthlyVarOutput[month-1] = float(newPrecSum / nrMonths);
         }
     }
     else
     {
-        for (month = 1; month<= 12; month++)
+        for (int month = 1; month<= 12; ++month)
         {
-            if (month <= anomalyMonth2 || month >= anomalyMonth1)
+            if (month <= month2 || month >= month1)
             {
-                if (mySumClimatePrec > 0)
-                    myWGMonthlyVar[month-1] = myWGMonthlyVarNoAnomaly[month-1] * myFraction;
+                if (sumClimatePrec > 0)
+                    monthlyVarOutput[month-1] = monthlyVarClimate[month-1] * newRatio;
                 else
-                    myWGMonthlyVar[month-1] = myNewSumPrec / float(nrMonths);
+                    monthlyVarOutput[month-1] = float(newPrecSum / nrMonths);
             }
         }
     }
@@ -617,27 +617,18 @@ bool assignAnomalyPrec(float myAnomaly, int anomalyMonth1, int anomalyMonth2,
 
 bool assignXMLAnomalyScenario(XMLScenarioAnomaly* XMLAnomaly,int modelIndex, int* anomalyMonth1, int* anomalyMonth2, TweatherGenClimate& wGenNoAnomaly, TweatherGenClimate &wGen)
 {
-    //unsigned int i = 0;
-    QString myVar;
-    float myValue = 0.0;
-
-    bool result;
-
     // loop for all XMLValuesList (Tmin, Tmax, TminVar, TmaxVar, Prec3M, Wetdays)
-    for (int iSeason=0;iSeason<4;iSeason++)
+    for (int iSeason = 0; iSeason < 4; iSeason++)
     {
         for (unsigned int iWeatherVariable = 0; iWeatherVariable < 4; iWeatherVariable++)
         {
             if (XMLAnomaly->period[iSeason].seasonalScenarios[iWeatherVariable].attribute.toUpper() == "ANOMALY")
             {
-                myVar = XMLAnomaly->period[iSeason].seasonalScenarios[iWeatherVariable].type.toUpper();
-                result = false;
-                //if (XMLAnomaly->forecast[i].value[modelIndex] != nullptr)
-                    myValue = XMLAnomaly->period[iSeason].seasonalScenarios[iWeatherVariable].value[modelIndex].toFloat();
-                //else
-                    //myValue = NODATA;
+                QString myVar = XMLAnomaly->period[iSeason].seasonalScenarios[iWeatherVariable].type.toUpper();
+                float myValue = XMLAnomaly->period[iSeason].seasonalScenarios[iWeatherVariable].value[modelIndex].toFloat();
 
-                if (int(myValue) != int(NODATA))
+                bool result = false;
+                if (! isEqual(myValue, NODATA))
                 {
                     if ( (myVar == "TMIN") || (myVar == "AVGTMIN") )
                         result = assignAnomalyNoPrec(myValue, anomalyMonth1[iSeason], anomalyMonth2[iSeason], wGenNoAnomaly.monthly.monthlyTmin, wGen.monthly.monthlyTmin);
@@ -651,10 +642,7 @@ bool assignXMLAnomalyScenario(XMLScenarioAnomaly* XMLAnomaly,int modelIndex, int
                         result = assignAnomalyNoPrec(myValue, anomalyMonth1[iSeason], anomalyMonth2[iSeason], wGenNoAnomaly.monthly.probabilityWetWet, wGen.monthly.probabilityWetWet);
                     else if ( (myVar == "DELTATMAXDRYWET") )
                         result = assignAnomalyNoPrec(myValue, anomalyMonth1[iSeason], anomalyMonth2[iSeason], wGenNoAnomaly.monthly.dw_Tmax, wGen.monthly.dw_Tmax);
-
                 }
-
-
                 else
                 {
                     // not critical variables
@@ -664,17 +652,14 @@ bool assignXMLAnomalyScenario(XMLScenarioAnomaly* XMLAnomaly,int modelIndex, int
 
                 if (result == false)
                 {
-                    qDebug() << "wrong anomaly: " + myVar;
+                    qDebug() << "*** ERROR in model: "  + XMLAnomaly->models.value[modelIndex];
+                    qDebug() << "wrong anomaly: "  + myVar;
                     return false;
                 }
             }
         }
-        // move to the next season
-        //anomalyMonth1 = (anomalyMonth1 + 3)%12;
-        //if (anomalyMonth1 == 0) anomalyMonth1 +=12;
-        //anomalyMonth2 = (anomalyMonth2 + 3)%12;
-        //if (anomalyMonth2 == 0) anomalyMonth2 +=12;
     }
+
     /* DEBUG
     QString anomaly="anomaly.txt";
     QFile file(anomaly);

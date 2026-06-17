@@ -131,11 +131,12 @@
     bool assignXMLAnomaly(XMLSeasonalAnomaly* XMLAnomaly, int modelIndex, int anomalyMonth1,
                           int anomalyMonth2, TweatherGenClimate &wGenNoAnomaly, TweatherGenClimate& wGen);
 
-    bool assignAnomalyNoPrec(float myAnomaly, int anomalyMonth1, int anomalyMonth2,
-                             float* myWGMonthlyVarNoAnomaly, float* myWGMonthlyVar );
+    bool assignAnomalyNoPrec(float anomaly, int month1, int month2,
+                             float* monthlyVarClimate, float* monthlyVarOutput );
 
-    bool assignAnomalyPrec(float myAnomaly, int anomalyMonth1, int anomalyMonth2,
-                           float* myWGMonthlyVarNoAnomaly, float* myWGMonthlyVar);
+    bool assignAnomalyPrec(float anomaly, int month1, int month2,
+                           float* monthlyVarClimate, float* monthlyVarOutput);
+
     bool assignXMLAnomalyScenario(XMLScenarioAnomaly* XMLAnomaly, int modelIndex, int *anomalyMonth1, int *anomalyMonth2,
                                   TweatherGenClimate& wGenNoAnomaly, TweatherGenClimate &wGen);
 

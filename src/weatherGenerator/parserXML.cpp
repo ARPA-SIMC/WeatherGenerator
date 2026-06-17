@@ -95,28 +95,28 @@ void XMLScenarioAnomaly::printInfo()
 
 bool parseXMLFile(const QString &xmlFileName, QDomDocument &xmlDoc)
 {
-    if (xmlFileName == "")
+    if (xmlFileName.isEmpty())
     {
         qDebug() << "Missing XML file.";
         return false;
     }
 
     QFile myFile(xmlFileName);
-    if (!myFile.open(QIODevice::ReadOnly))
+    if (! myFile.open(QIODevice::ReadOnly))
     {
         qDebug() << "Open XML failed:" << xmlFileName;
         qDebug() << myFile.errorString();
         return false;
     }
 
-    QString myError;
-    int myErrLine, myErrColumn;
-    if (! xmlDoc.setContent(&myFile, &myError, &myErrLine, &myErrColumn))
+    QString errorStr;
+    int errLineNr, errColumnNr;
+    if (! xmlDoc.setContent(&myFile, &errorStr, &errLineNr, &errColumnNr))
     {
        qDebug() << "Parse xml failed:" << xmlFileName
-                << " Row: " << QString::number(myErrLine)
-                << " - Column: " << QString::number(myErrColumn)
-                << "\n" << myError;
+                << " Row: " << QString::number(errLineNr)
+                << " - Column: " << QString::number(errColumnNr)
+                << "\n" << errorStr;
         myFile.close();
         return false;
     }
@@ -140,7 +140,6 @@ bool parseXMLSeasonal(const QString &xmlFileName, XMLSeasonalAnomaly &XMLAnomaly
 
     QDomNode child;
     QDomNode secondChild;
-    TXMLValuesList valuelist;
 
     QDomNode ancestor = xmlDoc.documentElement().firstChild();
     QString myTag;
@@ -255,36 +254,38 @@ bool parseXMLSeasonal(const QString &xmlFileName, XMLSeasonalAnomaly &XMLAnomaly
                 myTag = child.toElement().tagName().toUpper();
                 if (myTag == "VAR")
                 {
+                    TXMLValues xmlValue;
+
                     secondChild = child.firstChild();
-                    XMLAnomaly.forecast.push_back(valuelist);
                     while( !secondChild.isNull())
                     {
                         mySecondTag = secondChild.toElement().tagName().toUpper();
                         if (mySecondTag == "TYPE")
                         {
-                            XMLAnomaly.forecast[XMLAnomaly.forecast.size()-1].type = secondChild.toElement().text();
                             // remove white spaces
-                            XMLAnomaly.forecast[XMLAnomaly.forecast.size()-1].type = XMLAnomaly.forecast[XMLAnomaly.forecast.size()-1].type.simplified();
+                            xmlValue.type = secondChild.toElement().text().simplified();
                             nrTokens++;
                         }
 
                         if (mySecondTag == "ATTRIBUTE")
                         {
-                            XMLAnomaly.forecast[XMLAnomaly.forecast.size()-1].attribute = secondChild.toElement().text();
                             // remove white spaces
-                            XMLAnomaly.forecast[XMLAnomaly.forecast.size()-1].attribute = XMLAnomaly.forecast[XMLAnomaly.forecast.size()-1].attribute.simplified();
+                            xmlValue.attribute = secondChild.toElement().text().simplified();
                             nrTokens++;
                         }
 
                         if (mySecondTag == "VALUE")
                         {
+                            // split values
                             values = secondChild.toElement().text();
-                            XMLAnomaly.forecast[XMLAnomaly.forecast.size()-1].value = values.split(",");
+                            xmlValue.values = values.split(",");
                             nrTokens++;
                         }
 
                         secondChild = secondChild.nextSibling();
                     }
+
+                    XMLAnomaly.forecast.push_back(xmlValue);
                 }
 
                 child = child.nextSibling();
@@ -293,6 +294,7 @@ bool parseXMLSeasonal(const QString &xmlFileName, XMLSeasonalAnomaly &XMLAnomaly
 
         ancestor = ancestor.nextSibling();
     }
+
     xmlDoc.clear();
 
     if (nrTokens < nrRequiredToken)

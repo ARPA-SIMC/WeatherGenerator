@@ -58,11 +58,11 @@
         int yearTo;
     };
 
-    struct TXMLValuesList
+    struct TXMLValues
     {
         QString type;
         QString attribute;
-        QStringList value;
+        QStringList values;
     };
 
 
@@ -75,7 +75,7 @@
         void printInfo();
 
         TXMLPoint point;
-        std::vector<TXMLValuesList> forecast;
+        std::vector<TXMLValues> forecast;
         TXMLClimateField climatePeriod;
         int modelNumber;
         QStringList modelName;
