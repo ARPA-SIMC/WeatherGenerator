@@ -334,7 +334,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
 
-        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength()-1);
         climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
 
         int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
@@ -418,7 +418,7 @@ bool WG_SeasonalForecast(const WGSettings &wgSettings)
         }
 
         // weather generator - computes climate without anomaly
-        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate,
+        if (! climateGenerator(climateDailyObsData.dataLength(), climateDailyObsData, climateObsFirstDate,
                               climateObsLastDate, wgSettings.rainfallThreshold,
                               wgSettings.minDataPercentage, &wGenClimate))
         {
@@ -541,7 +541,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
         climateObsFirstDate = std::max(climateDateIni, climateObsFirstDate);
 
-        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength()-1);
         climateObsLastDate = std::min(climateDateFin, climateObsLastDate);
 
         int requestedClimateDays = climateDateIni.daysTo(climateDateFin);
@@ -557,7 +557,7 @@ bool WG_Scenario(const WGSettings &wgSettings)
         else
         {
             // weather generator - computes climate without anomaly
-            if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate,
+            if (! climateGenerator(climateDailyObsData.dataLength(), climateDailyObsData, climateObsFirstDate,
                                   climateObsLastDate, wgSettings.rainfallThreshold,
                                   wgSettings.minDataPercentage, &wGenClimate))
             {
@@ -739,7 +739,7 @@ bool WG_Climate(const WGSettings &wgSettings)
 
         // check climate dates
         Crit3DDate climateObsFirstDate = climateDailyObsData.inputFirstDate;
-        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+        Crit3DDate climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength()-1);
 
         // watertable
         if (wgSettings.isWaterTableData)
@@ -803,7 +803,7 @@ bool WG_Climate(const WGSettings &wgSettings)
 
         // weather generator - computes climate
         QString climateObsFileName = wgSettings.outputPath + "/" + "climate_obs_" + fileName;
-        if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate,
+        if (! climateGenerator(climateDailyObsData.dataLength(), climateDailyObsData, climateObsFirstDate, climateObsLastDate,
                               wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate, true, climateObsFileName))
         {
             qDebug() << "Error in climateGenerator";
@@ -811,8 +811,6 @@ bool WG_Climate(const WGSettings &wgSettings)
         }
         else
         {
-            qDebug() << "CLIMATE OK";
-
             /* initialize random seed: */
             srand(unsigned(time(nullptr)));
 
@@ -825,7 +823,6 @@ bool WG_Climate(const WGSettings &wgSettings)
                 continue;
             }
 
-            qDebug() << "Weather Generator OK";
             qDebug() << "Output:" << outputFileName;
             writeMeteoDataCsv(outputFileName, wgSettings.valuesSeparator, outputDailyData, false);
 
@@ -836,9 +833,9 @@ bool WG_Climate(const WGSettings &wgSettings)
                 return false;
 
             climateObsFirstDate = climateDailyObsData.inputFirstDate;
-            climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength-1);
+            climateObsLastDate = climateDailyObsData.inputFirstDate.addDays(climateDailyObsData.dataLength()-1);
             QString climateOutFileName = wgSettings.outputPath + "/" + "climate_output_" + fileName;
-            if (! climateGenerator(climateDailyObsData.dataLength, climateDailyObsData, climateObsFirstDate, climateObsLastDate,
+            if (! climateGenerator(climateDailyObsData.dataLength(), climateDailyObsData, climateObsFirstDate, climateObsLastDate,
                                   wgSettings.rainfallThreshold, wgSettings.minDataPercentage, &wGenClimate, true, climateOutFileName))
             {
                 qDebug() << "Error in check output";

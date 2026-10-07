@@ -17,6 +17,8 @@
         std::vector<float> inputTMin;
         std::vector<float> inputTMax;
         std::vector<float> inputPrecip;
+
+        long dataLength() { return (long)inputTMin.size(); }
     };
 
     struct Tmonthlyweather

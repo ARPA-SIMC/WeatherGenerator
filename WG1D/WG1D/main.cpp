@@ -67,7 +67,7 @@
 
 
 // uncomment to execute test:
-//#define TEST_WG_CLIMATE
+#define TEST_WG_CLIMATE
 //#define TEST_WG_SEASONAL
 //#define TEST_WG_SCENARIO
 //#define TEST_WG_WATERTABLE_DATA
@@ -76,7 +76,7 @@
 
 void usage()
 {
-    std::cout << "Daily Weather Generator by ARPAE ER \n";
+    std::cout << "Daily Weather Generator by ARPAE Climate Observatory \n";
     std::cout << "Variables: temperature (minimum and maximum), precipitation sum and watertable depth\n";
     std::cout << "execution mode: CLIMATE | SCENARIO | SEASONAL FORECAST \n";
     std::cout << std::endl << "USAGE:" << std::endl;
