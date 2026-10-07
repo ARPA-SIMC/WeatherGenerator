@@ -1,17 +1,12 @@
 #ifndef WEATHERGENERATOR_H
 #define WEATHERGENERATOR_H
 
-    #ifndef CRIT3DDATE_H
-        #include "crit3dDate.h"
-    #endif
+    #include "crit3dDate.h"
+    #include "parserXML.h"
+    #include "waterTable.h"
 
-    #ifndef PARSERXML_H
-        #include "parserXML.h"
-    #endif
-
-    #ifndef WATERTABLE_H
-        #include "waterTable.h"
-    #endif
+    #include <vector>
+    #include <string>
 
     #define NRDAYS_MAXDRYINCREASE  4
 
@@ -22,31 +17,30 @@
         std::vector<float> inputTMin;
         std::vector<float> inputTMax;
         std::vector<float> inputPrecip;
-        int dataLength;
     };
 
     struct Tmonthlyweather
     {
         int nCheckedDays=10;
-        float monthlyTmin [12];           // [°C]   monthly maximum temp.
-        float monthlyTmax [12];           // [°C]   monthly minimum temp.
-        float sumPrec [12];               // [mm]   total monthly precipitation
-        float fractionWetDays [12];       // [-]    fraction of wet days (must be >0)
-        float dw_Tmax [12];               // [°C]   difference between maximum temperatures on dry and wet days
-        float dw_Tmin [12];               // [°C]   difference between minimum temperatures on dry and wet days
-        float probabilityWetWet[12];      // [-]    probability of a wet day after a wet day
+        float monthlyTmin [12];             // [°C]   monthly maximum temp.
+        float monthlyTmax [12];             // [°C]   monthly minimum temp.
+        float sumPrec [12];                 // [mm]   total monthly precipitation
+        float fractionWetDays [12];         // [-]    fraction of wet days (must be >0)
+        float dw_Tmax [12];                 // [°C]   difference between maximum temperatures on dry and wet days
+        float dw_Tmin [12];                 // [°C]   difference between minimum temperatures on dry and wet days
+        float probabilityWetWet[12];        // [-]    probability of a wet day after a wet day
 
-        float dryProbabilityIncrease[12]; // [-]    increase of the probability of a dry day after a dry day
-        float wetProbabilityIncrease[12]; // [-]    increase of the probability of a wet day after a wet day
+        float dryProbabilityIncrease[12];   // [-]    increase of the probability of a dry day after a dry day
+        float wetProbabilityIncrease[12];   // [-]    increase of the probability of a wet day after a wet day
 
-        float stDevTminWet [12];             // [-]    monthly minimum temperature standard deviation
-        float stDevTmaxWet [12];             // [-]    monthly maximum temperature standard deviation
-        float stDevTminDry [12];             // [-]    monthly minimum temperature standard deviation
-        float stDevTmaxDry [12];             // [-]    monthly maximum temperature standard deviation
-        float monthlyTmaxWet [12];           // [°C]   monthly maximum temp Wet days
-        float monthlyTmaxDry [12];           // [°C]   monthly maximum temp Dry days
-        float monthlyTminWet [12];           // [°C]   monthly maximum temp Wet days
-        float monthlyTminDry [12];           // [°C]   monthly maximum temp Dry days
+        float stDevTminWet [12];            // [-]    monthly minimum temperature standard deviation
+        float stDevTmaxWet [12];            // [-]    monthly maximum temperature standard deviation
+        float stDevTminDry [12];            // [-]    monthly minimum temperature standard deviation
+        float stDevTmaxDry [12];            // [-]    monthly maximum temperature standard deviation
+        float monthlyTmaxWet [12];          // [°C]   monthly maximum temp Wet days
+        float monthlyTmaxDry [12];          // [°C]   monthly maximum temp Dry days
+        float monthlyTminWet [12];          // [°C]   monthly maximum temp Wet days
+        float monthlyTminDry [12];          // [°C]   monthly maximum temp Dry days
 
         float maxTmaxWet[12];
         float maxTmaxDry[12];
@@ -120,7 +114,6 @@
     void normalRandom(float &rnd_1, float &rnd_2);
 
     bool markov(float pWet);
-    bool markov_old(float pwd,float pww, bool isWetPreviousDay);
     float weibull (float mean, float precThreshold);
 
     void genTemps(float &tMax, float &tMin, float &residualTMaxPrev, float &residualTMinPrev,
@@ -140,14 +133,14 @@
     bool assignXMLAnomalyScenario(XMLScenarioAnomaly* XMLAnomaly, int modelIndex, int *anomalyMonth1, int *anomalyMonth2,
                                   TweatherGenClimate& wGenNoAnomaly, TweatherGenClimate &wGen);
 
-    bool makeSeasonalForecast(QString outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
+    bool makeSeasonalForecast(const QString &outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
                             TweatherGenClimate& wGenClimate, TinputObsData* dailyObsData,
                             int numRepetitions, int myPredictionYear, int wgDoy1, int wgDoy2, float rainfallThreshold);
 
     bool initializeWaterTableData(TinputObsData* dailyObsData, WaterTable *waterTable,
                                   int predictionYear, int wgDoy1, int nrDaysBeforeWgDoy1, int daysWg);
 
-    bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
+    bool makeSeasonalForecastWaterTable(const QString &outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
                                         TweatherGenClimate& wGenClimate, TinputObsData* dailyObsData, WaterTable *waterTable,
                                         int nrRepetitions, int myPredictionYear, int wgDoy1, int wgDoy2, float rainfallThreshold);
 

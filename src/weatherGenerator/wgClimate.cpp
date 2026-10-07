@@ -292,7 +292,8 @@ bool computeWGClimate(int nrDays, Crit3DDate inputFirstDate, const std::vector<f
         cout << "...Write WG climate file -->" << outputFileName.toStdString() << "\n";
 
         QFile file(outputFileName);
-        file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+        if (! file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+            return false;
 
         QTextStream stream( &file );
         stream << "----------------- CLIMATE ----------------\n";
@@ -459,7 +460,8 @@ bool computeWG2DClimate(int nrDays, Crit3DDate inputFirstDate, float *inputTMin,
             cout << "...Write WG climate file -->" << outputFileName.toStdString() << "\n";
 
             QFile file(outputFileName);
-            file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+            if (! file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+                return false;
 
             QTextStream stream( &file );
             stream << "----------------- CLIMATE ----------------\n";
@@ -490,7 +492,8 @@ bool computeWG2DClimate(int nrDays, Crit3DDate inputFirstDate, float *inputTMin,
             cout << "...Write WG climate file -->" << outputFileName.toStdString() << "\n";
 
             QFile file(outputFileName);
-            file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+            if (! file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+                return false;
 
             QTextStream stream( &file );
             for (m=0; m<12; m++)
@@ -664,7 +667,8 @@ bool computeWG2DClimate(int nrDays, Crit3DDate inputFirstDate, float *inputTMin,
             cout << "...Write WG climate file -->" << outputFileName.toStdString() << "\n";
 
             QFile file(outputFileName);
-            file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+            if (! file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+                return false;
 
             QTextStream stream( &file );
             stream << "----------------- CLIMATE ----------------\n";
@@ -695,7 +699,8 @@ bool computeWG2DClimate(int nrDays, Crit3DDate inputFirstDate, float *inputTMin,
             cout << "...Write WG climate file -->" << outputFileName.toStdString() << "\n";
 
             QFile file(outputFileName);
-            file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+            if (! file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+                return false;
 
             QTextStream stream( &file );
             for (m=0; m<12; m++)

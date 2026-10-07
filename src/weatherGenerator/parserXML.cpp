@@ -111,7 +111,8 @@ bool parseXMLFile(const QString &xmlFileName, QDomDocument &xmlDoc)
 
     QString errorStr;
     int errLineNr, errColumnNr;
-    if (! xmlDoc.setContent(&myFile, &errorStr, &errLineNr, &errColumnNr))
+    bool isOk = xmlDoc.setContent(&myFile, &errorStr, &errLineNr, &errColumnNr);
+    if (! isOk)
     {
        qDebug() << "Parse xml failed:" << xmlFileName
                 << " Row: " << QString::number(errLineNr)

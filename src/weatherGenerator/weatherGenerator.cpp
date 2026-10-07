@@ -3,7 +3,7 @@
     \name weatherGenerator.cpp
 ======================================================================================================
     \copyright
-    2016 Fausto Tomei, Laura Costantini
+    2026 Fausto Tomei, Laura Costantini, Antonio Volta
 
     This file is part of agrolib distribution .
     CRITERIA3D has been developed under contract issued by A.R.P.A. Emilia-Romagna
@@ -49,10 +49,10 @@
     (see Geng et al., Agric. Forest Meteorol. 36:363, 1986)
 ======================================================================================================
     \param
-    (Tmax) monthly maximum temp.  (C)
-    (Tmin) monthly minimum temp.  (C)
-    (Prcp) total monthly precip        (mm)
-    (fwet) fraction of wet days        (must be > 0)
+    (Tmax) monthly maximum temp.        (C)
+    (Tmin) monthly minimum temp.        (C)
+    (Prcp) total monthly precip         (mm)
+    (fwet) fraction of wet days         (- must be > 0)
     (Td-Tw)difference between maximum temperatures on dry and wet days (C)
     (Txsd) maximum temperature standard deviation   (C)
     (Tnsd) minimum temperature standard deviation   (C)
@@ -79,13 +79,11 @@
 #include "fileUtility.h"
 #include "furtherMathFunctions.h"
 #include "basicMath.h"
-
 #include "utilities.h"
 
 
 float getTMax(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 {
-    dayOfYear = dayOfYear % 365;
     if (dayOfYear != wGen.state.currentDay)
         newDay(dayOfYear, precThreshold, wGen);
 
@@ -95,7 +93,6 @@ float getTMax(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 
 float getTMin(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 {
-    dayOfYear = dayOfYear % 365;
     if (dayOfYear != wGen.state.currentDay)
         newDay(dayOfYear, precThreshold,  wGen);
 
@@ -105,7 +102,6 @@ float getTMin(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 
 float getTAverage(int dayOfYear, float precThreshold, TweatherGenClimate &wGen)
 {
-    dayOfYear = dayOfYear % 365;
     if (dayOfYear != wGen.state.currentDay)
         newDay(dayOfYear, precThreshold, wGen);
 
@@ -115,7 +111,6 @@ float getTAverage(int dayOfYear, float precThreshold, TweatherGenClimate &wGen)
 
 float getPrecip(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 {
-    dayOfYear = dayOfYear % 365;
     if (dayOfYear != wGen.state.currentDay)
         newDay(dayOfYear, precThreshold, wGen);
 
@@ -127,30 +122,30 @@ float getPrecip(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
 {
     // daily structure is 0-365
-    dayOfYear = dayOfYear - 1;
+    int idx = std::min(std::max(dayOfYear, 1), 366) - 1;   // array 0..365
 
     // dry/wet day
     bool isWetDay;
     if (wGen.state.wetPreviousDay)
     {
-        float pw = wGen.daily.pww[dayOfYear];
+        float pw = wGen.daily.pww[idx];
         int nrDaysIncrease = std::max(0, std::min(wGen.state.consecutiveWetDays-1, NRDAYS_MAXDRYINCREASE));
-        pw += nrDaysIncrease * wGen.daily.wetIncrease[dayOfYear];
+        pw += nrDaysIncrease * wGen.daily.wetIncrease[idx];
         isWetDay = markov(pw);
     }
     else
     {
-        float pw = wGen.daily.pwd[dayOfYear];
+        float pw = wGen.daily.pwd[idx];
         int nrDaysDecrease = std::max(0, std::min(wGen.state.consecutiveDryDays-1, NRDAYS_MAXDRYINCREASE));
         // Pwd = 1 - Pdd
-        pw -= nrDaysDecrease * wGen.daily.dryIncrease[dayOfYear];
+        pw -= nrDaysDecrease * wGen.daily.dryIncrease[idx];
         isWetDay = markov(pw);
     }
 
     // precipitation
     if (isWetDay)
     {
-        wGen.state.currentPrec = weibull(wGen.daily.meanPrecip[dayOfYear], precThreshold);
+        wGen.state.currentPrec = weibull(wGen.daily.meanPrecip[idx], precThreshold);
         wGen.state.consecutiveDryDays = 0;
         ++wGen.state.consecutiveWetDays;
     }
@@ -165,17 +160,17 @@ void newDay(int dayOfYear, float precThreshold, TweatherGenClimate& wGen)
     float meanTMin, meanTMax, stdTMax, stdTMin;
     if (isWetDay)
     {
-        meanTMax = wGen.daily.meanWetTMax[dayOfYear];
-        meanTMin = wGen.daily.meanWetTMin[dayOfYear];
-        stdTMax = wGen.daily.stdDevWetTmax[dayOfYear];
-        stdTMin = wGen.daily.stdDevWetTmin[dayOfYear];
+        meanTMax = wGen.daily.meanWetTMax[idx];
+        meanTMin = wGen.daily.meanWetTMin[idx];
+        stdTMax = wGen.daily.stdDevWetTmax[idx];
+        stdTMin = wGen.daily.stdDevWetTmin[idx];
     }
     else
     {
-        meanTMax = wGen.daily.meanDryTMax[dayOfYear];
-        meanTMin = wGen.daily.meanDryTMin[dayOfYear];
-        stdTMax = wGen.daily.stdDevDryTmax[dayOfYear];
-        stdTMin = wGen.daily.stdDevDryTmin[dayOfYear];
+        meanTMax = wGen.daily.meanDryTMax[idx];
+        meanTMin = wGen.daily.meanDryTMin[idx];
+        stdTMax = wGen.daily.stdDevDryTmax[idx];
+        stdTMin = wGen.daily.stdDevDryTmin[idx];
     }
 
     genTemps(wGen.state.currentTmax, wGen.state.currentTmin, wGen.state.resTMaxPrev, wGen.state.resTMinPrev,
@@ -314,32 +309,6 @@ bool markov(float pWet)
     double c = double(rand()) / double(RAND_MAX) - double(pWet);
 
     if (c < 0)
-        return true;  // wet
-    else
-        return false; // dry
-}
-
-
-/*!
- * \brief dry/wet markov chain
- * \param pwd     probability wet-dry
- * \param pww     probability wet-wet
- * \param isWetPreviousDay  true if the previous day has been a wet day, false otherwise
- * \return true if the day is wet, false otherwise
- */
-
-bool markov_old(float pwd,float pww, bool isWetPreviousDay)
-{
-    double c;
-
-    if (isWetPreviousDay)
-        c = double(rand()) / double(RAND_MAX) - double(pww);
-
-    else
-        c = double(rand()) / double(RAND_MAX) - double(pwd);
-
-
-    if (c <= 0)
         return true;  // wet
     else
         return false; // dry
@@ -501,26 +470,6 @@ bool assignXMLAnomaly(XMLSeasonalAnomaly* XMLAnomaly, int modelIndex, int anomal
             }
         }
     }
-
-    /* DEBUG
-    QString anomaly="anomaly.txt";
-    QFile file(anomaly);
-    file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
-    QTextStream stream( &file );
-    for (int m = 0; m < 12; m++)
-    {
-        stream << "month = " << m +1 << endl;
-        stream << "wGen.monthly.monthlyTmin = " << wGen.monthly.monthlyTmin[m] << endl;
-        stream << "wGen.monthly.monthlyTmax = " << wGen.monthly.monthlyTmax[m] << endl;
-        stream << "wGen.monthly.sumPrec = " << wGen.monthly.sumPrec[m] << endl;
-        stream << "wGen.monthly.stDevTmin[m] = " << wGen.monthly.stDevTmin[m] << endl;
-        stream << "wGen.monthly.stDevTmax = " << wGen.monthly.stDevTmax[m] << endl;
-        stream << "wGen.monthly.fractionWetDays[m] = " << wGen.monthly.fractionWetDays[m] << endl;
-        stream << "wGen.monthly.probabilityWetWet[m] = " << wGen.monthly.probabilityWetWet[m] << endl;
-        stream << "wGen.monthly.dw_Tmax[m] = " << wGen.monthly.dw_Tmax[m] << endl;
-        stream << "-------------------------------------------" << endl;
-    }
-    */
 
     return true;
 }
@@ -690,7 +639,7 @@ bool assignXMLAnomalyScenario(XMLScenarioAnomaly* XMLAnomaly,int modelIndex, int
   * Different members of anomalies loaded by xml files are added to the climate
   * Output is written on outputFileName (csv)
 */
-bool makeSeasonalForecast(QString outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
+bool makeSeasonalForecast(const QString &outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
                           TweatherGenClimate& wGenClimate, TinputObsData* dailyObsData,
                           int nrRepetitions, int myPredictionYear, int wgDoy1, int wgDoy2,
                           float rainfallThreshold)
@@ -704,7 +653,6 @@ bool makeSeasonalForecast(QString outputFileName, char separator, XMLSeasonalAno
     unsigned int nrYears;           // number of years of the output series. It is the length of the virtual period where all the previsions (one for each model) are given one after another
     unsigned int nrValues;          // number of days between the first and the last prediction year
     int firstYear, lastYear, myYear;
-    unsigned int obsIndex;
     unsigned int addday = 0;
     bool isLastMember = false;
 
@@ -766,7 +714,11 @@ bool makeSeasonalForecast(QString outputFileName, char separator, XMLSeasonalAno
     for (int tmp = 0; tmp < nrDaysBeforeWgDoy1; tmp++)
     {
         dailyPredictions[tmp].date = myDate;
-        obsIndex = difference(dailyObsData->inputFirstDate, dailyPredictions[tmp].date);
+
+        int obsIndex = difference(dailyObsData->inputFirstDate, dailyPredictions[tmp].date);
+        if (obsIndex < 0 || obsIndex >= dailyObsData->inputTMin.size())
+            return false;
+
         dailyPredictions[tmp].minTemp = dailyObsData->inputTMin[obsIndex];
         dailyPredictions[tmp].maxTemp = dailyObsData->inputTMax[obsIndex];
         dailyPredictions[tmp].prec = dailyObsData->inputPrecip[obsIndex];
@@ -896,10 +848,10 @@ bool initializeWaterTableData(TinputObsData* dailyObsData, WaterTable *waterTabl
   * Different members of anomalies loaded by xml files are added to the climate
   * Output is written on outputFileName (csv)
 */
-bool makeSeasonalForecastWaterTable(QString outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
-                          TweatherGenClimate& wGenClimate, TinputObsData* dailyObsData, WaterTable *waterTable,
-                          int nrRepetitions, int predictionYear, int wgDoy1, int wgDoy2,
-                          float rainfallThreshold)
+bool makeSeasonalForecastWaterTable(const QString &outputFileName, char separator, XMLSeasonalAnomaly* XMLAnomaly,
+                                    TweatherGenClimate& wGenClimate, TinputObsData* dailyObsData, WaterTable *waterTable,
+                                    int nrRepetitions, int predictionYear, int wgDoy1, int wgDoy2,
+                                    float rainfallThreshold)
 {
     // it checks if observed data includes the last 9 months before wgDoy1
     int nrDaysBeforeWgDoy1;
@@ -1214,7 +1166,7 @@ bool computeSeasonalPredictions(TinputObsData *dailyObsData, TweatherGenClimate 
 
             obsIndex = difference(dailyObsData->inputFirstDate, obsDate);
 
-            if ( obsIndex >= 0 && obsIndex <= dailyObsData->dataLength )
+            if ( obsIndex >= 0 && obsIndex < dailyObsData->inputTMin.size() )
             {
                 outputDailyData[currentIndex].maxTemp = dailyObsData->inputTMax[obsIndex];
                 outputDailyData[currentIndex].minTemp = dailyObsData->inputTMin[obsIndex];

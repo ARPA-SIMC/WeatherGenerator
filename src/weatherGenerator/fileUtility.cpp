@@ -160,12 +160,12 @@ bool readMeteoDataCsv (const QString &fileName, char mySeparator, double noData,
         return false;
     }
 
-    inputData.dataLength = listDate.length();
-    inputData.inputTMin.resize(inputData.dataLength);
-    inputData.inputTMax.resize(inputData.dataLength);
-    inputData.inputPrecip.resize(inputData.dataLength);
+    const long dataLength = listDate.length();
+    inputData.inputTMin.resize(dataLength);
+    inputData.inputTMax.resize(dataLength);
+    inputData.inputPrecip.resize(dataLength);
 
-    for (int i = 0; i < inputData.dataLength; i++)
+    for (int i = 0; i < dataLength; i++)
     {
         inputData.inputTMin[i] = listTMin[i].toFloat();
         inputData.inputTMax[i] = listTMax[i].toFloat();

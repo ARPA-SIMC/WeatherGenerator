@@ -39,13 +39,16 @@ bool checkLastYearDate(TinputObsData* dailyObsData, int predictionYear, int &wgD
     while (isCheck && dailyObsData->inputLastDate > dailyObsData->inputFirstDate)
     {
         int obsIndex = difference(dailyObsData->inputFirstDate, dailyObsData->inputLastDate);
+
         if ( isEqual(dailyObsData->inputTMin[obsIndex], NODATA)
             || isEqual(dailyObsData->inputTMax[obsIndex], NODATA)
             || isEqual(dailyObsData->inputPrecip[obsIndex], NODATA) )
         {
             qDebug() << "WARNING! Missing data:" << QString::fromStdString(dailyObsData->inputLastDate.toISOString());
             dailyObsData->inputLastDate = dailyObsData->inputLastDate.addDays(-1);
-            dailyObsData->dataLength--;
+            dailyObsData->inputTMin.pop_back();
+            dailyObsData->inputTMax.pop_back();
+            dailyObsData->inputPrecip.pop_back();
         }
         else
             isCheck = false;
@@ -100,7 +103,8 @@ bool checkLastYearDate(TinputObsData* dailyObsData, int predictionYear, int &wgD
         nrDaysBeforeWGDay1 += (difference(predictionFirstDate, dailyObsData->inputLastDate)) + 1 ;
     }
 
-    if ( difference(dailyObsData->inputFirstDate, predictionFirstDate) < nrDaysBeforeWGDay1 || dailyObsData->dataLength < (nrDaysBeforeWGDay1-NRDAYSTOLERANCE) )
+    if ( difference(dailyObsData->inputFirstDate, predictionFirstDate) < nrDaysBeforeWGDay1
+        || dailyObsData->inputTMin.size() < (nrDaysBeforeWGDay1-NRDAYSTOLERANCE) )
     {
         // observed data does not include 9 months before wgDoy1 or more than NRDAYSTOLERANCE days missing
         return false;
